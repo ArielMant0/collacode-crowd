@@ -1,0 +1,303 @@
+/**
+ * src/styles/settings.scss
+ *
+ * Configures SASS variables and Vuetify overwrites
+ */
+
+// https://vuetifyjs.com/features/sass-variables/`
+@use 'vuetify/settings';
+
+$v-theme-primary: #078766;
+$v-theme-secondary: #0ad39f;
+$v-theme-error: #b61431;
+$v-theme-info: #1976D2;
+
+.Vue-Toastification__toast--success.ctoast {
+  color: inherit;
+  border-color: $v-theme-primary;
+  background-color: $v-theme-primary;
+}
+.Vue-Toastification__toast--error.ctoast {
+  color: inherit;
+  border-color: $v-theme-error;
+  background-color: $v-theme-error;
+}
+.Vue-Toastification__toast--info.ctoast {
+  color: inherit;
+  border-color: $v-theme-info;
+  background-color: $v-theme-info;
+}
+
+.red-on-hover:hover {
+    background-color: $v-theme-error;
+    color: white;
+}
+
+.primary-on-hover:hover {
+    background-color: $v-theme-primary;
+    color: white;
+}
+.primary-text-on-hover:hover {
+    color: $v-theme-primary;
+}
+
+.secondary-on-hover:hover {
+    background-color: $v-theme-secondary;
+    color: black;
+}
+.secondary-text-on-hover:hover {
+    color: $v-theme-secondary;
+}
+
+.bold-on-hover:hover {
+  font-weight: bold !important;
+}
+
+.text-primary {
+  color: $v-theme-primary;
+}
+.text-secondary {
+  color: $v-theme-secondary;
+}
+
+.text-outline-primary {
+  -webkit-text-stroke: 1px $v-theme-primary;
+}
+.text-outline-secondary {
+  -webkit-text-stroke: 1px $v-theme-secondary;
+}
+.text-outline-error {
+  -webkit-text-stroke: 1px $v-theme-error;
+}
+.text-outline-red {
+  -webkit-text-stroke: 1px red;
+}
+
+.v-theme--customLight .grey-on-hover:hover {
+  background-color: #aaa;
+}
+.v-theme--customDark .grey-on-hover:hover {
+  background-color: #666;
+}
+.v-theme--customLight .light-grey-on-hover:hover {
+  background-color: #999;
+}
+.v-theme--customDark .light-grey-on-hover:hover {
+  background-color: #333;
+}
+
+.v-theme--customLight .ext-bordered {
+    border: 2px solid white;
+    border-radius: 5px;
+}
+.v-theme--customDark .ext-bordered {
+  border: 2px solid black;
+  border-radius: 5px;
+}
+
+.ext-bordered.selected {
+    border-color: $v-theme-secondary;
+}
+
+.text-ww {
+    overflow: hidden;
+    white-space: wrap;
+}
+
+.text-dots {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis
+}
+
+.v-theme--customLight .tthover {
+  background-color: #fff;
+  border: 1px solid #ddd;
+  color: black;
+}
+.v-theme--customDark .tthover {
+  background-color: #000;
+  border: 1px solid #444;
+  color: white;
+}
+
+.v-theme--customLight .bordered-grey {
+  border: 2px solid #aaa
+}
+.v-theme--customDark .bordered-grey {
+  border: 2px solid #666
+}
+.v-theme--customLight .bordered-grey-thin {
+  border: 1px solid #aaa
+}
+.v-theme--customDark .bordered-grey-thin {
+  border: 1px solid #666
+}
+.v-theme--customLight .bordered-grey-light {
+  border: 2px solid #ddd
+}
+.v-theme--customDark .bordered-grey-light {
+  border: 2px solid #333
+}
+.v-theme--customLight .bordered-grey-light-thin {
+  border: 1px solid #ddd
+}
+.v-theme--customDark .bordered-grey-light-thin {
+  border: 1px solid #333
+}
+
+.bordered-secondary {
+  border: 2px solid $v-theme-secondary
+}
+.bordered-secondary-thin {
+  border: 1px solid $v-theme-secondary
+}
+
+.bordered-primary {
+  border: 2px solid $v-theme-primary
+}
+.bordered-primary-thin {
+  border: 1px solid $v-theme-primary
+}
+
+
+@mixin scrollbars(
+  $foreground-color: #ccc,
+  $background-color: #fff,
+  $border-radius: 50%,
+  $size: 8px
+) {
+
+  /* Legacy browsers with `::-webkit-scrollbar-*` support */
+  &::-webkit-scrollbar-thumb {
+    background: $foreground-color;
+  }
+  &::-webkit-scrollbar-track {
+    background: $background-color;
+  }
+  &::-webkit-scrollbar {
+    max-width: $size;
+    max-height: $size;
+  }
+
+  scrollbar-color: $foreground-color $background-color;
+  scrollbar-width: $size;
+
+  --scrollbar-color-thumb: $foreground-color;
+  --scrollbar-color-track: $background-color;
+  --scrollbar-width: $size;
+}
+
+.v-theme--customLight body {
+  @include scrollbars();
+}
+.v-theme--customDark body {
+  @include scrollbars(#444, #222);
+}
+
+.prevent-select {
+  -webkit-user-select: none; /* Safari */
+  -ms-user-select: none; /* IE 10 and IE 11 */
+  user-select: none; /* Standard syntax */
+}
+
+.hover-it:hover { font-style: italic; }
+.hover-bold:hover { font-weight: bold; }
+.hover-sat:hover { filter: saturate(2); }
+
+.v-theme--customLight .hover-border:hover { border: 1px solid #aaa; }
+.v-theme--customDark .hover-border:hover { border: 1px solid #666; }
+
+.always-wobble {
+  animation: wobble 600ms linear infinite;
+}
+.hover-wobble:hover {
+  animation: wobble 600ms linear infinite;
+}
+.always-opac {
+  animation: opac 1000ms linear infinite;
+}
+
+.holo {
+  transition: all 0.5s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.holo::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: linear-gradient(
+    0deg,
+    transparent,
+    transparent 30%,
+    rgba(255,255,255,0.75)
+  );
+  transform: rotate(-45deg);
+  transition: all 0.5s ease;
+  opacity: 0;
+}
+
+.holo:hover::before {
+  opacity: 1;
+  transform: rotate(-45deg) translateY(100%);
+}
+
+.invalid {
+  border: 2px solid red;
+}
+
+.loading-screen {
+  --s: 50px;
+  --_d: calc(0.353*var(--s));
+  width: calc(var(--s) + var(--_d));
+  aspect-ratio: 1;
+  display: grid;
+}
+
+.loading-screen:before,
+.loading-screen:after {
+  content:"";
+  clip-path:polygon(var(--_d) 0,100% 0,100% calc(100% - var(--_d)),calc(100% - var(--_d)) 100%,0 100%,0 var(--_d));
+  animation: leftright 1.2s infinite;
+  background: conic-gradient(from -90deg at var(--s) var(--_d), #666 135deg,#000 0 270deg,#333 0);
+}
+.loading-screen:before {
+  z-index: 1;
+  margin-bottom: calc(var(--_d)/-2 - 1px);
+}
+.loading-screen:after {
+  margin-top: calc(var(--_d)/-2 - 1px);
+  animation-delay: 0.6s
+}
+.v-theme--customDark .loading-screen:before,
+.v-theme--customDark .loading-screen:after {
+  background: conic-gradient(from -90deg at var(--s) var(--_d), #fff 135deg,#666 0 270deg,#aaa 0);
+}
+
+
+@keyframes leftright {
+  0%     {transform: translate(0)}
+  16.67% {transform: translate(-10px)}
+  33.33% {transform: translate(10px)}
+  50%,
+  100%   {transform: translate(0)}
+}
+
+@keyframes wobble {
+  0% { transform: rotate(0deg); }
+  25% { transform: rotate(5deg); }
+  50% { transform: rotate(0eg); }
+  75% { transform: rotate(-5deg); }
+  100% { transform: rotate(0deg); }
+}
+
+@keyframes opac {
+  0% { filter: opacity(100%); }
+  50% { filter: opacity(50%); }
+  100% { filter: opacity(100%); }
+}

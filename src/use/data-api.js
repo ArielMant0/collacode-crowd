@@ -1,0 +1,66 @@
+import { useApp } from "@/stores/app";
+import { useLoader } from "./loader"
+
+////////////////////////////////////////////////////////////
+// Get Data
+////////////////////////////////////////////////////////////
+
+export async function loadMeta(guid) {
+    const loader = useLoader();
+    return loader.get("crowd")
+}
+export async function loadItemsByCode(code) {
+    const loader = useLoader();
+    return loader.get(`items/code/${code}`)
+}
+export async function loadTagsByCode(code) {
+    const loader = useLoader();
+    return loader.get(`tags/code/${code}`)
+}
+export async function loadDataTagsByCode(code) {
+    const loader = useLoader();
+    return loader.get(`datatags/code/${code}`)
+}
+
+////////////////////////////////////////////////////////////
+// Crowd Similarity Data
+////////////////////////////////////////////////////////////
+
+export async function getClientStatus(guid, ip=null) {
+    const loader = useLoader()
+    return loader.get("similarity/status", { guid: guid, ip: ip })
+}
+
+export async function getCrowdGUID() {
+    const loader = useLoader()
+    return loader.get("similarity/guid")
+}
+
+export async function postUserCrowdGUID(userId, guid, dataset=null) {
+    const app = useApp()
+    const loader = useLoader()
+    return loader.post("similarity/guid", {
+        user_id: userId,
+        guid: guid,
+        dataset_id: dataset ? dataset : app.ds
+    })
+}
+
+export async function getSimilarities(dataset=null) {
+    const app = useApp()
+    const loader = useLoader()
+    return loader.get(`similarity/dataset/${dataset ? dataset : app.ds}`)
+}
+
+export async function getSimilarByTarget(target, limit=5) {
+    const loader = useLoader();
+    return loader.get(`similarity/target/${target}/top/${limit}`)
+}
+
+export async function addSimilarity(info, data) {
+    const loader = useLoader();
+    return loader.post("add/similarity", {
+        info: info,
+        rows: Array.isArray(data) ? data : [data]
+    })
+}
