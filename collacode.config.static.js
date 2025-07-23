@@ -3,8 +3,8 @@ export const APP_START_PAGE = "coding"
 export const URL_TEASER = "media/teaser/"
 export const URL_EVIDENCE = "media/evidence/"
 export const URL_STATIC_DATA = "data/"
-export const URL_SOUND = "https://www2.visus.uni-stuttgart.de/collacode/sounds/"
-export const URL_IMAGES = "https://www2.visus.uni-stuttgart.de/collacode/images/"
+export const URL_SOUND = "sounds/"
+export const URL_IMAGES = "images/"
 export const ALLOWED_HOSTS = false
 
 export function getApiUrl(port=8000) {
