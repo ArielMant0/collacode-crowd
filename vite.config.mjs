@@ -22,6 +22,7 @@ export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd())
 
   return {
+    base: BASE_PATH,
     plugins: [
       VueRouter({ src: 'src/pages', path: BASE_PATH }),
       Layouts(),
