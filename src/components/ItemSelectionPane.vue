@@ -14,16 +14,7 @@
             </v-card-title>
             <v-card-text class="d-flex flex-wrap justify-center">
                 <v-sheet v-for="item in available" rounded="lg" color="surface" class="pa-2 mr-3 mb-3" elevation="2">
-                    <v-progress-linear
-                        color="primary"
-                        :model-value="progress[item.id]"
-                        rounded
-                        height="10"
-                        class="mb-2">
-                        <span class="text-caption" :class="{ 'text-primary': progress[item.id] < 55, 'text-white': progress[item.id] >= 55 }">
-                            {{ app.itemCounts[item.id] }} / {{ countTarget }}
-                        </span>
-                    </v-progress-linear>
+                    <ItemProgress :value="itemCounts[item.id]" :target="countTarget"/>
                     <ItemTeaser :item="item" @click="chooseItem(item)"/>
                 </v-sheet>
             </v-card-text>
@@ -35,16 +26,7 @@
             </v-card-title>
             <v-card-text class="d-flex flex-wrap justify-center">
                 <v-sheet v-for="item in done" rounded="lg" color="surface" class="pa-2 mr-3 mb-3" elevation="2">
-                    <v-progress-linear
-                        color="primary"
-                        :model-value="progress[item.id]"
-                        rounded
-                        height="10"
-                        class="mb-2">
-                        <span class="text-caption" :class="{ 'text-primary': progress[item.id] < 55, 'text-white': progress[item.id] >= 55 }">
-                            {{ app.itemCounts[item.id] }} / {{ countTarget }}
-                        </span>
-                    </v-progress-linear>
+                    <ItemProgress :value="itemCounts[item.id]" :target="countTarget"/>
                     <ItemTeaser :item="item" hide-overlay prevent-click style="opacity: 0.33"/>
                 </v-sheet>
             </v-card-text>
@@ -56,16 +38,7 @@
             </v-card-title>
             <v-card-text class="d-flex flex-wrap justify-center">
                 <v-sheet v-for="item in gone" rounded="lg" color="surface" class="pa-2 mr-3 mb-3" elevation="2">
-                    <v-progress-linear
-                        color="primary"
-                        :model-value="progress[item.id]"
-                        rounded
-                        height="10"
-                        class="mb-2">
-                        <span class="text-caption" :class="{ 'text-primary': progress[item.id] < 55, 'text-white': progress[item.id] >= 55 }">
-                            {{ app.itemCounts[item.id] }} / {{ countTarget }}
-                        </span>
-                    </v-progress-linear>
+                    <ItemProgress :value="itemCounts[item.id]" :target="countTarget"/>
                     <ItemTeaser :item="item" hide-overlay prevent-click style="opacity: 0.33"/>
                 </v-sheet>
             </v-card-text>
@@ -80,16 +53,19 @@
     import ItemTeaser from './items/ItemTeaser.vue';
     import router from '@/router';
     import { useTimes } from '@/stores/times';
+    import ItemProgress from './items/ItemProgress.vue';
+    import { storeToRefs } from 'pinia';
 
     const app = useApp()
     const times = useTimes()
 
+    const { itemCounts } = storeToRefs(app)
+
     const available = ref([])
     const done = ref([])
     const gone = ref([])
-    const progress = ref({})
 
-    const countTarget = 10
+    const countTarget = 6
 
     function chooseItem(item) {
         if (item._done) return
@@ -100,11 +76,6 @@
         available.value = DM.getDataBy("items", d => app.itemsLeft.has(d.id))
         done.value = DM.getDataBy("items", d => app.itemsDone.has(d.id))
         gone.value = DM.getDataBy("items", d => app.itemsGone.has(d.id))
-        const obj = {}
-        for (const key in app.itemCounts) {
-            obj[key] = Math.min(100, Math.round(app.itemCounts[key] / countTarget * 100))
-        }
-        progress.value = obj
     }
 
     onMounted(read)

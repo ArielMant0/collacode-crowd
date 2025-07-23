@@ -1,5 +1,20 @@
 <template>
     <div style="max-height: 95vh; overflow-y: auto;">
+
+        <v-stepper :model-value="step" style="max-width: 99%;" class="mb-4" bg-color="grey-lighten-5" color="primary">
+            <v-stepper-header>
+                <template v-for="(s, idx) in gameData.steps">
+                    <v-stepper-item
+                        :title="s.title"
+                        :value="s.value"
+                        :complete="s.value < step"/>
+
+                    <v-divider v-if="idx < gameData.steps.length-1"></v-divider>
+                </template>
+
+            </v-stepper-header>
+        </v-stepper>
+
         <div v-if="state === STATES.START" class="d-flex align-center justify-center">
             <v-btn size="x-large" color="primary" class="mt-4" @click="startGame">start</v-btn>
         </div>
@@ -10,7 +25,7 @@
 
         <div v-else-if="state === STATES.INGAME || state === STATES.END" class="d-flex flex-column align-center" style="width: 100%; max-width: 100%;">
 
-            <div class="ml-2 mr-2 mb-2 d-flex flex-column align-center">
+            <div class="ml-2 mr-2 d-flex flex-column align-center">
                 <div>{{ gameData.target.name }}</div>
                 <ItemTeaser
                     :item="gameData.target"
@@ -35,14 +50,18 @@
                     :target="gameData.target.id"/>
             </div>
             <div v-else-if="step === 2" class="mt-4 mb-8" style="width: 95%; max-width: 100%;">
-                <v-btn v-if="state === STATES.INGAME" class="mb-2" size="large" color="primary" @click="step = 3">next phase</v-btn>
+                <div style="text-align: center;">
+                    <v-btn v-if="state === STATES.INGAME" class="mb-2" color="primary" @click="step = 3">next step</v-btn>
+                </div>
                 <ItemTagRecommend
                     :item-limit="10"
                     :items="candidates"
                     @update="setResultItems"/>
             </div>
             <div v-else-if="state === STATES.INGAME" class="mt-4 mb-8" style="width: 95%; max-width: 100%;">
-                <v-btn v-if="state === STATES.INGAME" class="mb-2" size="large" color="primary" @click="stopGame">submit</v-btn>
+                <div style="text-align: center;">
+                    <v-btn v-if="state === STATES.INGAME" class="mb-2" color="primary" @click="stopGame">submit</v-btn>
+                </div>
                 <ItemCustomRecommend
                     :item-limit="10"
                     :target="gameData.target.id"
@@ -140,7 +159,7 @@
     const inventory = ref([])
     const gameData = reactive({
         target: null,
-        tagDomain: [],
+        steps: [],
         resultItems: [],
         customItems: [],
         otherItems: []
@@ -182,6 +201,23 @@
         gameData.resultItems = []
         gameData.customItems = []
         gameData.otherItems = []
+        gameData.steps = [
+            {
+                title:  props.method === 1 ?
+                    "find similar "+app.itemName+"s" :
+                    "answer tag questions",
+                value: 1
+            },{
+                title: "select similar "+app.itemName+"s",
+                value: 2
+            },{
+                title: "review and enrich suggestions",
+                value: 3
+            },{
+                title: "submit",
+                value: 4
+            }
+        ]
         if (!target.value) {
             state.value = STATES.START
             toast.error(
@@ -208,14 +244,13 @@
         const now = Date.now() - (loading ? 0 : 1000)
         // clear previous data
         clear()
-        // get bar code domain
-        gameData.tagDomain = DM.getDataBy("tags_tree", d => d.is_leaf === 1).map(d => d.id)
         // try to start the round
         tryStartRound(now)
     }
 
     async function stopGame() {
         state.value = STATES.END
+        step.value = 4
         timeEnd = Date.now()
 
         // check if we already have a guid

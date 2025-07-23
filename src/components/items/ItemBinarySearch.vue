@@ -1,14 +1,13 @@
 <template>
     <div style="width: min-content;" class="pa-2">
         <div>
-
             <div style="text-align: center;">
                 <v-btn
                     class="mb-4"
                     :color="split.length > 0 ? 'primary' : 'default'"
                     :disabled="split.length === 0"
                     @click="submit">
-                    next phase
+                    next step
                 </v-btn>
             </div>
 

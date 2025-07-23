@@ -6,7 +6,7 @@
                 class="mb-4"
                 :disabled="selectionItems.length === 0"
                 @click="submit">
-                next phase
+                next step
             </v-btn>
         </div>
 
