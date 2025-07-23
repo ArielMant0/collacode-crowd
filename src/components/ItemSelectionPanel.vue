@@ -51,15 +51,19 @@
     import { storeToRefs } from 'pinia';
     import DM from '@/use/data-manager';
     import { useTimes } from '@/stores/times';
+    import { useSettings } from '@/stores/settings';
 
     const app = useApp()
     const times = useTimes()
+    const settings = useSettings()
+
     const { itemCounts } = storeToRefs(app)
 
     const props = defineProps({
         subset: {
             type: Number,
-            required: true
+            required: true,
+            validator: v => v === 0 || v === 1 | v === 2
         },
         title: {
             type: String
@@ -97,7 +101,7 @@
     const page = ref(1)
     const numPages = computed(() => Math.ceil(items.value.length / props.numPerPage))
 
-    const sortBy = ref(0)
+    const sortBy = ref(settings.panelSort[props.subset])
 
     const textClass = computed(() => {
         switch(props.subset) {
@@ -125,6 +129,7 @@
     })
 
     function applySort() {
+        settings.panelSort[props.subset] = sortBy.value
         items.value.sort((a, b) => {
             switch(sortBy.value) {
                 default:

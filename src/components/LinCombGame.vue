@@ -1,19 +1,21 @@
 <template>
     <div style="max-height: 95vh; overflow-y: auto;">
 
-        <v-stepper :model-value="step" style="max-width: 98%;" class="mb-4" bg-color="grey-lighten-5" color="primary">
-            <v-stepper-header>
-                <template v-for="(s, idx) in gameData.steps">
-                    <v-stepper-item
-                        :title="s.title"
-                        :value="s.value"
-                        :complete="s.value < step"/>
+        <div class="d-flex justify-center">
+            <v-stepper :model-value="step" style="min-width: 85%; max-width: 95%;" class="mb-4" bg-color="grey-lighten-5" color="primary">
+                <v-stepper-header>
+                    <template v-for="(s, idx) in gameData.steps">
+                        <v-stepper-item
+                            :title="s.title"
+                            :value="s.value"
+                            :complete="s.value < step"/>
 
-                    <v-divider v-if="idx < gameData.steps.length-1"></v-divider>
-                </template>
+                        <v-divider v-if="idx < gameData.steps.length-1"></v-divider>
+                    </template>
 
-            </v-stepper-header>
-        </v-stepper>
+                </v-stepper-header>
+            </v-stepper>
+        </div>
 
         <div v-if="state === STATES.START" class="d-flex align-center justify-center">
             <v-btn size="x-large" color="primary" class="mt-4" @click="startGame">start</v-btn>
@@ -277,22 +279,26 @@
             source: getSource(d.origin)
         })
 
-        let allItems = gameData.resultItems
+        const allItems = gameData.resultItems
             .concat(gameData.customItems)
             .map(d => transform(d, gameData.target.id))
 
         // get all highly similar items
         const highSim = new Set(allItems.filter(d => d.value > 1).map(d => d.item_id))
-        // make the cross product of highly similar items
-        let extra = cross(highSim, highSim)
-        // add pairwise high similarity for highly similar items
-        allItems = allItems.concat(extra.map(d => transform({ id: d[0], value: 2, origin: "auto" }, d[1])))
-
         // get all "normally" similar items
         const normalSim = new Set(allItems.filter(d => d.value === 1).map(d => d.item_id))
-        // make the cross product of highly similar items with normally similar items
-        extra = cross(normalSim, highSim)
-        allItems = allItems.concat(extra.map(d => transform({ id: d[0], value: 1, origin: "auto" }, d[1])))
+
+        // add automatic similarity judgements
+        for (let i = 0; i < highSim.length; ++i) {
+            // add high similarity for very similar items
+            for (let j = i+1; j < highSim.length; ++j) {
+                allItems.push(transform({ id: highSim[j], value: 2, origin: "auto" }, highSim[i]))
+            }
+            // add normal similarity for similar items
+            for (let j = 0; j < normalSim.length; ++j) {
+                allItems.push(transform({ id: normalSim[j], value: 1, origin: "auto" }, highSim[i]))
+            }
+        }
 
         const info = {
             dataset_id: app.ds,

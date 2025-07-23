@@ -10,6 +10,8 @@ export const useSettings = defineStore('settings', {
         lightMode: true,
         verticalLayout: false,
         panelSide: "left",
+
+        panelSort: [0, 0, 0]
     }),
 
     actions: {
