@@ -340,18 +340,20 @@
 
         const k = clusters.clusters.length
         // get indices of all clusters
-        const allcf = [...Array(k).keys()]
-        const cf = allcf.filter(i => clusterLeft.has(i))
+        const cf = [...Array(k).keys()].filter(i => clusterLeft.has(i))
 
         if (cf.length === 0) {
             console.debug("no more clusters left")
             return
         }
 
-        // get next clusters with the highest distances to all previous clusters
-        const subset = cf.slice(0, props.numClusters*2)
+        // get next clusters with the highest distances to
+        // - each other
+        // - selected clusters
+        const subset = cf.slice(0, props.numClusters*3)
+        const compareTo = Array.from(clusterLeft.values()).concat(subset)
         const tmp = subset.map(i => {
-            const scores = allcf.map((d, j) => {
+            const scores = compareTo.map((d, j) => {
                 if (i === j) return 0
                 return matchValue(
                     clusters.minDistances[d][i],

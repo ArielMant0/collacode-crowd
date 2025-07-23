@@ -44,7 +44,8 @@
     const {
         initialized,
         fetchUpdateTime,
-        updateItemsTime
+        updateItemsTime,
+        activeUserId
     } = storeToRefs(app);
 
     const { isLoading } = storeToRefs(settings)
@@ -330,7 +331,7 @@
         // try to read the users id
         const guid = localStorage.getItem("crowd-guid")
         if (guid) {
-            app.activeUserId = guid
+            app.setActiveUser(guid)
         }
 
         // try to get the user's ip address
@@ -425,6 +426,12 @@
 
     watch(fetchUpdateTime, () => fetchServerUpdate(true))
     watch(updateItemsTime, () => updateAllItems())
+
+    watch(activeUserId, function() {
+        if (app.activeUserId) {
+            localStorage.setItem("crowd-guid", app.activeUserId)
+        }
+    })
 
     router.afterEach(function() {
         if (readQuery()) {
