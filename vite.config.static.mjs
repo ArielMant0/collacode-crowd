@@ -23,7 +23,7 @@ export default defineConfig(({ mode }) => {
 
   return {
     plugins: [
-      VueRouter(),
+      VueRouter({ src: 'src/pages', path: BASE_PATH }),
       Layouts(),
       Vue({
         template: { transformAssetUrls },

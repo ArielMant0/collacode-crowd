@@ -1,7 +1,7 @@
 <template>
     <div style="max-height: 95vh; overflow-y: auto;">
 
-        <v-stepper :model-value="step" style="max-width: 99%;" class="mb-4" bg-color="grey-lighten-5" color="primary">
+        <v-stepper :model-value="step" style="max-width: 98%;" class="mb-4" bg-color="grey-lighten-5" color="primary">
             <v-stepper-header>
                 <template v-for="(s, idx) in gameData.steps">
                     <v-stepper-item
