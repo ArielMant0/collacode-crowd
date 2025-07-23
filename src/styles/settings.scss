@@ -6,11 +6,23 @@
 
 // https://vuetifyjs.com/features/sass-variables/`
 @use 'vuetify/settings';
+@import url('https://fonts.googleapis.com/css2?family=Bitcount+Prop+Double:wght@100..900&display=swap');
 
 $v-theme-primary: #078766;
 $v-theme-secondary: #0ad39f;
 $v-theme-error: #b61431;
 $v-theme-info: #1976D2;
+
+.bitcount-prop-double {
+  font-family: "Bitcount Prop Double", system-ui;
+  font-optical-sizing: auto;
+  font-style: normal;
+  font-variation-settings:
+    "slnt" 0,
+    "CRSV" 0.5,
+    "ELSH" 0,
+    "ELXP" 0;
+}
 
 .Vue-Toastification__toast--success.ctoast {
   color: inherit;
@@ -278,7 +290,6 @@ $v-theme-info: #1976D2;
 .v-theme--customDark .loading-screen:after {
   background: conic-gradient(from -90deg at var(--s) var(--_d), #fff 135deg,#666 0 270deg,#aaa 0);
 }
-
 
 @keyframes leftright {
   0%     {transform: translate(0)}

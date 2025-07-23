@@ -30,6 +30,8 @@
     import GlobalTooltip from '@/components/GlobalTooltip.vue';
     import { useSounds } from '@/stores/sounds';
     import { toTreePath } from '@/use/utility';
+    import { useRoute } from 'vue-router';
+    import router from './router';
 
     const toast = useToast();
     const loader = useLoader()
@@ -37,6 +39,7 @@
     const app = useApp()
     const times = useTimes()
     const sounds = useSounds()
+    const route = useRoute()
 
     const {
         initialized,
@@ -56,17 +59,36 @@
         await loadDataTags(false)
         // add data to games
         await loadItems();
-
         isLoading.value = false;
     }
 
-    async function loadMetaInfo() {
+    async function loadCrowdMeta() {
         try {
-            const result = await api.loadMeta(app.activeUserId)
-            app.setMetaInfo(result)
+            const result = await api.loadCrowdMeta()
+            app.setCrowdMeta(result)
         } catch (e) {
             console.error(e.toString())
-            toast.error("error loading meta info")
+            toast.error("error loading crowd info")
+        }
+    }
+
+    async function loadCrowdItems() {
+        try {
+            const result = await api.loadCrowdItems()
+            app.setCrowdItems(result)
+        } catch (e) {
+            console.error(e.toString())
+            toast.error("error loading crowd items")
+        }
+    }
+
+    async function loadCrowd() {
+        try {
+            await loadCrowdMeta()
+            await loadCrowdItems()
+        } catch (e) {
+            console.error(e.toString())
+            toast.error("error loading crowd data")
         }
     }
 
@@ -291,19 +313,34 @@
         }
     }
 
+    function readQuery() {
+        // check if we were passed a crowd worker id
+        if (route.query.prolific_id) {
+            const before = app.cwId
+            app.cwId = ""+route.query.prolific_id
+            app.cwSource = "prolific"
+            return before !== app.cwId
+        }
+        return false
+    }
+
     async function readClient() {
+        readQuery()
+
+        // try to read the users id
         const guid = localStorage.getItem("crowd-guid")
         if (guid) {
             app.activeUserId = guid
-            // get the user's ip address
-            try {
-                const ipres = await fetch("https://api.ipify.org?format=json")
-                const ipaddr = await ipres.json()
-                app.ipAddress = ipaddr.ip
-            } catch (e) {
-                console.error(e.toString())
-                console.error("could not get ip address")
-            }
+        }
+
+        // try to get the user's ip address
+        try {
+            const ipres = await fetch("https://api.ipify.org?format=json")
+            const ipaddr = await ipres.json()
+            app.ipAddress = ipaddr.ip
+        } catch (e) {
+            console.error(e.toString())
+            console.error("could not get ip address")
         }
     }
 
@@ -355,10 +392,13 @@
         await readClient()
 
         // load meta data
-        await loadMetaInfo()
+        await loadCrowd()
 
         // load actual game data
-        await loadData()
+        if (app.ds) {
+            await loadData()
+        }
+
         initialized.value = true
     });
 
@@ -366,7 +406,7 @@
         const showToast = initialized.value
         if (showToast) toast.info("reloading all data..")
         allowOverlay.value = true
-        await loadData();
+        await Promise.all([loadData(), loadCrowdItems()])
         allowOverlay.value = false
         if (showToast) toast.success("reloaded data")
         times.reloaded("all")
@@ -377,6 +417,7 @@
         times.reloaded("transitioning")
     });
 
+    watch(() => times.n_crowd, loadCrowdItems);
     watch(() => times.n_items, loadItems);
     watch(() => times.n_tags, loadTags);
     watch(() => times.n_datatags, loadDataTags);
@@ -384,6 +425,12 @@
 
     watch(fetchUpdateTime, () => fetchServerUpdate(true))
     watch(updateItemsTime, () => updateAllItems())
+
+    router.afterEach(function() {
+        if (readQuery()) {
+            loadCrowd()
+        }
+    })
 
 </script>
 

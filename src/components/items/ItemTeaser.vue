@@ -27,7 +27,7 @@
                 :lazy-src="imgUrlS"
                 :width="width"
                 :height="height"/>
-            <div :class="{ 'overlay': itemObj.teaser, 'overlay-text': !itemObj.teaser, 'rounded': rounded }"
+            <div v-if="!itemObj.teaser || !hideOverlay" :class="{ 'overlay': itemObj.teaser, 'overlay-text': !itemObj.teaser, 'rounded': rounded }"
                 style="overflow: hidden;"
                 @click="onClick"
                 @pointermove="onHover"
@@ -97,6 +97,10 @@
             default: false
         },
         preventContext: {
+            type: Boolean,
+            default: false
+        },
+        hideOverlay: {
             type: Boolean,
             default: false
         },

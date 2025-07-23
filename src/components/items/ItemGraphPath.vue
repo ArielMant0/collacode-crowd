@@ -4,10 +4,9 @@
             <v-btn
                 :color="selectionItems.length > 0 ? 'primary' : 'default'"
                 class="mb-4"
-                density="comfortable"
                 :disabled="selectionItems.length === 0"
                 @click="submit">
-                submit
+                next phase
             </v-btn>
         </div>
 
@@ -335,8 +334,12 @@
 
     async function nextClusters() {
 
+        const fixed = clsOrder.list
+            .map((d, i) => ({ cluster: d, index: i }))
+            .filter(d => clsOrder.selected.has(d.cluster))
+
         const k = clusters.clusters.length
-        // get indices of remaining clusters
+        // get indices of all clusters
         const allcf = [...Array(k).keys()]
         const cf = allcf.filter(i => clusterLeft.has(i))
 
@@ -371,15 +374,11 @@
             return b.value - a.value
         })
 
-        const fixed = clsOrder.list
-            .map((d, i) => ({ cluster: d, index: i }))
-            .filter(d => clsOrder.selected.has(d.cluster))
-
         const next = new Array()
         fixed.forEach(d => next[d.index] = d.cluster)
 
         for (let i = 0, j = 0; i < props.numClusters; ++i) {
-            if (next[i] === undefined) {
+            if (next[i] === undefined && !fixed.find(d => d.cluster === tmp[j].index)) {
                 next[i] = tmp[j].index
                 j++
                 clusterLeft.delete(next[i])

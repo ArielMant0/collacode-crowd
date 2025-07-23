@@ -7,7 +7,8 @@ export const URL_SOUND = "https://www2.visus.uni-stuttgart.de/collacode/sounds/"
 export const URL_IMAGES = "https://www2.visus.uni-stuttgart.de/collacode/images/"
 export const ALLOWED_HOSTS = false
 
-export function getApiUrl() {
+export function getApiUrl(port=8000) {
+    // return `http://localhost:${port && !Number.isNaN(port) ? port : 8000}/colladata/api/v1`
     return `https://www2.visus.uni-stuttgart.de/colladata/api/v1`
 }
 

@@ -1,26 +1,44 @@
 <template>
-    <LinCombGame :method="method" @close="onClose"/>
+    <div class="pa-2">
+        <LinCombGame v-if="validMethod" :method="method" @close="onClose" @end="onEnd"/>
+    </div>
 </template>
 
 <script setup>
     import LinCombGame from '@/components/LinCombGame.vue';
     import router from '@/router';
     import { useApp } from '@/stores/app';
+    import { useTimes } from '@/stores/times';
     import { randomInteger } from '@/use/random';
-    import { onMounted } from 'vue';
+    import { computed, onMounted } from 'vue';
+    import { useToast } from 'vue-toastification';
 
     const app = useApp()
+    const times = useTimes()
+    const toast = useToast()
 
-    const method = ref(1)
+    const method = ref(0)
+    const validMethod = computed(() => method.value === 1 || method.value === 2)
 
+    function onEnd() {
+        app.completedTarget()
+        times.needsReload("crowd")
+    }
     function onClose() {
-        router.replace("/")
+        router.push("/")
     }
     function read() {
-        if (app.method === 1 || app.method === 2) {
-            method.value = app.method
-        } else {
-            method.value = randomInteger(1, 2)
+        switch (app.method) {
+            case 0:
+                method.value = randomInteger(1, 2)
+                break
+            case 1:
+            case 2:
+                method.value = app.method
+                break
+            default:
+                toast.error("invalid method")
+                method.value = 0
         }
     }
 

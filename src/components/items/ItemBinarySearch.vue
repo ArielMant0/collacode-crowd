@@ -4,12 +4,11 @@
 
             <div style="text-align: center;">
                 <v-btn
-                    color="primary"
                     class="mb-4"
+                    :color="split.length > 0 ? 'primary' : 'default'"
                     :disabled="split.length === 0"
-                    density="comfortable"
                     @click="submit">
-                    submit
+                    next phase
                 </v-btn>
             </div>
 
@@ -346,7 +345,11 @@
         itemsLeft.clear()
         tagsLeft.clear()
         itemsToUse.forEach((_, idx) => itemsLeft.add(idx))
-        tagsToUse.forEach(t => tagsLeft.add(t.id))
+        tagsToUse.forEach(t => {
+            if (!app.excludedTags.has(t.name)) {
+                tagsLeft.add(t.id)
+            }
+        })
         if (update) {
             nextTag()
         }

@@ -5,9 +5,24 @@ import { useLoader } from "./loader"
 // Get Data
 ////////////////////////////////////////////////////////////
 
-export async function loadMeta(guid) {
+export async function loadCrowdMeta() {
     const loader = useLoader();
-    return loader.get("crowd")
+    const app = useApp()
+    return loader.get("crowd", {
+        guid: app.activeUserId,
+        ip: app.ipAddress,
+        cwId: app.cwId,
+        cwSource: app.cwSource
+    })
+}
+export async function loadCrowdItems() {
+    const loader = useLoader();
+    const app = useApp()
+    return loader.get("crowd/items", {
+        guid: app.activeUserId,
+        ip: app.ipAddress,
+        cwId: app.cwId,
+    })
 }
 export async function loadItemsByCode(code) {
     const loader = useLoader();

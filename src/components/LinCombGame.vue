@@ -1,17 +1,11 @@
 <template>
-    <div style="max-height: 90vh; overflow-y: auto;">
+    <div style="max-height: 95vh; overflow-y: auto;">
         <div v-if="state === STATES.START" class="d-flex align-center justify-center">
             <v-btn size="x-large" color="primary" class="mt-4" @click="startGame">start</v-btn>
         </div>
 
         <div v-else-if="state === STATES.LOADING"class="d-flex align-center justify-center">
-            <LoadingScreen
-                :messages="[
-                    'select games to get recommendations of similar games',
-                    'you can select up to 3 games',
-                    'use the reroll button if you see no similar games',
-                    'selected groups will not change when using reroll',
-                ]"/>
+            <LoadingScreen/>
         </div>
 
         <div v-else-if="state === STATES.INGAME || state === STATES.END" class="d-flex flex-column align-center" style="width: 100%; max-width: 100%;">
@@ -31,27 +25,30 @@
                 <ItemGraphPath v-if="method === 1"
                     @inventory="items => inventory = items"
                     @submit="setCandidates"
+                    :max-items="30"
                     :target="gameData.target.id"/>
                 <ItemBinarySearch v-else
                     :min-items="15"
+                    :max-items="30"
                     @inventory="items => inventory = items"
                     @submit="setCandidates"
                     :target="gameData.target.id"/>
             </div>
             <div v-else-if="step === 2" class="mt-4 mb-8" style="width: 95%; max-width: 100%;">
+                <v-btn v-if="state === STATES.INGAME" class="mb-2" size="large" color="primary" @click="step = 3">next phase</v-btn>
                 <ItemTagRecommend
                     :item-limit="10"
                     :items="candidates"
                     @update="setResultItems"/>
             </div>
             <div v-else-if="state === STATES.INGAME" class="mt-4 mb-8" style="width: 95%; max-width: 100%;">
+                <v-btn v-if="state === STATES.INGAME" class="mb-2" size="large" color="primary" @click="stopGame">submit</v-btn>
                 <ItemCustomRecommend
                     :item-limit="10"
                     :target="gameData.target.id"
                     :items="gameData.resultItems"
                     @update="setAdditionalItems"/>
             </div>
-
 
             <div v-if="state === STATES.END" class="mb-8 d-flex flex-column align-center" :style="{ maxWidth: (190*5)+'px' }">
                 <div style="max-width: 100%; text-align: center;">
@@ -83,8 +80,6 @@
                 </div>
             </div>
 
-            <v-btn v-if="state === STATES.INGAME && step === 2" class="ml-1" size="large" color="primary" @click="step = 3">next</v-btn>
-            <v-btn v-else-if="state === STATES.INGAME && step === 3" class="ml-1" size="large" color="primary" @click="stopGame">submit</v-btn>
             <div v-if="state === STATES.END" class="d-flex align-center justify-center">
                 <v-btn class="mr-1" size="large" color="error" @click="close">close</v-btn>
                 <v-btn
@@ -297,7 +292,8 @@
             const set = new Set(allItems.map(d => d.item_id))
             const other = await getSimilarByTarget(gameData.target.id)
             gameData.otherItems = other.map(d => ({ id: d["item_id"], same: set.has(d["item_id"]) }))
-            // TODO: update available items for this client
+            // tell the parent we're done so that items get updated
+            emit("end")
         } catch(e) {
             console.error(e.toString())
             toast.error("error adding similarity")

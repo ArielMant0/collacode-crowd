@@ -4,19 +4,10 @@ import { defineStore } from 'pinia'
 export const useTimes = defineStore('times', {
     state: () => ({
         n_all: 0,
-
-        n_items: 0,
-        n_tags: 0,
-        n_datatags: 0,
-        n_similarity: 0,
-
+        n_crowd: 0,
 
         all: 0,
-
-        items: 0,
-        tags: 0,
-        datatags: 0,
-        similarity: 0,
+        crowd: 0,
 
         actions: {}
     }),
