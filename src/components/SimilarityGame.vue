@@ -37,6 +37,9 @@
 
                 <Timer v-if="showTimer" ref="timer" class="ml-8 mt-4" :time-in-sec="timeInSec" @end="nextStep(true)"/>
             </div>
+        </div>
+
+        <div v-if="state === STATES.INGAME" class="d-flex flex-column align-center" style="width: 100%; max-width: 100%;">
 
             <div v-if="step === PR_STEPS.COMPREHENSION" class="mt-8">
                 <ComprehensionCheck
@@ -57,7 +60,7 @@
                     @submit="setCandidates"
                     :target="gameData.target.id"/>
             </div>
-            <div v-else-if="step === PR_STEPS.SELECT" class="mt-4 mb-8" style="width: 95%; max-width: 100%;">
+            <div v-else-if="step === PR_STEPS.SELECT && state === STATES.INGAME" class="mt-4 mb-8" style="width: 95%; max-width: 100%;">
                 <div style="text-align: center;">
                     <v-btn class="mb-2" color="primary" @click="nextStep(false)">next step</v-btn>
                 </div>
@@ -66,7 +69,7 @@
                     :items="candidates"
                     @update="setResultItems"/>
             </div>
-            <div v-else-if="step === PR_STEPS.REFINE" class="mt-4 mb-8" style="width: 95%; max-width: 100%;">
+            <div v-else-if="step === PR_STEPS.REFINE && state === STATES.INGAME" class="mt-4 mb-8" style="width: 95%; max-width: 100%;">
                 <div style="text-align: center;">
                     <v-btn class="mb-2" color="primary" @click="nextStep(false)">submit</v-btn>
                 </div>
@@ -80,8 +83,11 @@
             <div v-else-if="step === PR_STEPS.ATTENTION && state === STATES.INGAME">
                 <AttentionCheck @submit="testAttention"/>
             </div>
+        </div>
 
-            <div v-else-if="state === STATES.END" class="mb-8 d-flex flex-column align-center" :style="{ maxWidth: (190*5)+'px' }">
+        <div v-else-if="state === STATES.END" class="d-flex flex-column align-center" style="width: 100%; max-width: 100%;">
+
+            <div class="mb-8 d-flex flex-column align-center" :style="{ maxWidth: (190*5)+'px' }">
                 <div style="max-width: 100%; text-align: center;">
                     <h3>Your Choices</h3>
                     <div class="d-flex flex-wrap justify-center">
@@ -111,7 +117,7 @@
                 </div>
             </div>
 
-            <div v-if="state === STATES.END" class="d-flex align-center justify-center">
+            <div class="d-flex align-center justify-center">
                 <v-btn class="mr-1" size="large" color="error" @click="close">back to home</v-btn>
             </div>
 
@@ -266,7 +272,7 @@
                 }
 
                 // see if we do the attention check now
-                if (!attentionDone && props.attentionChecks) { // && Math.random() > 0.75) {
+                if (!attentionDone && props.attentionChecks && Math.random() > 0.75) {
                     step.value = PR_STEPS.ATTENTION
                     attentionDone = true
                     attentionNext = PR_STEPS.SELECT
@@ -446,6 +452,7 @@
     async function stopGame() {
         stopTimer()
         state.value = STATES.END
+        step.value = PR_STEPS.FEEDBACK
         timeEnd = Date.now()
 
         // check if we already have a guid

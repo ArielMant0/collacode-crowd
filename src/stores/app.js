@@ -16,6 +16,7 @@ export const PR_STEPS = Object.freeze({
     GAME: 2,
     SELECT: 3,
     REFINE: 4,
+    FEEDBACK: 5
 })
 
 export const useApp = defineStore('app', {
