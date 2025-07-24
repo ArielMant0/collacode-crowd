@@ -1,6 +1,11 @@
 <template>
     <div class="pa-2">
-        <SimilarityGame v-if="validMethod" :method="method" @close="onClose" @end="onEnd"/>
+        <SimilarityGame v-if="validMethod"
+            :method="method"
+            :use-timer="isCrowdWorker"
+            @close="onClose"
+            @end="onEnd"
+            @cancel="onCancel"/>
     </div>
 </template>
 
@@ -10,6 +15,7 @@
     import { useApp } from '@/stores/app';
     import { useTimes } from '@/stores/times';
     import { randomWeighted } from '@/use/random';
+    import { storeToRefs } from 'pinia';
     import { computed, onMounted } from 'vue';
     import { useToast } from 'vue-toastification';
 
@@ -17,9 +23,18 @@
     const times = useTimes()
     const toast = useToast()
 
+    const { isCrowdWorker } = storeToRefs(app)
+
     const method = ref(0)
     const validMethod = computed(() => method.value === 1 || method.value === 2)
 
+    function onCancel(delay=0) {
+        if (delay > 0) {
+            setTimeout(() => router.push("/"), delay)
+        } else {
+            router.push("/")
+        }
+    }
     function onEnd() {
         app.completedTarget()
         times.needsReload("crowd")

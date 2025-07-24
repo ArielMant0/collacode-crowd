@@ -10,6 +10,13 @@ export const APP_URLS = Object.freeze({
     DATA: __URL_STATIC_DATA__,
 })
 
+export const PR_STEPS = Object.freeze({
+    ATTENTION: 0,
+    COMPREHENSION: 1,
+    GAME: 2,
+    SELECT: 3,
+    REFINE: 4,
+})
 
 export const useApp = defineStore('app', {
     state: () => ({

@@ -77,6 +77,7 @@
             console.error(e.toString())
             toast.error("error loading crowd items")
         }
+        times.reloaded("crowd")
     }
 
     async function loadCrowd() {

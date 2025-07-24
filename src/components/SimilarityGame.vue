@@ -1,32 +1,30 @@
 <template>
     <div style="max-height: 95vh; overflow-y: auto;">
 
-        <div class="d-flex justify-center">
-            <v-stepper :model-value="step" style="min-width: 85%; max-width: 95%;" class="mb-4" bg-color="grey-lighten-5">
-                <v-stepper-header>
-                    <template v-for="(s, idx) in gameData.steps">
-                        <v-stepper-item
-                            :title="s.title"
-                            :value="s.value"
-                            color="primary"
-                            :complete="s.value < step"/>
-
-                        <v-divider v-if="idx < gameData.steps.length-1"></v-divider>
-                    </template>
-
-                </v-stepper-header>
-            </v-stepper>
-        </div>
-
         <div v-if="state === STATES.START"class="d-flex align-center justify-center">
             <LoadingScreen/>
         </div>
 
-        <div v-else-if="state === STATES.INGAME || state === STATES.END" class="d-flex flex-column align-center" style="width: 100%; max-width: 100%;">
+        <div v-if="state === STATES.INGAME && notInCheck" class="d-flex justify-center">
+            <v-stepper flat :model-value="stepIndex" style="min-width: 85%; max-width: 95%;" class="mb-4">
+                <v-stepper-header>
+                    <template v-for="(s, idx) in gameData.steps">
+                        <v-stepper-item
+                            :title="s.title"
+                            :value="idx+1"
+                            color="primary"
+                            :complete="s.step < step"/>
+
+                        <v-divider v-if="idx < gameData.steps.length-1"></v-divider>
+                    </template>
+                </v-stepper-header>
+            </v-stepper>
+        </div>
+
+        <div v-if="state === STATES.INGAME || state === STATES.END" class="d-flex flex-column align-center" style="width: 100%; max-width: 100%;">
 
             <div class="d-flex align-center mb-4">
-
-                <div class="d-flex flex-column align-center">
+                <div v-if="notInCheck" class="d-flex flex-column align-center">
                     <div>{{ gameData.target.name }}</div>
                     <ItemTeaser
                         :item="gameData.target"
@@ -37,13 +35,18 @@
                         :prevent-context="state !== STATES.END"/>
                 </div>
 
-                <Timer v-if="showTimer" ref="timer" class="ml-8 mt-4" :time-in-sec="timeInSec" @end="nextStep"/>
+                <Timer v-if="showTimer" ref="timer" class="ml-8 mt-4" :time-in-sec="timeInSec" @end="nextStep(true)"/>
             </div>
 
-            <div v-if="step <= 1">
+            <div v-if="step === PR_STEPS.COMPREHENSION" class="mt-8">
+                <ComprehensionCheck
+                    :title="target.name"
+                    :questions="gameData.comprehension"
+                    @submit="testComp"/>
+            </div>
+            <div v-else-if="step === PR_STEPS.GAME">
                 <ItemGraphPath v-if="method === 1"
                     ref="clusters"
-                    @inventory="items => inventory = items"
                     @submit="setCandidates"
                     :max-items="30"
                     :target="gameData.target.id"/>
@@ -51,22 +54,21 @@
                     ref="binsearch"
                     :min-items="15"
                     :max-items="30"
-                    @inventory="items => inventory = items"
                     @submit="setCandidates"
                     :target="gameData.target.id"/>
             </div>
-            <div v-else-if="step === 2" class="mt-4 mb-8" style="width: 95%; max-width: 100%;">
+            <div v-else-if="step === PR_STEPS.SELECT" class="mt-4 mb-8" style="width: 95%; max-width: 100%;">
                 <div style="text-align: center;">
-                    <v-btn v-if="state === STATES.INGAME" class="mb-2" color="primary" @click="step = 3">next step</v-btn>
+                    <v-btn class="mb-2" color="primary" @click="nextStep(false)">next step</v-btn>
                 </div>
                 <ItemTagRecommend
                     :item-limit="10"
                     :items="candidates"
                     @update="setResultItems"/>
             </div>
-            <div v-else-if="state === STATES.INGAME" class="mt-4 mb-8" style="width: 95%; max-width: 100%;">
+            <div v-else-if="step === PR_STEPS.REFINE" class="mt-4 mb-8" style="width: 95%; max-width: 100%;">
                 <div style="text-align: center;">
-                    <v-btn v-if="state === STATES.INGAME" class="mb-2" color="primary" @click="stopGame">submit</v-btn>
+                    <v-btn class="mb-2" color="primary" @click="nextStep(false)">submit</v-btn>
                 </div>
                 <ItemCustomRecommend
                     :item-limit="10"
@@ -75,7 +77,11 @@
                     @update="setAdditionalItems"/>
             </div>
 
-            <div v-if="state === STATES.END" class="mb-8 d-flex flex-column align-center" :style="{ maxWidth: (190*5)+'px' }">
+            <div v-else-if="step === PR_STEPS.ATTENTION && state === STATES.INGAME">
+                <AttentionCheck @submit="testAttention"/>
+            </div>
+
+            <div v-else-if="state === STATES.END" class="mb-8 d-flex flex-column align-center" :style="{ maxWidth: (190*5)+'px' }">
                 <div style="max-width: 100%; text-align: center;">
                     <h3>Your Choices</h3>
                     <div class="d-flex flex-wrap justify-center">
@@ -121,16 +127,18 @@
     import LoadingScreen from './LoadingScreen.vue'
     import ItemTeaser from './items/ItemTeaser.vue'
     import ItemGraphPath from './items/ItemGraphPath.vue'
-    import { useApp } from '@/stores/app'
+    import { PR_STEPS, useApp } from '@/stores/app'
     import ItemBinarySearch from './items/ItemBinarySearch.vue'
     import ItemTagRecommend from './items/ItemTagRecommend.vue'
     import ItemCustomRecommend from './items/ItemCustomRecommend.vue'
-    import { addSimilarity, getClientStatus, getSimilarByTarget } from '@/use/data-api'
+    import { addAttentionFail, addSimilarity, getClientStatus, getSimilarByTarget, loadComprehensionData, testComprehensionData } from '@/use/data-api'
     import { POSITION, useToast } from 'vue-toastification'
     import router from '@/router'
     import Timer from './Timer.vue';
+    import ComprehensionCheck from './ComprehensionCheck.vue';
+    import AttentionCheck from './AttentionCheck.vue';
 
-    const emit = defineEmits(["end", "close"])
+    const emit = defineEmits(["end", "close", "cancel"])
 
     // stores
     const app = useApp()
@@ -143,10 +151,12 @@
     const clusters = useTemplateRef("clusters")
     const binsearch = useTemplateRef("binsearch")
 
-    const step = ref(1)
+    const step = ref(PR_STEPS.COMPREHENSION)
+    const stepIndex = ref(1)
     const candidates = ref([])
 
     let ilog = null
+    let attentionDone = false, attentionNext = null
     let timeStart, timeEnd
 
     const props = defineProps({
@@ -154,42 +164,59 @@
             type: Number,
             required: true,
             validator: v => v === 1 || v === 2
-        }
+        },
+        attentionChecks: {
+            type: Boolean,
+            default: true
+        },
+        useTimer: {
+            type: Boolean,
+            default: true
+        },
     })
 
-    const showTimer = computed(() => app.isCrowdWorker && state.value === STATES.INGAME)
+    const showTimer = computed(() => props.useTimer && state.value === STATES.INGAME)
     const timeInSec = computed(() => {
         switch (step.value) {
-            // initial "game" phase - 3 minutes
-            case 1: return 180
-            // final review phase - 1.5 minutes
-            case 3: return 90
-            // default - 1 minute
-            default: return 60
+            // attention check
+            case PR_STEPS.ATTENTION:
+                return 15
+
+            // game phase
+            case PR_STEPS.GAME:
+                return 180
+
+            // comprehension check
+            case PR_STEPS.COMPREHENSION:
+            // selection phases
+            default:
+                return 60
         }
     })
 
     // game related stuff
     const state = ref(STATES.START)
-    const inventory = ref([])
     const gameData = reactive({
         target: null,
         steps: [],
         resultItems: [],
         customItems: [],
-        otherItems: []
+        otherItems: [],
+        comprehension: []
     })
+
+    const notInCheck = computed(() => step.value !== PR_STEPS.ATTENTION && step.value !== PR_STEPS.COMPREHENSION)
 
     // ---------------------------------------------------------------------
     // Functions
     // ---------------------------------------------------------------------
 
     function startTimer() {
-        if (app.isCrowdWorker) {
+        if (props.useTimer) {
             if (timer.value) {
                 timer.value.start()
             } else {
-                setTimeout(startTimer, 50)
+                setTimeout(startTimer, 100)
             }
         }
     }
@@ -203,39 +230,136 @@
         setTimeout(startTimer, 150)
     }
 
+    function setFirstStep() {
+        if (gameData.comprehension.length > 0) {
+            step.value = PR_STEPS.COMPREHENSION
+        } else {
+            step.value = PR_STEPS.GAME
+        }
+        stepIndex.value = 1
+    }
 
-    function nextStep() {
+    function nextStep(onTimerEnd=false) {
         switch(step.value) {
-            case 1: {
-                let data
-                // get the data from clusters/binary search
-                if (clusters.value) {
-                    data = clusters.value.getSubmitData()
-                } else if (binsearch.value) {
-                    data = binsearch.value.getSubmitData()
+            case PR_STEPS.COMPREHENSION:
+                if (onTimerEnd) {
+                    // the user did not answer the questions in time
+                    testComp()
+                } else {
+                    step.value = PR_STEPS.GAME
+                    resetTimer()
+                }
+                break
+            case PR_STEPS.GAME: {
+                if (onTimerEnd) {
+                    let data
+                    // get the data from clusters/binary search
+                    if (clusters.value) {
+                        data = clusters.value.getSubmitData()
+                    } else if (binsearch.value) {
+                        data = binsearch.value.getSubmitData()
+                    }
+
+                    if (data) {
+                        setCandidates(data.candidates, data.log)
+                    }
                 }
 
-                if (data) {
-                    setCandidates(data.candidates, data.log)
+                // see if we do the attention check now
+                if (!attentionDone && props.attentionChecks) { // && Math.random() > 0.75) {
+                    step.value = PR_STEPS.ATTENTION
+                    attentionDone = true
+                    attentionNext = PR_STEPS.SELECT
+                } else {
+                    stepIndex.value++
+                    step.value = PR_STEPS.SELECT
                 }
-                step.value = 2
                 resetTimer()
                 break
             }
-            case 2:
-                step.value = 3
+            case PR_STEPS.SELECT:
+                if (!attentionDone && props.attentionChecks && Math.random() > 0.5) {
+                    step.value = PR_STEPS.ATTENTION
+                    attentionDone = true
+                    attentionNext = PR_STEPS.REFINE
+                } else {
+                    stepIndex.value++
+                    step.value = PR_STEPS.REFINE
+                }
                 resetTimer()
                 break
-            case 3:
-                stopGame()
+            case PR_STEPS.REFINE:
+                if (!attentionDone && props.attentionChecks) {
+                    step.value = PR_STEPS.ATTENTION
+                    attentionDone = true
+                    attentionNext = null
+                    resetTimer()
+                } else {
+                    stopGame()
+                }
                 break
+            case PR_STEPS.ATTENTION:
+                if (onTimerEnd) {
+                    // user did not complete attention check in time
+                    testAttention(false)
+                } else {
+                    if (attentionNext !== null) {
+                        step.value = attentionNext
+                        attentionNext = null
+                        resetTimer()
+                    } else {
+                        stopGame()
+                    }
+                }
+                break
+        }
+    }
+
+    async function testComp(answers) {
+        try {
+            if (!answers) {
+                answers = gameData.comprehension.map(() => -1)
+            }
+            const result = await testComprehensionData(target.value.id, answers, props.method)
+            if (result.passed === true) {
+                nextStep()
+            } else {
+                toast.error(
+                    "you failed the comprehension check",
+                    { timeout: 1500, position: POSITION.TOP_CENTER }
+                )
+                setTimeout(() => router.push("/"), 2000)
+            }
+        } catch(e) {
+            console.error(e.toString())
+            toast.error("error testing comprehension")
+            goHome(1000)
+        }
+    }
+
+    async function testAttention(passed) {
+        if (passed) {
+            nextStep()
+        } else {
+            try {
+                await addAttentionFail(target.value.id, props.method)
+                toast.error(
+                    "you failed the attention check",
+                    { timeout: 1500, position: POSITION.TOP_CENTER }
+                )
+                setTimeout(() => router.push("/"), 2000)
+            } catch(e) {
+                console.error(e.toString())
+                toast.error("error adding attention fail")
+                goHome(1000)
+            }
         }
     }
 
     function setCandidates(items, logs) {
         candidates.value = items
         ilog = logs
-        step.value = 2
+        nextStep()
     }
 
     function setResultItems(items) {
@@ -247,8 +371,7 @@
 
     function startRound(timestamp=null) {
         state.value = STATES.START
-        step.value = 1
-        inventory.value = []
+        setFirstStep()
         sounds.play(SOUND.START_SHORT)
         setTimeout(
             () => {
@@ -259,49 +382,65 @@
             1000 - (timestamp !== null ? Date.now()-timestamp : 0)
         )
     }
-    function tryStartRound(timestamp=null) {
+    async function tryStartRound(timestamp=null) {
         ilog = null
         gameData.resultItems = []
         gameData.customItems = []
         gameData.otherItems = []
-        gameData.steps = [
-            {
-                title:  props.method === 1 ?
-                    "find similar "+app.itemName+"s" :
-                    "answer tag questions",
-                value: 1
-            },{
-                title: "select similar "+app.itemName+"s",
-                value: 2
-            },{
-                title: "enrich and submit",
-                value: 3
-            }
-        ]
+        stepIndex.value = 1
+
         if (!target.value) {
             state.value = STATES.START
             toast.error(
                 "select an item in the main page first",
                 { timeout: 1500, position: POSITION.TOP_CENTER }
             )
-            setTimeout(() => router.push("/"), 2000)
-            return
+            return setTimeout(() => router.push("/"), 2000)
         }
+
         gameData.target = target.value
+
+        const baseSteps = [
+            {
+                title:  props.method === 1 ? "find similar "+app.itemName+"s" : "answer tag questions",
+                step: PR_STEPS.GAME
+            },{
+                title: "select similar "+app.itemName+"s",
+                step: PR_STEPS.SELECT
+            },{
+                title: "enrich and submit",
+                step: PR_STEPS.REFINE
+            }
+        ]
+
+        if (gameData.comprehension.length > 0) {
+            gameData.steps = [{
+                title: "test your game knowledge",
+                value: PR_STEPS.COMPREHENSION
+            }].concat(baseSteps)
+        } else {
+            gameData.steps = baseSteps
+        }
+
+        // get comprehension check data
+        try {
+            gameData.comprehension = await loadComprehensionData(target.value.id)
+        } catch(e) {
+            console.error(e.toString())
+            toast.error("error loading comprehension check data")
+            gameData.comprehension = []
+        }
+
         startRound(timestamp)
     }
     function startGame() {
         sounds.stopAll()
         sounds.play(SOUND.START)
         state.value = STATES.START
-        reroll(false)
-    }
-    function reroll(loading=true) {
-        const now = Date.now() - (loading ? 0 : 1000)
         // clear previous data
         clear()
         // try to start the round
-        tryStartRound(now)
+        tryStartRound(Date.now() - 800)
     }
 
     async function stopGame() {
@@ -379,11 +518,12 @@
 
         try {
             // check whether this client should be blocked (e.g. too many requests)
-            await getClientStatus(info.guid, info.data.ip)
+            await getClientStatus()
             console.info("client status is OK")
         } catch (e) {
             console.error(e.toString())
-            return toast.error("blocked due to suspicious activity", { timeout: 5000, position: POSITION.TOP_CENTER })
+            toast.error("blocked due to suspicious activity", { timeout: 1500, position: POSITION.TOP_CENTER })
+            goHome(2000)
         }
 
         try {
@@ -407,13 +547,17 @@
     }
 
     function clear() {
-        step.value = 1
+        step.value = PR_STEPS.COMPREHENSION
         ilog = null
+        attentionDone = false
+        attentionNext = null
+        stepIndex.value = 1
         candidates.value = []
         gameData.target = null
         gameData.resultItems = []
         gameData.customItems = []
         gameData.otherItems = []
+        gameData.comprehension = []
         app.resetInteraction()
     }
     function reset() {
@@ -421,8 +565,17 @@
         clear()
     }
 
-    function init () {
+    function goHome(delay=0) {
+        emit("cancel", delay)
+    }
+
+    async function init () {
         reset()
+        if (!target.value) {
+            toast.warning("missing target")
+            return goHome(500)
+        }
+
         startGame()
     }
 

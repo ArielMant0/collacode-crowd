@@ -84,7 +84,6 @@
         timer.value = timeEnd.value.diffNow(["minutes", "seconds"])
         lastSecond = Math.floor(secondsLeft.value)
         int = requestAnimationFrame(tick)
-        console.log("started", lastSecond)
         emit("start")
     }
     function pause() {

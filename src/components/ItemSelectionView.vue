@@ -22,10 +22,10 @@
             :count-target="countTarget"
             :selectable="false"/>
 
-        <ItemSelectionPanel v-if="app.cwId"
+        <ItemSelectionPanel v-if="app.itemsGone.size > 0"
             class="mt-8"
             :subset="2"
-            :title="'Other '+app.itemNameCaptial+'s'"
+            :title="'Blocked '+app.itemNameCaptial+'s'"
             :count-target="countTarget"
             :selectable="false"/>
 

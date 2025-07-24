@@ -360,7 +360,6 @@
 
         // get next clusters with the highest distances to each other
         const subset = cf.slice(0, props.numClusters*4)
-        console.log(subset)
         const tmp = subset.map(i => {
             const scores = subset.map((d, j) => {
                 if (i === j) return 0

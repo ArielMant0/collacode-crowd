@@ -1,29 +1,17 @@
 import { useApp } from "@/stores/app";
 import { useLoader } from "./loader"
 
+export async function loadLastUpdate() {
+    const app = useApp()
+    if (!app.ds) return
+    const loader = useLoader()
+    return loader.get(`lastupdate/dataset/${app.ds}`)
+}
+
 ////////////////////////////////////////////////////////////
 // Get Data
 ////////////////////////////////////////////////////////////
 
-export async function loadCrowdMeta() {
-    const loader = useLoader();
-    const app = useApp()
-    return loader.get("crowd", {
-        guid: app.activeUserId,
-        ip: app.ipAddress,
-        cwId: app.cwId,
-        cwSource: app.cwSource
-    })
-}
-export async function loadCrowdItems() {
-    const loader = useLoader();
-    const app = useApp()
-    return loader.get("crowd/items", {
-        guid: app.activeUserId,
-        ip: app.ipAddress,
-        cwId: app.cwId,
-    })
-}
 export async function loadItemsByCode(code) {
     const loader = useLoader();
     return loader.get(`items/code/${code}`)
@@ -38,12 +26,38 @@ export async function loadDataTagsByCode(code) {
 }
 
 ////////////////////////////////////////////////////////////
-// Crowd Similarity Data
+// Crowd Sourcing
 ////////////////////////////////////////////////////////////
 
-export async function getClientStatus(guid, ip=null) {
+export async function loadCrowdMeta() {
+    const loader = useLoader();
+    const app = useApp()
+    return loader.get("crowd", {
+        guid: app.activeUserId,
+        ip: app.ipAddress,
+        cwId: app.cwId,
+        cwSource: app.cwSource
+    })
+}
+
+export async function loadCrowdItems() {
+    const loader = useLoader();
+    const app = useApp()
+    return loader.get("crowd/items", {
+        guid: app.activeUserId,
+        ip: app.ipAddress,
+        cwId: app.cwId,
+    })
+}
+
+export async function getClientStatus() {
     const loader = useLoader()
-    return loader.get("similarity/status", { guid: guid, ip: ip })
+    const app = useApp()
+    return loader.get("similarity/status", {
+        guid: app.activeUserId,
+        ip: app.ipAddress,
+        cwId: app.cwId,
+    })
 }
 
 export async function getCrowdGUID() {
@@ -60,6 +74,41 @@ export async function postUserCrowdGUID(userId, guid, dataset=null) {
         dataset_id: dataset ? dataset : app.ds
     })
 }
+
+// Comprehension Checks
+export async function loadComprehensionData(itemId) {
+    const loader = useLoader();
+    return loader.get("crowd/comprehension", { itemId: itemId })
+}
+export async function testComprehensionData(itemId, answers, game) {
+    const app = useApp()
+    const loader = useLoader();
+    return loader.post("crowd/comprehension/test", {
+        guid: app.activeUserId,
+        ip: app.ipAddress,
+        cwId: app.cwId,
+        gameId: game,
+        // actual data
+        itemId: itemId,
+        answers: answers,
+    })
+}
+// Attention Checks
+export async function addAttentionFail(itemId, game) {
+    const app = useApp()
+    const loader = useLoader();
+    return loader.post("crowd/attention/fail", {
+        guid: app.activeUserId,
+        ip: app.ipAddress,
+        cwId: app.cwId,
+        gameId: game,
+        itemId: itemId
+    })
+}
+
+////////////////////////////////////////////////////////////
+// Crowd Similarity Data
+////////////////////////////////////////////////////////////
 
 export async function getSimilarities(dataset=null) {
     const app = useApp()
