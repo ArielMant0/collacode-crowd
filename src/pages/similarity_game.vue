@@ -1,11 +1,11 @@
 <template>
     <div class="pa-2">
-        <LinCombGame v-if="validMethod" :method="method" @close="onClose" @end="onEnd"/>
+        <SimilarityGame v-if="validMethod" :method="method" @close="onClose" @end="onEnd"/>
     </div>
 </template>
 
 <script setup>
-    import LinCombGame from '@/components/LinCombGame.vue';
+    import SimilarityGame from '@/components/SimilarityGame.vue';
     import router from '@/router';
     import { useApp } from '@/stores/app';
     import { useTimes } from '@/stores/times';

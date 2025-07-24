@@ -6,7 +6,7 @@
                     class="mb-4"
                     :color="split.length > 0 ? 'primary' : 'default'"
                     :disabled="split.length === 0"
-                    @click="submit">
+                    @click="submit(true)">
                     next step
                 </v-btn>
             </div>
@@ -175,10 +175,14 @@
         return theme.current.value.colors.background
     }
 
-    function submit() {
+    function submit(fromClick=false) {
         const indices = itemsLeft.size <= props.maxItems ?
             Array.from(itemsLeft.values()) :
             randomChoice(Array.from(itemsLeft.values()), props.maxItems)
+
+        if (fromClick) {
+            app.addInteraction("step1")
+        }
 
         emit("submit", indices.map(idx => itemsToUse[idx]), log)
     }
@@ -190,6 +194,7 @@
                 splitTag = tagsToUse[i]
             }
         }
+        app.addInteraction("step1")
         if (splitTag !== null) {
             tagsLeft.delete(splitTag.id)
             // divide items based on split tag
@@ -326,6 +331,7 @@
             tag: it.tag.id,
             removeCount: index
         })
+        app.addInteraction("step1")
 
         // remove following tags if we clicked on a previous tag
         if (index > 0) {
@@ -375,7 +381,18 @@
         }
     }
 
-    defineExpose({ reset })
+    function getSubmitData() {
+        const indices = itemsLeft.size <= props.maxItems ?
+            Array.from(itemsLeft.values()) :
+            randomChoice(Array.from(itemsLeft.values()), props.maxItems)
+
+        return {
+            candidates: indices.map(idx => itemsToUse[idx]),
+            log: log
+        }
+    }
+
+    defineExpose({ reset, getSubmitData })
 
     onMounted(function() {
         read()

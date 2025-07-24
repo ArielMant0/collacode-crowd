@@ -1,5 +1,6 @@
 <template>
     <div style="width: min-content" class="pa-2">
+
         <div style="text-align: center;">
             <v-btn
                 :color="selectionItems.length > 0 ? 'primary' : 'default'"
@@ -78,7 +79,7 @@
                 </div>
             </div>
 
-            <div style="text-align: center;">suggested {{ app.itemName }}s</div>
+            <div style="text-align: center;">collected candidates</div>
 
             <v-sheet class="pa-2" rounded border :style="{ minHeight: ((miniImageHeight+5)*3)+'px' }">
                 <div class="d-flex justify-start align-start">
@@ -87,7 +88,7 @@
                             <ItemTeaser v-for="id in list"
                                 class="mr-1 mb-1"
                                 :id="id"
-                                :border-color="id === getSelectedId(cidx) ? theme.current.value.colors.secondary : undefined"
+                                :border-color="isSelectedItem(id) ? theme.current.value.colors.secondary : undefined"
                                 :border-size="3"
                                 prevent-open
                                 prevent-context
@@ -161,6 +162,7 @@
     let log = []
     let candidateItems = []
     let clusters = null, maxClsSize = 0
+    let lastIndexUsed = 0
 
     const clusterLeft = new Set()
 
@@ -169,7 +171,9 @@
 
     let dragId = null, dragSrc = null
 
+
     function onStartDrag(id, source="") {
+        app.addInteraction("step1")
         dragId = id
         dragSrc = source
     }
@@ -177,6 +181,8 @@
     function onDrop(target=0) {
         if (target < props.maxSelect) {
             toggleItem(dragId, dragSrc, target)
+        } else {
+            app.addInteraction("step1")
         }
         dragId = null
         dragSrc = null
@@ -188,11 +194,11 @@
                 return i
             }
         }
-        return props.maxSelect-1
+        return lastIndexUsed
     }
 
-    function getSelectedId(index) {
-        return selection.value[index] ? selection.value[index].id : null
+    function isSelectedItem(id) {
+        return selection.value.find(d => d && d.id === id)
     }
 
     function getCandidates() {
@@ -283,6 +289,7 @@
             desc: "submit suggested items",
             items: candidates.value
         })
+        app.addInteraction("step1")
         emit("submit", candidateItems, log)
     }
 
@@ -296,8 +303,11 @@
     function resetRerolls() {
         logAction({ desc: "reset rerolls" })
         for (let i = 0; i < clusters.clusters.length; ++i) {
-            clusterLeft.add(i)
+            if (!clsOrder.selected.has(i)) {
+                clusterLeft.add(i)
+            }
         }
+        app.addInteraction("step1")
         nextClusters()
     }
     function reroll() {
@@ -305,6 +315,7 @@
             desc: "reroll",
             clusters: clsOrder.list
         })
+        app.addInteraction("step1")
         nextClusters()
     }
 
@@ -349,6 +360,7 @@
 
         // get next clusters with the highest distances to each other
         const subset = cf.slice(0, props.numClusters*4)
+        console.log(subset)
         const tmp = subset.map(i => {
             const scores = subset.map((d, j) => {
                 if (i === j) return 0
@@ -420,6 +432,8 @@
         if (move) {
             selection.value[newIdx] = selection.value[index]
             selection.value[index] = null
+            lastIndexUsed = newIdx
+            app.addInteraction("step1")
             updateCandidates()
         } else if (replace || add) {
             // get the necessary data
@@ -435,8 +449,10 @@
             } else {
                 addSelection(newIdx, selObj, source)
             }
+            lastIndexUsed = newIdx
         } else {
             removeSelection(index, source)
+            lastIndexUsed = index
         }
     }
 
@@ -446,6 +462,8 @@
             source: source,
             item: object.id
         })
+        app.addInteraction("step1")
+
         // add the cluster to the list of selected clusters
         clsOrder.selected.add(object.cluster)
         // set the selected item
@@ -460,6 +478,7 @@
                 source: source,
                 item: selection.value[index].id
             })
+            app.addInteraction("step1")
 
             const c = selection.value[index].cluster
             const numCls = selectionItems.value.reduce((acc, d) => acc + (d.cluster === c ? 1 : 0), 0)
@@ -481,6 +500,8 @@
                 item: replacement.id,
                 previous: selection.value[index].id
             })
+            app.addInteraction("step1")
+
             const c = selection.value[index].cluster
             const numCls = selectionItems.value.reduce((acc, d) => acc + (d.cluster === c ? 1 : 0), 0)
             // remove cluster highlight (if this was the only related item)
@@ -514,7 +535,14 @@
         log.push(obj)
     }
 
-    defineExpose({ reset })
+    function getSubmitData() {
+        return {
+            candidates: candidateItems,
+            log: log
+        }
+    }
+
+    defineExpose({ reset, getSubmitData })
 
     onMounted(function() {
         reset(false)

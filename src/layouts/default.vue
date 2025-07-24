@@ -2,9 +2,9 @@
   <v-app>
     <v-app-bar flat density="compact" class="pa-0 top-bar">
         <v-app-bar-title density="compact">
-            <span style="font-size: smaller;">
-                <v-icon class="mr-2">mdi-crowd</v-icon>
-                <span>CollaCode Crowd Similarity</span>
+            <span style="font-size: 18px;">
+                <v-icon class="mr-2 mb-1">mdi-crowd</v-icon>
+                <span class="bitcount-prop-double">CollaCode Crowd Similarity</span>
             </span>
 
             <v-divider vertical opacity="0.5" color="primary" style="min-height: 1em;" class="ml-3 mr-3"></v-divider>

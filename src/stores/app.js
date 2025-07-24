@@ -43,7 +43,9 @@ export const useApp = defineStore('app', {
         target: null,
 
         // excluded tag names (for binary search)
-        excludedTags: new Set()
+        excludedTags: new Set(),
+
+        numInteractions: {}
     }),
 
     getters: {
@@ -51,7 +53,8 @@ export const useApp = defineStore('app', {
         itemColumns: state => state.schema ? state.schema.columns : [],
         itemName: state => state.dataset ? state.dataset.item_name : "Item",
         itemNameCaptial: state => capitalize(state.itemName),
-        hasNextItem: state => state.itemsLeft.size > 0
+        hasNextItem: state => state.itemsLeft.size > 0,
+        isCrowdWorker: state => state.cwId !== null,
     },
 
     actions: {
@@ -62,6 +65,30 @@ export const useApp = defineStore('app', {
 
         updateItems() {
             this.updateItemsTime = Date.now()
+        },
+
+        addInteraction(name) {
+            if (!this.numInteractions[name]) {
+                this.numInteractions[name] = 0
+            }
+            this.numInteractions[name] += 1
+        },
+
+        resetInteraction() {
+            for (const name in this.numInteractions) {
+                this.numInteractions[name] = 0
+            }
+        },
+
+        getInteractionCount(name) {
+            if (name) {
+                return this.numInteractions[name] ? this.numInteractions[name] : 0
+            }
+            let sum = 0
+            for (const name in this.numInteractions) {
+                sum += this.numInteractions[name]
+            }
+            return sum
         },
 
         setCrowdMeta(meta) {

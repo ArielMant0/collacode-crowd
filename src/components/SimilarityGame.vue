@@ -2,12 +2,13 @@
     <div style="max-height: 95vh; overflow-y: auto;">
 
         <div class="d-flex justify-center">
-            <v-stepper :model-value="step" style="min-width: 85%; max-width: 95%;" class="mb-4" bg-color="grey-lighten-5" color="primary">
+            <v-stepper :model-value="step" style="min-width: 85%; max-width: 95%;" class="mb-4" bg-color="grey-lighten-5">
                 <v-stepper-header>
                     <template v-for="(s, idx) in gameData.steps">
                         <v-stepper-item
                             :title="s.title"
                             :value="s.value"
+                            color="primary"
                             :complete="s.value < step"/>
 
                         <v-divider v-if="idx < gameData.steps.length-1"></v-divider>
@@ -23,24 +24,31 @@
 
         <div v-else-if="state === STATES.INGAME || state === STATES.END" class="d-flex flex-column align-center" style="width: 100%; max-width: 100%;">
 
-            <div class="ml-2 mr-2 d-flex flex-column align-center">
-                <div>{{ gameData.target.name }}</div>
-                <ItemTeaser
-                    :item="gameData.target"
-                    :width="180"
-                    :height="90"
-                    :prevent-click="state !== STATES.END"
-                    :prevent-open="state !== STATES.END"
-                    :prevent-context="state !== STATES.END"/>
+            <div class="d-flex align-center mb-4">
+
+                <div class="d-flex flex-column align-center">
+                    <div>{{ gameData.target.name }}</div>
+                    <ItemTeaser
+                        :item="gameData.target"
+                        :width="180"
+                        :height="90"
+                        :prevent-click="state !== STATES.END"
+                        :prevent-open="state !== STATES.END"
+                        :prevent-context="state !== STATES.END"/>
+                </div>
+
+                <Timer v-if="showTimer" ref="timer" class="ml-8 mt-4" :time-in-sec="timeInSec" @end="nextStep"/>
             </div>
 
             <div v-if="step <= 1">
                 <ItemGraphPath v-if="method === 1"
+                    ref="clusters"
                     @inventory="items => inventory = items"
                     @submit="setCandidates"
                     :max-items="30"
                     :target="gameData.target.id"/>
                 <ItemBinarySearch v-else
+                    ref="binsearch"
                     :min-items="15"
                     :max-items="30"
                     @inventory="items => inventory = items"
@@ -106,10 +114,8 @@
 </template>
 
 <script setup>
-    import DM from '@/use/data-manager'
-    import { cross } from 'd3'
-    import { onMounted, reactive, watch } from 'vue'
-    import { GR_COLOR, STATES, useGames } from '@/stores/games'
+    import { computed, onMounted, reactive, useTemplateRef, watch } from 'vue'
+    import { GR_COLOR, STATES } from '@/stores/games'
     import { useSounds, SOUND } from '@/stores/sounds';
     import { storeToRefs } from 'pinia'
     import LoadingScreen from './LoadingScreen.vue'
@@ -119,9 +125,10 @@
     import ItemBinarySearch from './items/ItemBinarySearch.vue'
     import ItemTagRecommend from './items/ItemTagRecommend.vue'
     import ItemCustomRecommend from './items/ItemCustomRecommend.vue'
-    import { addSimilarity, getClientStatus, getCrowdGUID, getSimilarByTarget } from '@/use/data-api'
+    import { addSimilarity, getClientStatus, getSimilarByTarget } from '@/use/data-api'
     import { POSITION, useToast } from 'vue-toastification'
     import router from '@/router'
+    import Timer from './Timer.vue';
 
     const emit = defineEmits(["end", "close"])
 
@@ -131,6 +138,10 @@
     const toast = useToast()
 
     const { target } = storeToRefs(app)
+
+    const timer = useTemplateRef("timer")
+    const clusters = useTemplateRef("clusters")
+    const binsearch = useTemplateRef("binsearch")
 
     const step = ref(1)
     const candidates = ref([])
@@ -143,6 +154,18 @@
             type: Number,
             required: true,
             validator: v => v === 1 || v === 2
+        }
+    })
+
+    const showTimer = computed(() => app.isCrowdWorker && state.value === STATES.INGAME)
+    const timeInSec = computed(() => {
+        switch (step.value) {
+            // initial "game" phase - 3 minutes
+            case 1: return 180
+            // final review phase - 1.5 minutes
+            case 3: return 90
+            // default - 1 minute
+            default: return 60
         }
     })
 
@@ -161,6 +184,53 @@
     // Functions
     // ---------------------------------------------------------------------
 
+    function startTimer() {
+        if (app.isCrowdWorker) {
+            if (timer.value) {
+                timer.value.start()
+            } else {
+                setTimeout(startTimer, 50)
+            }
+        }
+    }
+    function stopTimer() {
+        if (timer.value) {
+            timer.value.stop()
+        }
+    }
+    function resetTimer() {
+        stopTimer()
+        setTimeout(startTimer, 150)
+    }
+
+
+    function nextStep() {
+        switch(step.value) {
+            case 1: {
+                let data
+                // get the data from clusters/binary search
+                if (clusters.value) {
+                    data = clusters.value.getSubmitData()
+                } else if (binsearch.value) {
+                    data = binsearch.value.getSubmitData()
+                }
+
+                if (data) {
+                    setCandidates(data.candidates, data.log)
+                }
+                step.value = 2
+                resetTimer()
+                break
+            }
+            case 2:
+                step.value = 3
+                resetTimer()
+                break
+            case 3:
+                stopGame()
+                break
+        }
+    }
 
     function setCandidates(items, logs) {
         candidates.value = items
@@ -184,6 +254,7 @@
             () => {
                 state.value = STATES.INGAME
                 timeStart = Date.now()
+                startTimer()
             },
             1000 - (timestamp !== null ? Date.now()-timestamp : 0)
         )
@@ -203,20 +274,17 @@
                 title: "select similar "+app.itemName+"s",
                 value: 2
             },{
-                title: "review and enrich suggestions",
+                title: "enrich and submit",
                 value: 3
-            },{
-                title: "submit",
-                value: 4
             }
         ]
         if (!target.value) {
             state.value = STATES.START
             toast.error(
                 "select an item in the main page first",
-                { timeout: 1000, position: POSITION.TOP_CENTER }
+                { timeout: 1500, position: POSITION.TOP_CENTER }
             )
-            setTimeout(() => router.push("/"), 1500)
+            setTimeout(() => router.push("/"), 2000)
             return
         }
         gameData.target = target.value
@@ -228,10 +296,6 @@
         state.value = STATES.START
         reroll(false)
     }
-    function startNext() {
-        app.chooseRandomTarget()
-        startGame()
-    }
     function reroll(loading=true) {
         const now = Date.now() - (loading ? 0 : 1000)
         // clear previous data
@@ -241,15 +305,17 @@
     }
 
     async function stopGame() {
+        stopTimer()
         state.value = STATES.END
-        step.value = 4
         timeEnd = Date.now()
 
         // check if we already have a guid
         if (!app.activeUserId) {
-            const guid = await getCrowdGUID()
-            localStorage.setItem("crowd-guid", guid)
-            app.activeUserId = guid
+            return toast.error("missing identification")
+        }
+
+        if (app.getInteractionCount() <= 0) {
+            return toast.warning("no interactions recorded")
         }
 
         const getSource = origin => {
@@ -272,6 +338,10 @@
         const allItems = gameData.resultItems
             .concat(gameData.customItems)
             .map(d => transform(d, gameData.target.id))
+
+        if (allItems.length === 0) {
+            return toast.warning("no similarities specified")
+        }
 
         // get all highly similar items
         const highSim = new Set(allItems.filter(d => d.value > 1).map(d => d.item_id))
@@ -344,6 +414,7 @@
         gameData.resultItems = []
         gameData.customItems = []
         gameData.otherItems = []
+        app.resetInteraction()
     }
     function reset() {
         state.value = STATES.START

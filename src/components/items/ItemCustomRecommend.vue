@@ -258,6 +258,7 @@
     let dragId = null, dragOrigin, dragIndex
 
     function searchByName() {
+        app.addInteraction("step3")
         if (search.value && search.value.length > 2) {
             const name = new RegExp(search.value, "gi")
             bySearch.value = DM.getDataBy("items", d => d.allTags.length > 0 && !isChosenItem(d.id) && name.test(d.name))
@@ -304,6 +305,7 @@
         dragId = id
         dragOrigin = origin
         dragIndex = index
+        app.addInteraction("step3")
     }
     function dropItem(event, where=0) {
         if (!dragId) return
@@ -352,6 +354,7 @@
         }
     }
     function setItem(id, origin, index, where=0) {
+        app.addInteraction("step3")
         if (where === 2) {
             if (props.itemLimit > 0 && itemHigh.size >= props.itemLimit) {
                 return toast.warning(`maximum number of ${app.itemName}s reached`)

@@ -11,15 +11,6 @@ export const DIFF_COLOR = Object.freeze({
     HARD: "#d11706"
 })
 
-export const GAMES = Object.freeze({
-    MATCHING: 1,
-    WHEREAMI: 2,
-    WHOAMI: 3,
-    TRIVIA: 4,
-    SET: 5,
-    LINCOMB: 6,
-})
-
 export const STATES = Object.freeze({
     START: 0,
     LOADING: 1,
@@ -35,7 +26,6 @@ export const GAME_RESULT = Object.freeze({
     DRAW: 1,
     WIN: 2
 })
-
 
 export const GR_COLOR = {
     GREEN: "#078766",

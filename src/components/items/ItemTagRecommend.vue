@@ -166,6 +166,7 @@
 
     function startDrag(id) {
         dragId = id
+        app.addInteraction("step2")
     }
     function dropItem(event, where=0) {
         if (!dragId) return
@@ -182,6 +183,7 @@
         event.target.classList.remove("bg-surface-light")
     }
     function setItem(id, where=0) {
+        app.addInteraction("step2")
         if (where === 2) {
             if (props.itemLimit > 0 && itemHigh.size >= props.itemLimit) {
                 return toast.warning(`maximum number of ${app.itemName}s reached`)
@@ -202,6 +204,7 @@
     }
 
     function resetItem(id) {
+        app.addInteraction("step2")
         itemHigh.delete(id)
         itemMed.delete(id)
         update()

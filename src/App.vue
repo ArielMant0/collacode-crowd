@@ -389,6 +389,10 @@
     watch(activeUserId, function() {
         if (app.activeUserId) {
             localStorage.setItem("crowd-guid", app.activeUserId)
+            if (app.isCrowdWorker) {
+                localStorage.setItem("cw-id", app.cwId)
+                localStorage.setItem("cw-source", app.cwSource)
+            }
         }
     })
 

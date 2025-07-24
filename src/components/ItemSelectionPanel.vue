@@ -1,7 +1,7 @@
 <template>
 
     <v-card rounded="lg" class="panel" :class="[textClass, panelClass]">
-        <v-card-title v-if="title" style="font-weight: 400;" class="bitcount-prop-double">
+        <v-card-title v-if="title" style="font-weight: 400; font-size: 30px;" class="bitcount-prop-double">
             {{ title }}
         </v-card-title>
         <v-card-text>
@@ -182,9 +182,9 @@
     /* backdrop-filter: blur(8px); */
 }
 .panel-yes {
-  --s: 300px; /* control the size*/
-  --c1: #94b4b1;
-  --c2: #acc4c5;
+  --s: 306px; /* control the size*/
+  --c1: #acc4c5;
+  --c2: #94b4b1;
   --c3: #e5e5f7;
 
   --_l:#0000 calc(25%/3),var(--c1) 0 25%,#0000 0;
@@ -200,9 +200,9 @@
 }
 
 .panel-done {
-  --s: 300px; /* control the size*/
-  --c1: #b6accf;
-  --c2: #cbc3da;
+  --s: 306px; /* control the size*/
+  --c1: #cbc3da;
+  --c2: #b6accf;
   --c3: #e6ddeb;
 
   --_l:#0000 calc(25%/3),var(--c1) 0 25%,#0000 0;
@@ -218,9 +218,9 @@
 }
 
 .panel-no {
-  --s: 300px; /* control the size*/
-  --c1: #cfacac;
-  --c2: #dac3c3;
+  --s: 306px; /* control the size*/
+  --c1: #dac3c3;
+  --c2: #cfacac;
   --c3: #f7ebe5;
 
   --_l:#0000 calc(25%/3),var(--c1) 0 25%,#0000 0;
