@@ -30,6 +30,7 @@ export const useApp = defineStore('app', {
         // which method (binary search = 1 or clusters = 2) to prefer
         // by default, we randomly pick one
         method: 0,
+        methodCounts: new Map(),
 
         // which items the user can still do
         itemsLeft: new Set(),
@@ -115,8 +116,17 @@ export const useApp = defineStore('app', {
 
         setActiveUser(id) {
             if (id !== this.activeUserId) {
+                this.methodCounts.clear()
                 this.activeUserId = id
             }
+        },
+
+        addMethodCount(method) {
+            this.methodCounts.set(method, (this.methodCounts.get(method) || 0) + 1)
+        },
+
+        getMethodCount(method) {
+            return this.methodCounts.has(method) ? this.methodCounts.get(method) : 0
         },
 
         setInitialized() {

@@ -24,7 +24,7 @@
                 </div>
 
                 <div class="d-flex mt-8">
-                    <div class="d-flex align-center">
+                    <div class="d-flex align-center pa-1 rounded" :style="{ border: '2px solid '+answerColor(true, obj.hasTag) }">
                         <div class="mr-1">
                             <ItemTeaser v-for="exId in obj.examplesYes"
                                 :id="exId"
@@ -37,9 +37,8 @@
                         <div class="d-flex flex-column align-center" :style="{ minWidth: '300px' }">
                             <v-btn
                                 density="comfortable"
-                                :color="idx === 0 || obj.hasTag ? GR_COLOR.GREEN : 'default'"
-                                :disabled="idx > 0"
-                                @click="choose(true)">yes</v-btn>
+                                :color="GR_COLOR.GREEN"
+                                @click="choose(true, idx)">yes</v-btn>
                             <SpiralBubble
                                 :width="obj.size"
                                 :height="obj.size"
@@ -51,13 +50,12 @@
                         </div>
                     </div>
 
-                    <div class="d-flex align-center">
+                    <div class="d-flex align-center pa-2 rounded" :style="{ border: '2px solid '+answerColor(false, obj.hasTag) }">
                         <div class="d-flex flex-column align-center" :style="{ minWidth: '300px' }">
                             <v-btn
                                 density="comfortable"
-                                :color="idx === 0 || !obj.hasTag ? GR_COLOR.RED : 'default'"
-                                :disabled="idx > 0"
-                                @click="choose(false)">no</v-btn>
+                                :color="GR_COLOR.RED"
+                                @click="choose(false, idx)">no</v-btn>
                             <SpiralBubble
                                 :width="obj.size"
                                 :height="obj.size"
@@ -170,6 +168,12 @@
         }
     }
 
+    function answerColor(answer, hasTag) {
+        if (hasTag !== null && answer === hasTag) {
+            return answer ? GR_COLOR.GREEN : GR_COLOR.RED
+        }
+        return theme.current.value.colors.background
+    }
 
     function submit() {
         const indices = itemsLeft.size <= props.maxItems ?
@@ -200,7 +204,7 @@
             })
 
             const last = split.value.at(0)
-            log.push({
+            logAction({
                 desc: "reroll",
                 step: split.value.length,
                 tag: splitTag,
@@ -302,7 +306,7 @@
             width: h*2,
             height: h
         })
-        log.push({
+        logAction({
             desc: "split step",
             step: split.value.length,
             tag: splitTag.id,
@@ -311,19 +315,36 @@
         })
     }
 
-    function choose(hasTag) {
+    function choose(hasTag, index) {
         if (split.value.length === 0) return
-        const last = split.value.at(0)
-        last.hasTag = hasTag === true
-        log.push({
+        const it = split.value.at(index)
+        it.hasTag = hasTag === true
+        logAction({
             desc: "choose answer",
-            answer: last.hasTag ? "yes" : "no",
-            tag: last.tag.id,
-            step: split.value.length-1
+            step: split.value.length-index-1,
+            answer: it.hasTag ? "yes" : "no",
+            tag: it.tag.id,
+            removeCount: index
         })
+
+        // remove following tags if we clicked on a previous tag
+        if (index > 0) {
+            // add items back to list of available items
+            for (let i = 1; i <= index; ++i) {
+                const s = split.value.at(i)
+                s.with.forEach(id => itemsLeft.add(id))
+                s.without.forEach(id => itemsLeft.add(id))
+            }
+            // remove splits
+            split.value.splice(0, index)
+        }
+
         nextTag()
     }
 
+    function logAction(obj) {
+        log.push(obj)
+    }
 
     function read() {
         itemsToUse = DM.getDataBy("items", d => d.allTags.length > 0 && (!props.target || d.id !== props.target))

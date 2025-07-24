@@ -9,7 +9,7 @@
     import router from '@/router';
     import { useApp } from '@/stores/app';
     import { useTimes } from '@/stores/times';
-    import { randomInteger } from '@/use/random';
+    import { randomWeighted } from '@/use/random';
     import { computed, onMounted } from 'vue';
     import { useToast } from 'vue-toastification';
 
@@ -30,11 +30,18 @@
     function read() {
         switch (app.method) {
             case 0:
-                method.value = randomInteger(1, 2)
+                const c1 = app.getMethodCount(1)
+                const c2 = app.getMethodCount(2)
+                const sum = Math.max(1, c1 + c2)
+                const w1 = 1 - (c1 / sum)
+                const w2 = 1 - (c2 / sum)
+                method.value = randomWeighted([1, 2], [w1, w2])
+                app.addMethodCount(method.value)
                 break
             case 1:
             case 2:
                 method.value = app.method
+                app.addMethodCount(method.value)
                 break
             default:
                 toast.error("invalid method")

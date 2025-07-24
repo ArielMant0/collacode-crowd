@@ -347,13 +347,10 @@
             return
         }
 
-        // get next clusters with the highest distances to
-        // - each other
-        // - selected clusters
-        const subset = cf.slice(0, props.numClusters*3)
-        const compareTo = Array.from(clusterLeft.values()).concat(subset)
+        // get next clusters with the highest distances to each other
+        const subset = cf.slice(0, props.numClusters*4)
         const tmp = subset.map(i => {
-            const scores = compareTo.map((d, j) => {
+            const scores = subset.map((d, j) => {
                 if (i === j) return 0
                 return matchValue(
                     clusters.minDistances[d][i],
@@ -368,6 +365,7 @@
                 value: d3.median(scores),
             }
         })
+
         // sort from high to low match value
         tmp.sort((a, b) => {
             if (b.value === a.value) {
@@ -380,7 +378,7 @@
         fixed.forEach(d => next[d.index] = d.cluster)
 
         for (let i = 0, j = 0; i < props.numClusters; ++i) {
-            if (next[i] === undefined && !fixed.find(d => d.cluster === tmp[j].index)) {
+            if (next[i] === undefined && !clsOrder.selected.has(tmp[j].index)) {
                 next[i] = tmp[j].index
                 j++
                 clusterLeft.delete(next[i])
@@ -514,7 +512,6 @@
 
     function logAction(obj) {
         log.push(obj)
-        // console.log("log", obj)
     }
 
     defineExpose({ reset })

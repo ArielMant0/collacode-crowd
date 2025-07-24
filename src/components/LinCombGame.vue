@@ -17,11 +17,7 @@
             </v-stepper>
         </div>
 
-        <div v-if="state === STATES.START" class="d-flex align-center justify-center">
-            <v-btn size="x-large" color="primary" class="mt-4" @click="startGame">start</v-btn>
-        </div>
-
-        <div v-else-if="state === STATES.LOADING"class="d-flex align-center justify-center">
+        <div v-if="state === STATES.START"class="d-flex align-center justify-center">
             <LoadingScreen/>
         </div>
 
@@ -102,13 +98,7 @@
             </div>
 
             <div v-if="state === STATES.END" class="d-flex align-center justify-center">
-                <v-btn class="mr-1" size="large" color="error" @click="close">close</v-btn>
-                <v-btn
-                    class="ml-1"
-                    size="large"
-                    :color="hasNextItem ? 'primary' : 'default'"
-                    :disabled="!hasNextItem"
-                    @click="startNext">next {{ app.itemName }}</v-btn>
+                <v-btn class="mr-1" size="large" color="error" @click="close">back to home</v-btn>
             </div>
 
         </div>
@@ -140,7 +130,7 @@
     const sounds = useSounds()
     const toast = useToast()
 
-    const { target, hasNextItem } = storeToRefs(app)
+    const { target } = storeToRefs(app)
 
     const step = ref(1)
     const candidates = ref([])
@@ -186,7 +176,7 @@
     }
 
     function startRound(timestamp=null) {
-        state.value = STATES.LOADING
+        state.value = STATES.START
         step.value = 1
         inventory.value = []
         sounds.play(SOUND.START_SHORT)
@@ -235,8 +225,8 @@
     function startGame() {
         sounds.stopAll()
         sounds.play(SOUND.START)
-        state.value = STATES.LOADING
-        reroll()
+        state.value = STATES.START
+        reroll(false)
     }
     function startNext() {
         app.chooseRandomTarget()

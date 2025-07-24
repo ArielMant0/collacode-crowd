@@ -16,7 +16,6 @@ export function randomLeafTags(size=1, minCount=1, ignore=[]) {
 
 export function randomItems(size=1, minTags=1) {
     const items = DM.getDataBy("items", d => d.allTags.length >= minTags)
-    console.log(items)
     return randomChoice(items, size)
 }
 
