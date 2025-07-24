@@ -20,6 +20,7 @@
                 <v-pagination v-if="numPages > 1"
                     v-model="page"
                     :length="numPages"
+                    show-first-last-page
                     :total-visible="5">
                 </v-pagination>
             </div>
@@ -132,9 +133,12 @@
         settings.panelSort[props.subset] = sortBy.value
         items.value.sort((a, b) => {
             switch(sortBy.value) {
+                // sort by id (ascending)
                 default:
                 case 0: return a.id - b.id
+                // sort by count (descending)
                 case 1: return itemCounts.value[b.id] - itemCounts.value[a.id]
+                // sort by count (ascending)
                 case 2: return itemCounts.value[a.id] - itemCounts.value[b.id]
             }
         })

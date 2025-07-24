@@ -1,6 +1,5 @@
 <template>
-  <v-app>
-    <v-main style="max-width: 100vw; max-height: 100vh; overflow-y: auto; overflow-x: hidden;">
+    <div style="max-width: 100vw; max-height: 100vh; overflow-y: auto; overflow-x: hidden;">
         <v-overlay v-if="allowOverlay" :model-value="showOverlay" class="d-flex justify-center align-center" persistent>
             <v-progress-circular indeterminate size="64" color="white"></v-progress-circular>
         </v-overlay>
@@ -9,13 +8,11 @@
         <div v-if="initialized" :style="{ maxWidth: '100vw' }">
             <router-view style="max-height: none"/>
         </div>
-    </v-main>
-  </v-app>
+    </div>
 </template>
 
 <script setup>
 
-    import { useLoader } from '@/use/loader';
     import { useApp } from '@/stores/app'
     import { useToast } from "vue-toastification";
     import { storeToRefs } from 'pinia'
@@ -34,7 +31,6 @@
     import router from './router';
 
     const toast = useToast();
-    const loader = useLoader()
     const settings = useSettings();
     const app = useApp()
     const times = useTimes()
@@ -43,7 +39,6 @@
 
     const {
         initialized,
-        fetchUpdateTime,
         updateItemsTime,
         activeUserId
     } = storeToRefs(app);
@@ -52,6 +47,7 @@
 
     const allowOverlay = ref(false)
     const showOverlay = computed(() => allowOverlay.value && isLoading.value)
+
 
     async function loadData() {
         isLoading.value = true;
@@ -345,47 +341,11 @@
         }
     }
 
-    async function fetchServerUpdate(giveToast=false) {
-        try {
-            const resp = await loader.get(`/lastupdate/dataset/${app.ds}`)
-            if (resp.length > 0 && initialized.value) {
-                const updates = []
-                resp.forEach(d => {
-                    if (times.hasTime(d.name) && d.timestamp > times.getTime(d.name)) {
-                        updates.push(d.name)
-                        times.needsReload(d.name)
-                    }
-                });
 
-                if (updates.length > 0) {
-                    toast.info("loading updates for: " + updates.join(", "))
-                } else if (giveToast) {
-                    toast.info("no server update available")
-                }
-            }
-        } catch {
-            toast.error("could not fetch server update")
-        }
-    }
-    function startPolling(immediate=false) {
-        if (immediate) fetchServerUpdate();
-        return setInterval(fetchServerUpdate, 30000)
-    }
-    function stopPolling(handler) {
-        clearInterval(handler)
-    }
 
     onMounted(async () => {
         allowOverlay.value = true
 
-        let handler = startPolling()
-        document.addEventListener("visibilitychange", () => {
-            if (document.hidden) {
-                stopPolling(handler)
-            } else {
-                handler = startPolling(true);
-            }
-        });
         window.addEventListener("click", () => sounds.loadSounds(), { once: true })
 
         initialized.value = false
@@ -424,7 +384,6 @@
     watch(() => times.n_datatags, loadDataTags);
     watch(() => times.n_similarity, loadSimilarities);
 
-    watch(fetchUpdateTime, () => fetchServerUpdate(true))
     watch(updateItemsTime, () => updateAllItems())
 
     watch(activeUserId, function() {

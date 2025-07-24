@@ -1,5 +1,5 @@
 <template>
-  <div style="max-width: 100%; height: 100vh;" class="d-flex justify-center">
+  <div style="max-width: 100%" class="d-flex justify-center">
     <ItemSelectionView class="mt-4"/>
   </div>
 </template>
