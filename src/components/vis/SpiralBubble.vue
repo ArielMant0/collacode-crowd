@@ -40,6 +40,9 @@
             type: Number,
             default: 200
         },
+        dataColors: {
+            type: Array,
+        },
         imageThreshold: {
             type: Number,
             default: 6
@@ -66,6 +69,13 @@
     const emit = defineEmits(["click", "hover"])
 
     const aspect = computed(() => props.width / props.height)
+
+    function getColor(d, set, high) {
+        if (props.dataColors !== undefined) {
+            return props.dataColors[d.index]
+        }
+        return set.has(d.id) ? props.selectedColor : (high.has(d.id) ? props.highlightsColor : props.color)
+    }
 
     function draw(animate=true) {
 
@@ -135,8 +145,8 @@
 
         const rects = g.append("rect")
             .attr("stroke", "none")
-            .attr("stroke", d => set.has(d.id) ? props.selectedColor : (high.has(d.id) ? props.highlightsColor : props.color))
-            .attr("fill", d => set.has(d.id) ? props.selectedColor : (high.has(d.id) ? props.highlightsColor : props.color))
+            .attr("stroke", d => getColor(d, set, high))
+            .attr("fill", d => getColor(d, set, high))
             .attr("fill-opacity", animate ? 0.2 : 0)
             .attr("width", animate ? 0 : w - props.padding)
             .attr("height", animate ? 0 : h - props.padding)
@@ -182,7 +192,7 @@
 
         const simulateSpacing = () => {
             let theta = 0
-            let s = 13; // initial guess for spacing
+            let s = 14; // initial guess for spacing
             let b = s / (1.75 * Math.PI); // tightness factor
             let r = 0, i = 0
             while (r < maxRadius && i < numPoints) {
@@ -205,6 +215,7 @@
             coords.push({
                 id: props.data[i].id,
                 data: props.data[i],
+                index: i,
                 x: x,
                 y: y,
                 r: theta
@@ -221,15 +232,15 @@
             .attr("cx", d => d.x)
             .attr("cy", d => d.y)
             .attr("fill", d => {
-                const c = d3.color(set.has(d.id) ? props.selectedColor : (high.has(d.id) ? props.highlightsColor : props.color))
+                const c = d3.color(getColor(d, set, high))
                 return animate ? c.brighter(1.5) : c
             })
-            .attr("stroke", d => set.has(d.id) ? props.selectedColor : (high.has(d.id) ? props.highlightsColor : props.color))
+            .attr("stroke", d => getColor(d, set, high))
             .attr("r", animate ? 0 : pointRadius)
             .style("cursor", "pointer")
             .on("pointerenter", function(event, d) {
                 emit("hover", d.data, event)
-                const c = d3.color(set.has(d.id) ? props.selectedColor : (high.has(d.id) ? props.highlightsColor : props.color))
+                const c = d3.color(getColor(d, set, high))
                 d3.select(this)
                     .transition(50)
                     .attr("stroke", c.darker(2))
@@ -240,7 +251,7 @@
             })
             .on("pointerleave", function(d) {
                 emit("hover", null, null)
-                const c = d3.color(set.has(d.id) ? props.selectedColor : (high.has(d.id) ? props.highlightsColor : props.color))
+                const c = d3.color(getColor(d, set, high))
                 d3.select(this)
                     .transition(50)
                     .attr("stroke", c)
@@ -255,9 +266,9 @@
                 .transition()
                 .duration(1500)
                 .ease(d3.easeElasticOut.amplitude(1.05))
-                .delay((_d, i) => i * (numPoints > 25 ? 15 : 100))
+                .delay((_d, i) => i * (numPoints > 100 ? 8 : (numPoints > 25 ? 15 : 100)))
                 .attr("r", pointRadius)
-                .attr("fill", d => set.has(d.id) ? props.selectedColor : (high.has(d.id) ? props.highlightsColor : props.color))
+                .attr("fill", d => getColor(d, set, high))
             }
     }
 
@@ -268,4 +279,5 @@
     watch(() => ([props.selectedColor, props.highlightsColor]), () => draw(false))
     watch(() => props.selected, () => draw(false))
     watch(() => props.highlights, () => draw(false))
+    watch(() => props.dataColors, () => draw(false))
 </script>

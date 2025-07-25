@@ -308,6 +308,7 @@
         if (passed !== null) {
             DM.setData("items_name", new Map(data.map(d => ([d.id, d.name]))))
             DM.setData("items", data)
+            DM.setData("items_id", new Map(data.map(d => ([d.id, d]))))
         }
     }
 

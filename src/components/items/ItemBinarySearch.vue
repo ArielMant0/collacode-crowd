@@ -367,6 +367,7 @@
                 with: withTag.map(i => itemsToUse[i].id),
                 without: without.map(i => itemsToUse[i].id),
             })
+            last.rerolls.push(last.tag)
             last.hasTag = null
             last.tag = splitTag
             last.with = withTag
@@ -392,6 +393,15 @@
                 }
             }
         }
+    }
+
+    function itemHasTag(item, tag) {
+        return item.allTags.find(t => t.id === tag)
+    }
+    function getItemColor(idx, tag) {
+        return itemHasTag(itemsToUse[idx], tag) ?
+            theme.current.value.colors.primary :
+            theme.current.value.colors.error
     }
 
     async function nextTag() {
@@ -457,18 +467,27 @@
             randomChoice(without, numEx) :
             without
 
+        // split.value.forEach(s => {
+        //     s.colorsYes = s.with.map(idx => getItemColor(idx, splitTag.id))
+        //     s.colorsNo = s.without.map(idx => getItemColor(idx, splitTag.id))
+        // })
+
         const h = getImageHeight(withTag.length, without.length)
         split.value.unshift({
             tag: splitTag,
             hasTag: null,
             with: withTag,
             without: without,
+            // colorsYes: withTag.map(idx => getItemColor(idx, splitTag.id)),
+            // colorsNo: without.map(idx => getItemColor(idx, splitTag.id)),
+            rerolls: [],
             examplesYes: examplesYes.map(idx => itemsToUse[idx].id),
             examplesNo: examplesNo.map(idx => itemsToUse[idx].id),
             size: getBubbleSize(withTag.length, without.length),
             width: h*2,
             height: h
         })
+
         logAction({
             desc: "split step",
             step: split.value.length,
@@ -498,6 +517,7 @@
                 const s = split.value.at(i)
                 s.with.forEach(id => itemsLeft.add(id))
                 s.without.forEach(id => itemsLeft.add(id))
+                s.rerolls.forEach(id => tagsLeft.add(id))
             }
             // remove splits
             split.value.splice(0, index)

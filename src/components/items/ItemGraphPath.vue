@@ -22,7 +22,7 @@
                 reroll
             </v-btn>
             <v-sheet style="font-size: smaller;" rounded="sm" color="surface-light" class="ml-2 pt-1 pb-1 pl-3 pr-3">
-                {{ clusterLeft.size }} groups left
+                {{ numClsLeft }} groups left
             </v-sheet>
         </div>
         <div>
@@ -42,7 +42,7 @@
                     @click-item="d => toggleItem(d.id, 'cluster')"/>
             </div>
 
-            <div class="d-flex justify-space-around mt-2 mb-4 pa-2">
+            <div class="d-flex justify-space-around mt-8 mb-8 pa-2">
                 <div v-for="(sel, i) in selection" class="mr-1 ml-1 seed">
                     <ItemTeaser v-if="sel"
                         :id="sel.id"
@@ -70,28 +70,58 @@
                 </div>
             </div>
 
-            <div style="text-align: center;">collected candidates</div>
+            <div class="d-flex align-start" style="min-width: 100%; max-width: 100%;">
 
-            <v-sheet id="collected-items" class="pa-2" rounded border :style="{ minHeight: ((miniImageHeight+5)*3)+'px' }">
-                <div class="d-flex justify-start align-start">
-                    <div v-for="list in candidates" :style="{ maxWidth: Math.floor(100/selectionItems.length)+'%' }">
-                        <div class="d-flex flex-wrap justify-center">
-                            <ItemTeaser v-for="id in list"
-                                class="mr-1 mb-1"
-                                :id="id"
-                                :border-color="isSelectedItem(id) ? theme.current.value.colors.secondary : undefined"
-                                :border-size="3"
-                                prevent-open
-                                prevent-context
-                                @click="toggleItem(id, 'suggestions')"
-                                draggable
-                                @dragstart="onStartDrag(id, 'suggestions-drag')"
-                                :width="miniImageWidth"
-                                :height="miniImageHeight"/>
-                        </div>
+                <div class="mr-2" style="max-width: 15%;" :style="{ minWidth: (miniImageWidth+20)+'px' }">
+                    <div style="text-align: center;">
+                        <v-icon>mdi-history</v-icon>
+                        history
                     </div>
+                    <v-sheet class="pa-2" rounded border
+                        :style="{
+                            width: '100%',
+                            minHeight: ((miniImageHeight+10)*5)+'px',
+                            maxHeight: ((miniImageHeight+10)*5)+'px',
+                            overflowY: 'auto',
+                        }">
+                        <ItemTeaser v-for="id in history"
+                            :id="id"
+                            prevent-open
+                            prevent-context
+                            :width="miniImageWidth-5"
+                            :height="miniImageHeight-10"
+                            draggable
+                            class="mb-1"
+                            @click="toggleItem(id, 'history')"
+                            @dragstart="onStartDrag(id, 'history-drag')"/>
+                    </v-sheet>
                 </div>
-            </v-sheet>
+
+                <div class="ml-2" style="width: 100%;">
+                    <div style="text-align: center;">similar {{ app.itemName }}s</div>
+                    <v-sheet id="collected-items" class="pa-2" rounded border :style="{ width: '100%', minHeight: ((miniImageHeight+10)*5)+'px' }">
+                        <div class="d-flex justify-start align-start">
+                            <div v-for="list in candidates" :style="{ maxWidth: Math.floor(100/selectionItems.length)+'%' }">
+                                <div class="d-flex flex-wrap justify-center">
+                                    <ItemTeaser v-for="id in list"
+                                        class="mr-1 mb-1"
+                                        :id="id"
+                                        :border-color="isSelectedItem(id) ? theme.current.value.colors.secondary : undefined"
+                                        :border-size="3"
+                                        prevent-open
+                                        prevent-context
+                                        draggable
+                                        @click="toggleItem(id, 'suggestions')"
+                                        @dragstart="onStartDrag(id, 'suggestions-drag')"
+                                        :width="miniImageWidth"
+                                        :height="miniImageHeight"/>
+                                </div>
+                            </div>
+                        </div>
+                    </v-sheet>
+                </div>
+
+            </div>
         </div>
     </div>
 </template>
@@ -158,6 +188,7 @@
         selected: new Set(),
         show: []
     })
+    const numClsLeft = ref(0)
 
     const miniImageWidth = computed(() => Math.max(50, Math.round(props.imageWidth * 0.66)))
     const miniImageHeight = computed(() => Math.round(miniImageWidth.value * 0.5))
@@ -169,6 +200,7 @@
     let clusters = null, maxClsSize = 0
     let lastIndexUsed = 0
 
+    const history = ref([])
     const clusterLeft = new Set()
 
     const ALL_TAGS = ref(true)
@@ -304,6 +336,7 @@
                 clusterLeft.add(i)
             }
         }
+        numClsLeft.value = clusterLeft.size
         app.addInteraction("step1")
     }
     function reroll() {
@@ -478,6 +511,8 @@
                 maxClsSize = Math.max(maxClsSize, clusters.size[i])
             })
 
+            numClsLeft.value = clusterLeft.size
+
             if (!clusters) {
                 return console.debug("no clusters found")
             }
@@ -548,6 +583,7 @@
             })),
         })
 
+        numClsLeft.value = clusterLeft.size
         clsOrder.list = next
         clsOrder.show = next.map(() => 0)
     }
@@ -605,6 +641,15 @@
         }
     }
 
+    function addToHistory(id) {
+        if (history.value.length === 0 || history.value.at(0) !== id) {
+            history.value.unshift(id)
+            if (history.value.length > 75) {
+                history.value = history.value.slice(0, 50)
+            }
+        }
+    }
+
     function addSelection(index, object, source="") {
         logAction({
             desc: "add item",
@@ -617,6 +662,7 @@
         clsOrder.selected.add(object.cluster)
         // set the selected item
         selection.value[index] = object
+        addToHistory(object.id)
         updateCandidates()
     }
 
@@ -674,6 +720,7 @@
             }
             selection.value[index] = replacement
             clsOrder.selected.add(replacement.cluster)
+            addToHistory(replacement.id)
             // update candidates for suggestion
             updateCandidates()
         }
@@ -682,7 +729,9 @@
     function reset(update=true) {
         log = []
         tutorialNeedsNext = false
+        history.value = []
         clusterLeft.clear()
+        numClsLeft.value = clusterLeft.size
         itemsToUse = DM.getDataBy("items", d => d.allTags.length > 0 && (!props.target || d.id !== props.target))
         clusters = null
         clsOrder.list = []

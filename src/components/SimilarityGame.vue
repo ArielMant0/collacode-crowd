@@ -17,7 +17,7 @@
             <LoadingScreen/>
         </div>
 
-        <div v-if="state === STATES.INGAME && step === PR_STEPS.GAME" style="position: absolute; top: 60px; right: 10px;">
+        <div v-if="state === STATES.INGAME && step === PR_STEPS.GAME" style="position: absolute; top: 560x; right: 10px;">
             <v-tooltip text="start the tutorial" location="left" open-delay="300">
                 <template v-slot:activator="{ props }">
                     <v-btn v-bind="props"
