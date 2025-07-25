@@ -39,6 +39,11 @@ export const GR_ICON = Object.freeze({
     LOSS: "mdi-close-circle-outline",
 })
 
+export const GAME_IDS = Object.freeze({
+    CLUSTERS: 1,
+    BINSEARCH: 2
+})
+
 
 export const useGames = defineStore('games', {
     state: () => ({

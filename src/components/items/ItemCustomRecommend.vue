@@ -1,88 +1,90 @@
 <template>
     <div style="text-align: center; min-width: 100%;">
 
-        <div class="text-caption">drag similar {{ app.itemName+'s' }} into their fitting category</div>
-        <div class="d-flex align-start justify-center" style="min-width: 100%;">
+        <div class="text-h5 mb-2">
+            click or drag <b class="text-decoration-underline">only</b> similar {{ app.itemName }}s into a fitting category
+        </div>
 
-            <div class="d-flex flex-column mr-4" style="max-width: 49%; min-width: 35%;">
+        <div class="d-flex align-start justify-center" style="max-width: 100%;">
 
-            <div class="bordered-grey-light-thin pa-2 mt-1" style="width: 100%; border-radius: 4px;">
-                <h3 class="sectitle bordered-secondary">{{ app.itemNameCaptial }}s with similar names</h3>
+            <div class="d-flex flex-column mr-4" style="max-width: 49%; min-width: 30%;">
+                <div class="bordered-grey-light-thin pa-2 mt-1" style="width: 100%; border-radius: 4px;">
+                    <h3 class="sectitle bordered-secondary">{{ app.itemNameCaptial }}s with similar names</h3>
 
-                <div class="d-flex flex-wrap justify-center align-start"
-                    @drop.prevent="e => dropItem(e, 0)"
-                    @dragover.prevent
-                    :style="{ minWidth: minW+'px', width: minW+'px', maxWidth: '100%', minHeight: ((imageHeight+10)*2)+'px' }">
-                    <ItemTeaser v-for="(item, idx) in suggs.byName"
-                        :id="item.id"
-                        :width="imageWidth"
-                        :height="imageHeight"
-                        prevent-open
-                        prevent-context
-                        draggable
-                        @click="setItem(item.id, 'name', idx, 2)"
-                        @dragstart="startDrag(item.id, 'name', idx)"
-                        style="cursor: grab"
-                        class="mr-1 mb-1"/>
+                    <div class="d-flex flex-wrap justify-center align-start"
+                        @drop.prevent="e => dropItem(e, 0)"
+                        @dragover.prevent
+                        :style="{ minWidth: minW+'px', width: minW+'px', maxWidth: '100%', minHeight: ((imageHeight+10)*2)+'px' }">
+                        <ItemTeaser v-for="(item, idx) in suggs.byName"
+                            :id="item.id"
+                            :width="imageWidth"
+                            :height="imageHeight"
+                            prevent-open
+                            prevent-context
+                            draggable
+                            @click="setItem(item.id, 'name', idx, 2)"
+                            @dragstart="startDrag(item.id, 'name', idx)"
+                            style="cursor: grab"
+                            class="mr-1 mb-1"/>
+                    </div>
+                </div>
+
+                <div class="bordered-grey-light-thin pa-2 mt-1" style="width: 100%; border-radius: 4px;">
+                    <h3 class="sectitle bordered-secondary">Additional {{ app.itemName }}s others picked</h3>
+                    <div class="d-flex flex-wrap justify-center align-start"
+                        @drop.prevent="e => dropItem(e, 0)"
+                        @dragover.prevent
+                        :style="{ minWidth: minW+'px', width: minW+'px', maxWidth: '100%', minHeight: ((imageHeight+10)*2)+'px' }">
+                        <ItemTeaser v-for="(item, idx) in suggs.byCrowd"
+                            :id="item.id"
+                            :width="imageWidth"
+                            :height="imageHeight"
+                            prevent-open
+                            prevent-context
+                            draggable
+                            @click="setItem(item.id, 'crowd', idx, 2)"
+                            @dragstart="startDrag(item.id, 'crowd', idx)"
+                            style="cursor: grab"
+                            class="mr-1 mb-1"/>
+                    </div>
+                </div>
+
+                <div class="bordered-grey-light-thin pa-2 mt-1" style="width: 100%; border-radius: 4px;">
+
+                    <v-text-field v-model="search"
+                        label="Search for items by name.."
+                        prepend-inner-icon="mdi-magnify"
+                        color="secondary"
+                        variant="outlined"
+                        density="compact"
+                        class="mb-1"
+                        style="width: 100%;"
+                        @update:model-value="searchByName"
+                        clearable
+                        hide-details
+                        single-line/>
+                    <div class="d-flex flex-wrap justify-center align-start"
+                        @drop.prevent="e => dropItem(e, 0)"
+                        @dragover.prevent
+                        @dragenter="onDragEnter"
+                        @dragleave="onDragLeave"
+                        :style="{ minWidth: minW+'px', width: minW+'px', maxWidth: '100%', minHeight: ((imageHeight+10)*2)+'px' }">
+                        <ItemTeaser v-for="(item, idx) in bySearch"
+                            :id="item.id"
+                            :width="imageWidth"
+                            :height="imageHeight"
+                            prevent-open
+                            prevent-context
+                            draggable
+                            @click="setItem(item.id, 'search', idx, 2)"
+                            @dragstart="startDrag(item.id, 'search', idx)"
+                            style="cursor: grab"
+                            class="mr-1 mb-1"/>
+                    </div>
                 </div>
             </div>
 
-            <div class="bordered-grey-light-thin pa-2 mt-1" style="width: 100%; border-radius: 4px;">
-                <h3 class="sectitle bordered-secondary">Additional {{ app.itemName }}s others picked</h3>
-                <div class="d-flex flex-wrap justify-center align-start"
-                    @drop.prevent="e => dropItem(e, 0)"
-                    @dragover.prevent
-                    :style="{ minWidth: minW+'px', width: minW+'px', maxWidth: '100%', minHeight: ((imageHeight+10)*2)+'px' }">
-                    <ItemTeaser v-for="(item, idx) in suggs.byCrowd"
-                        :id="item.id"
-                        :width="imageWidth"
-                        :height="imageHeight"
-                        prevent-open
-                        prevent-context
-                        draggable
-                        @click="setItem(item.id, 'crowd', idx, 2)"
-                        @dragstart="startDrag(item.id, 'crowd', idx)"
-                        style="cursor: grab"
-                        class="mr-1 mb-1"/>
-                </div>
-            </div>
-
-            <div class="bordered-grey-light-thin pa-2 mt-1" style="width: 100%; border-radius: 4px;">
-
-                <v-text-field v-model="search"
-                    label="Search for items by name.."
-                    prepend-inner-icon="mdi-magnify"
-                    color="secondary"
-                    variant="outlined"
-                    density="compact"
-                    class="mb-1"
-                    style="width: 100%;"
-                    @update:model-value="searchByName"
-                    clearable
-                    hide-details
-                    single-line/>
-                <div class="d-flex flex-wrap justify-center align-start"
-                    @drop.prevent="e => dropItem(e, 0)"
-                    @dragover.prevent
-                    @dragenter="onDragEnter"
-                    @dragleave="onDragLeave"
-                    :style="{ minWidth: minW+'px', width: minW+'px', maxWidth: '100%', minHeight: ((imageHeight+10)*2)+'px' }">
-                    <ItemTeaser v-for="(item, idx) in bySearch"
-                        :id="item.id"
-                        :width="imageWidth"
-                        :height="imageHeight"
-                        prevent-open
-                        prevent-context
-                        draggable
-                        @click="setItem(item.id, 'search', idx, 2)"
-                        @dragstart="startDrag(item.id, 'search', idx)"
-                        style="cursor: grab"
-                        class="mr-1 mb-1"/>
-                </div>
-            </div>
-            </div>
-
-            <div class="ml-4" style="max-width: 49%; min-width: 35%;">
+            <div class="ml-4" style="max-width: 49%; min-width: 30%;">
 
                 <div class="d-flex flex-column align-center bordered-grey-light-thin pa-2 mb-1" style="min-width: 100%; border-radius: 4px;">
                     <h3 class="d-flex align-center">
@@ -356,7 +358,7 @@
     function setItem(id, origin, index, where=0) {
         app.addInteraction("step3")
         if (where === 2) {
-            if (props.itemLimit > 0 && itemHigh.size >= props.itemLimit) {
+            if (props.itemLimit > 0 && (itemHigh.size+highFixed.value.length) >= props.itemLimit) {
                 return toast.warning(`maximum number of ${app.itemName}s reached`)
             }
             if (!itemMed.has(id) && !itemHigh.has(id)) {
@@ -367,7 +369,7 @@
             itemMed.delete(id)
             itemHigh.add(id)
         } else if (where === 1) {
-            if (props.itemLimit > 0 && itemMed.size >= props.itemLimit) {
+            if (props.itemLimit > 0 && (itemMed.size+medFixed.value.length) >= props.itemLimit) {
                 return toast.warning(`maximum number of ${app.itemName}s reached`)
             }
             if (!itemMed.has(id) && !itemHigh.has(id)) {

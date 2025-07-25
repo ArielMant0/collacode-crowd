@@ -2,7 +2,6 @@
     <div class="pa-2">
         <SimilarityGame v-if="validMethod"
             :method="method"
-            :use-timer="isCrowdWorker"
             @close="onClose"
             @end="onEnd"
             @cancel="onCancel"/>
@@ -13,6 +12,7 @@
     import SimilarityGame from '@/components/SimilarityGame.vue';
     import router from '@/router';
     import { useApp } from '@/stores/app';
+    import { GAME_IDS } from '@/stores/games';
     import { useTimes } from '@/stores/times';
     import { randomWeighted } from '@/use/random';
     import { storeToRefs } from 'pinia';
@@ -45,12 +45,12 @@
     function read() {
         switch (app.method) {
             case 0:
-                const c1 = app.getMethodCount(1)
-                const c2 = app.getMethodCount(2)
+                const c1 = app.getMethodCount(GAME_IDS.CLUSTERS)
+                const c2 = app.getMethodCount(GAME_IDS.BINSEARCH)
                 const sum = Math.max(1, c1 + c2)
                 const w1 = 1 - (c1 / sum)
                 const w2 = 1 - (c2 / sum)
-                method.value = randomWeighted([1, 2], [w1, w2])
+                method.value = randomWeighted([GAME_IDS.CLUSTERS, GAME_IDS.BINSEARCH], [w1, w2])
                 app.addMethodCount(method.value)
                 break
             case 1:

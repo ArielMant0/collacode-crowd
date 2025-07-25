@@ -35,7 +35,7 @@ export const useApp = defineStore('app', {
         cwSource: null,
         cwId: null,
 
-        // which method (binary search = 1 or clusters = 2) to prefer
+        // which method (clusters = 1 or binary search = 2) to prefer
         // by default, we randomly pick one
         method: 0,
         methodCounts: new Map(),

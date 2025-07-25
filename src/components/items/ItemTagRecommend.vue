@@ -1,9 +1,13 @@
 <template>
     <div style="text-align: center; min-width: 100%;">
 
-        <div class="text-caption">drag <b>only</b> similar {{ app.itemName }}s into their fitting category</div>
+        <div class="text-h5 mb-2">
+            click or drag <b class="text-decoration-underline">only</b> similar {{ app.itemName }}s into a fitting category
+        </div>
+
         <div class="d-flex align-start justify-center" style="min-width: 100%;">
-            <div class="d-flex flex-column align-center bordered-grey-light-thin pa-2 mr-4" style="max-width: 49%; min-width: 35%; border-radius: 4px;">
+
+            <div class="d-flex flex-column align-center bordered-grey-light-thin pa-2 mr-4" style="max-width: 49%; min-width: 30%; border-radius: 4px;">
                 <h3 class="sectitle bordered-secondary">Suggested Similar {{ app.itemNameCaptial }}s</h3>
                 <div class="d-flex flex-wrap justify-center align-start"
                     @drop.prevent="e => dropItem(e, 0)"
@@ -23,7 +27,7 @@
                 </div>
             </div>
 
-            <div class="ml-4" style="max-width: 49%; min-width: 35%;">
+            <div class="ml-4" style="max-width: 49%; min-width: 30%;">
 
                 <div class="d-flex flex-column align-center bordered-grey-light-thin pa-2 mb-1" style="min-width: 100%; border-radius: 4px;">
                     <h3 class="d-flex align-center">

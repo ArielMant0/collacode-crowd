@@ -1,6 +1,7 @@
 <template>
     <div
-        class="container"
+        :id="elementId"
+        class="container item-teaser"
         :class="{ 'prevent-select': draggable }"
         @dragstart="onDragStart"
         @drop="onDrop"
@@ -53,6 +54,10 @@
     const props = defineProps({
         id: { type: Number },
         item: { type: Object },
+        elementId: {
+            type: String,
+            default: ""
+        },
         width: {
             type: Number,
             default: 160

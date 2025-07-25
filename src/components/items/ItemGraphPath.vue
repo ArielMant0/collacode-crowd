@@ -3,6 +3,7 @@
 
         <div style="text-align: center;">
             <v-btn
+                id="submit-btn"
                 :color="selectionItems.length > 0 ? 'primary' : 'default'"
                 class="mb-4"
                 :disabled="selectionItems.length === 0"
@@ -10,8 +11,6 @@
                 next step
             </v-btn>
         </div>
-
-        <h3 style="text-align: center;" class="mt-2 mb-4">Find up to {{ maxSelect }} similar seed {{ app.itemName }}s!</h3>
 
         <div class="d-flex justify-center align-center mb-2">
             <v-btn
@@ -24,6 +23,7 @@
                 reset rerolls
             </v-btn>
             <v-btn
+                id="reroll-btn"
                 color="primary"
                 class="ml-2"
                 density="comfortable"
@@ -34,7 +34,7 @@
             </v-btn>
         </div>
         <div>
-            <div class="d-flex align-start justify-center">
+            <div id="cluster-options" class="d-flex align-start justify-center">
                 <ItemSimilarityRow v-for="(index, idx2) in clsOrder.list"
                     :items="clusters.clusters[index]"
                     :show-index="clsOrder.show[idx2]"
@@ -51,7 +51,7 @@
             </div>
 
             <div class="d-flex justify-space-around mt-4 mb-8 pa-2">
-                <div v-for="(sel, i) in selection" class="mr-1 ml-1">
+                <div v-for="(sel, i) in selection" class="mr-1 ml-1 seed">
                     <div style="text-align: center;" class="text-caption">{{ app.itemNameCaptial }} {{ i+1 }}</div>
                     <ItemTeaser v-if="sel"
                         :id="sel.id"
@@ -81,9 +81,9 @@
 
             <div style="text-align: center;">collected candidates</div>
 
-            <v-sheet class="pa-2" rounded border :style="{ minHeight: ((miniImageHeight+5)*3)+'px' }">
+            <v-sheet id="collected-items" class="pa-2" rounded border :style="{ minHeight: ((miniImageHeight+5)*3)+'px' }">
                 <div class="d-flex justify-start align-start">
-                    <div v-for="(list, cidx) in candidates" :style="{ maxWidth: Math.floor(100/selectionItems.length)+'%' }">
+                    <div v-for="list in candidates" :style="{ maxWidth: Math.floor(100/selectionItems.length)+'%' }">
                         <div class="d-flex flex-wrap justify-center">
                             <ItemTeaser v-for="id in list"
                                 class="mr-1 mb-1"
@@ -114,9 +114,21 @@
     import { useApp } from '@/stores/app';
     import ItemTeaser from './ItemTeaser.vue';
     import { useTheme } from 'vuetify';
+    import { useShepherd } from 'vue-shepherd'
+import { randomInteger } from '@/use/random';
 
     const app = useApp()
     const theme = useTheme()
+
+    const tutorial = useShepherd({
+        useModalOverlay: true,
+        defaultStepOptions: {
+            classes: 'shadow-md bg-surface-light',
+            scrollTo: true
+        }
+    })
+    tutorial.on("complete", onEndTutorial)
+    tutorial.on("cancel", onEndTutorial)
 
     const props = defineProps({
         numClusters: {
@@ -144,7 +156,7 @@
         }
     })
 
-    const emit = defineEmits(["submit"])
+    const emit = defineEmits(["submit", "tutorial-start", "tutorial-stop"])
 
     const selection = ref(new Array(props.maxSelect))
     const selectionItems = computed(() => selection.value.filter(d => d !== null && d !== undefined))
@@ -157,6 +169,7 @@
 
     const miniImageWidth = computed(() => Math.max(50, Math.round(props.imageWidth * 0.66)))
     const miniImageHeight = computed(() => Math.round(miniImageWidth.value * 0.5))
+
 
     let itemsToUse
     let log = []
@@ -316,7 +329,126 @@
             clusters: clsOrder.list
         })
         app.addInteraction("step1")
+        if (tutorial.isActive()) {
+            tutorial.next()
+        }
         nextClusters()
+    }
+
+    /**
+     * Prepare the guided tour tutorial
+     */
+    function prepareTutorial() {
+        const single = app.itemName
+        const plural = single + "s"
+        tutorial.addSteps([
+            {
+                id: "show-target",
+                attachTo: {
+                    element: "#sim-target",
+                    on: "bottom"
+                },
+                buttons: [
+                    { text: "skip tutorial", action: tutorial.cancel },
+                    { text: "next", action: tutorial.next },
+                ],
+                text: `This is your target ${single}. Your task is to find
+                    <b>other similar ${plural}</b> from our dataset.`
+            },{
+                id: "show-clusters",
+                attachTo: {
+                    element: "#cluster-options",
+                    on: "bottom"
+                },
+                buttons: [{ text: "next", action: tutorial.next }],
+                text: `These are different groups of ${plural} from our dataset.
+                    Click or drag any ${single} to get a list of similar ${plural} shown below.
+                    You can select up to 3 ${plural} to get suggestions of similar ${plural}.`
+            },{
+                id: "click-item",
+                attachTo: {
+                    element: "#cluster-options .item-teaser:first-of-type",
+                    on: "right-start"
+                },
+                buttons: [{ text: "next", action: tutorialAdd }],
+                text: `Click on this ${single} to get up to ${props.maxItems} suggestions.`
+            },{
+                id: "show-collected",
+                attachTo: {
+                    element: "#collected-items",
+                    on: "top"
+                },
+                buttons: [{ text: "next", action: tutorialAddFromList }],
+                text: `These are now your collected similar ${plural} from which you will select
+                    the most similar ${plural} to your target in the next step. You can add
+                    other ${plural} by clicking on a different ${single} here or in a group.
+                    Click on another ${single} from this list!`
+            },{
+                id: "remove-item",
+                attachTo: {
+                    element: ".seed:first-of-type",
+                    on: "right"
+                },
+                buttons: [{ text: "next", action: tutorialRemove }],
+                text: `Click on this ${single} again to remove it from your selection.`
+            },{
+                id: "reroll",
+                attachTo: {
+                    element: "#reroll-btn",
+                    on: "bottom"
+                },
+                buttons: [{ text: "next", action: reroll }],
+                text: `Click here to get different ${single} groups.
+                    Groups with selected ${plural} will stay, no need to worry.`
+            },{
+                id: "submit",
+                attachTo: {
+                    element: "#submit-btn",
+                    on: "bottom"
+                },
+                buttons: [{ text: "done", action: tutorialClear }],
+                text: `When you are happy with your list of similar ${plural}, click
+                    here to go to the next step.`
+            }
+        ])
+    }
+    function startTutorial() {
+        // emit event so that things like timers can be cancelled
+        emit("tutorial-start")
+        tutorial.start()
+    }
+
+    function onEndTutorial() {
+        // emit event so that things like timers can be started again
+        emit("tutorial-stop")
+    }
+
+    // add the first item
+    function tutorialAdd() {
+        const first = clsOrder.list.at(0)
+        if (first >= 0) {
+            toggleItem(clusters.clusters[first][0].id, "tutorial")
+        }
+    }
+
+    function tutorialAddFromList() {
+        const first = candidateItems[randomInteger(1, candidateItems.length-1)]
+        if (first) {
+            toggleItem(first.id, "tutorial")
+        }
+    }
+
+    function tutorialRemove() {
+        const index = selection.value.findIndex(d => d !== null)
+        if (index >= 0) {
+            removeSelection(index, "tutorial")
+        }
+    }
+
+    function tutorialClear() {
+        tutorial.complete()
+        clearSelection()
+        resetRerolls()
     }
 
     async function init() {
@@ -453,6 +585,13 @@
             removeSelection(index, source)
             lastIndexUsed = index
         }
+
+        if (tutorial.isActive()) {
+            const sid = tutorial.getCurrentStep()
+            if (sid.id === 'click-item' || sid.id === 'show-collected' || sid.id === 'remove-item') {
+                tutorial.next()
+            }
+        }
     }
 
     function addSelection(index, object, source="") {
@@ -479,6 +618,13 @@
             })
             app.addInteraction("step1")
 
+            if (tutorial.isActive()) {
+                const sid = tutorial.getCurrentStep()
+                if (sid.id === 'remove-item') {
+                    tutorial.next()
+                }
+            }
+
             const c = selection.value[index].cluster
             const numCls = selectionItems.value.reduce((acc, d) => acc + (d.cluster === c ? 1 : 0), 0)
             // remove cluster highlight (if this was the only related item)
@@ -489,6 +635,13 @@
             // update candidates for suggestion
             updateCandidates()
         }
+    }
+
+    function clearSelection() {
+        clsOrder.selected.clear()
+        selection.value = selection.value.map(() => null)
+        // update candidates for suggestion
+        updateCandidates()
     }
 
     function replaceSelection(index, replacement, source="") {
@@ -541,9 +694,10 @@
         }
     }
 
-    defineExpose({ reset, getSubmitData })
+    defineExpose({ reset, getSubmitData, startTutorial })
 
     onMounted(function() {
+        prepareTutorial()
         reset(false)
         init()
     })

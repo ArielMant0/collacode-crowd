@@ -1,6 +1,5 @@
 <template>
-    <div style="max-height: 95vh; overflow-y: auto;">
-
+    <div>
         <div v-if="state === STATES.START"class="d-flex align-center justify-center">
             <LoadingScreen/>
         </div>
@@ -27,6 +26,7 @@
                 <div v-if="notInCheck" class="d-flex flex-column align-center">
                     <div>{{ gameData.target.name }}</div>
                     <ItemTeaser
+                        element-id="sim-target"
                         :item="gameData.target"
                         :width="180"
                         :height="90"
@@ -48,9 +48,11 @@
                     @submit="testComp"/>
             </div>
             <div v-else-if="step === PR_STEPS.GAME">
-                <ItemGraphPath v-if="method === 1"
+                <ItemGraphPath v-if="method === GAME_IDS.CLUSTERS"
                     ref="clusters"
                     @submit="setCandidates"
+                    @tutorial-start="onTutorialStart"
+                    @tutorial-stop="onTutorialStop"
                     :max-items="30"
                     :target="gameData.target.id"/>
                 <ItemBinarySearch v-else
@@ -60,7 +62,7 @@
                     @submit="setCandidates"
                     :target="gameData.target.id"/>
             </div>
-            <div v-else-if="step === PR_STEPS.SELECT && state === STATES.INGAME" class="mt-4 mb-8" style="width: 95%; max-width: 100%;">
+            <div v-else-if="step === PR_STEPS.SELECT && state === STATES.INGAME" class="mb-8" style="width: 95%; max-width: 100%;">
                 <div style="text-align: center;">
                     <v-btn class="mb-2" color="primary" @click="nextStep(false)">next step</v-btn>
                 </div>
@@ -69,7 +71,7 @@
                     :items="candidates"
                     @update="setResultItems"/>
             </div>
-            <div v-else-if="step === PR_STEPS.REFINE && state === STATES.INGAME" class="mt-4 mb-8" style="width: 95%; max-width: 100%;">
+            <div v-else-if="step === PR_STEPS.REFINE && state === STATES.INGAME" class="mb-8" style="width: 95%; max-width: 100%;">
                 <div style="text-align: center;">
                     <v-btn class="mb-2" color="primary" @click="nextStep(false)">submit</v-btn>
                 </div>
@@ -88,6 +90,11 @@
         <div v-else-if="state === STATES.END" class="d-flex flex-column align-center" style="width: 100%; max-width: 100%;">
 
             <div class="mb-8 d-flex flex-column align-center" :style="{ maxWidth: (190*5)+'px' }">
+
+                <div class="d-flex align-center justify-center mb-4">
+                    <v-btn class="mr-1" size="large" color="error" @click="close">back to home</v-btn>
+                </div>
+
                 <div style="max-width: 100%; text-align: center;">
                     <h3>Your Choices</h3>
                     <div class="d-flex flex-wrap justify-center">
@@ -117,17 +124,13 @@
                 </div>
             </div>
 
-            <div class="d-flex align-center justify-center">
-                <v-btn class="mr-1" size="large" color="error" @click="close">back to home</v-btn>
-            </div>
-
         </div>
     </div>
 </template>
 
 <script setup>
     import { computed, onMounted, reactive, useTemplateRef, watch } from 'vue'
-    import { GR_COLOR, STATES } from '@/stores/games'
+    import { GAME_IDS, GR_COLOR, STATES } from '@/stores/games'
     import { useSounds, SOUND } from '@/stores/sounds';
     import { storeToRefs } from 'pinia'
     import LoadingScreen from './LoadingScreen.vue'
@@ -169,7 +172,7 @@
         method: {
             type: Number,
             required: true,
-            validator: v => v === 1 || v === 2
+            validator: v => v === GAME_IDS.CLUSTERS || v === GAME_IDS.BINSEARCH
         },
         attentionChecks: {
             type: Boolean,
@@ -190,13 +193,15 @@
 
             // game phase
             case PR_STEPS.GAME:
-                return 180
+                return props.method === GAME_IDS.CLUSTERS ? 300 : 180
 
             // comprehension check
             case PR_STEPS.COMPREHENSION:
+                return 160
+
             // selection phases
             default:
-                return 60
+                return 120
         }
     })
 
@@ -212,6 +217,8 @@
     })
 
     const notInCheck = computed(() => step.value !== PR_STEPS.ATTENTION && step.value !== PR_STEPS.COMPREHENSION)
+
+    let inTutorial = false, tutorialDone = false
 
     // ---------------------------------------------------------------------
     // Functions
@@ -236,6 +243,26 @@
         setTimeout(startTimer, 150)
     }
 
+    function onTutorialStart() {
+        inTutorial = true
+        stopTimer()
+    }
+    function onTutorialStop() {
+        inTutorial = false
+        localStorage.setItem("tutorial_"+props.method, true)
+        startTimer()
+    }
+    function checkTutorial() {
+        if (!tutorialDone && step.value === PR_STEPS.GAME) {
+            // get the data from clusters/binary search
+            if (clusters.value) {
+                clusters.value.startTutorial()
+            // } else if (binsearch.value) {
+                // binsearch.value.startTutorial()
+            }
+        }
+    }
+
     function setFirstStep() {
         if (gameData.comprehension.length > 0) {
             step.value = PR_STEPS.COMPREHENSION
@@ -243,6 +270,7 @@
             step.value = PR_STEPS.GAME
         }
         stepIndex.value = 1
+        setTimeout(checkTutorial, 200)
     }
 
     function nextStep(onTimerEnd=false) {
@@ -254,6 +282,7 @@
                 } else {
                     step.value = PR_STEPS.GAME
                     resetTimer()
+                    setTimeout(checkTutorial, 200)
                 }
                 break
             case PR_STEPS.GAME: {
@@ -408,7 +437,9 @@
 
         const baseSteps = [
             {
-                title:  props.method === 1 ? "find similar "+app.itemName+"s" : "answer tag questions",
+                title:  props.method === GAME_IDS.CLUSTERS ?
+                    "find similar "+app.itemName+"s" :
+                    "answer tag questions",
                 step: PR_STEPS.GAME
             },{
                 title: "select similar "+app.itemName+"s",
@@ -578,6 +609,10 @@
 
     async function init () {
         reset()
+
+        inTutorial = false
+        tutorialDone = localStorage.getItem("tutorial_"+props.method) === true
+
         if (!target.value) {
             toast.warning("missing target")
             return goHome(500)

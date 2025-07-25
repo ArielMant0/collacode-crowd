@@ -9,8 +9,6 @@ import vuetify from './vuetify'
 import pinia from '@/stores'
 import router from '@/router'
 import Toast from "vue-toastification";
-// Import the CSS or use your own!
-import "vue-toastification/dist/index.css";
 
 export function registerPlugins (app) {
   app
