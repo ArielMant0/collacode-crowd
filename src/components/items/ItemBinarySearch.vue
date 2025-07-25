@@ -1,29 +1,28 @@
 <template>
     <div style="width: min-content;" class="pa-2">
         <div>
-            <div style="text-align: center;">
-                <v-btn
-                    class="mb-4"
-                    :color="split.length > 0 ? 'primary' : 'default'"
-                    :disabled="split.length === 0"
-                    @click="submit(true)">
-                    next step
-                </v-btn>
-            </div>
+            <div v-for="(obj, idx) in split" :key="obj.tag.id" class="binsearch-q">
 
-            <div v-for="(obj, idx) in split" :key="obj.tag.id">
-                <div style="text-align: center;">
+                <div style="text-align: center;" class="qtext">
                     <div v-if="idx === 0">
                         Does this tag apply to the {{ app.itemName }}?
                     </div>
                     <div class="mt-4 mb-2 d-flex align-center justify-center">
                         <h4>{{ obj.tag.name }}</h4>
-                        <v-btn v-if="idx === 0" variant="outlined" class="ml-2" icon="mdi-sync" size="small" density="comfortable" @click="rerollTag"/>
+                        <v-btn v-if="idx === 0"
+                            variant="outlined"
+                            class="ml-2"
+                            id="reroll-btn"
+                            icon="mdi-sync"
+                            size="small"
+                            density="comfortable"
+                            @click="rerollTag"/>
                     </div>
                     <p>{{ obj.tag.description }}</p>
                 </div>
 
-                <div class="d-flex mt-8">
+                <div class="d-flex mt-8 item-groups">
+
                     <div class="d-flex align-center pa-1 rounded" :style="{ border: '2px solid '+answerColor(true, obj.hasTag) }">
                         <div class="mr-1">
                             <ItemTeaser v-for="exId in obj.examplesYes"
@@ -34,12 +33,14 @@
                                 prevent-context
                                 class="mb-1"/>
                         </div>
-                        <div class="d-flex flex-column align-center" :style="{ minWidth: '300px' }">
+                        <div class="d-flex flex-column align-center answer-yes" :style="{ minWidth: '300px' }">
                             <v-btn
+                                class="yes-btn"
                                 density="comfortable"
                                 :color="GR_COLOR.GREEN"
                                 @click="choose(true, idx)">yes</v-btn>
                             <SpiralBubble
+                                class="items-yes"
                                 :width="obj.size"
                                 :height="obj.size"
                                 :highlights="obj.examplesYes"
@@ -51,12 +52,14 @@
                     </div>
 
                     <div class="d-flex align-center pa-2 rounded" :style="{ border: '2px solid '+answerColor(false, obj.hasTag) }">
-                        <div class="d-flex flex-column align-center" :style="{ minWidth: '300px' }">
+                        <div class="d-flex flex-column align-center answer-no" :style="{ minWidth: '300px' }">
                             <v-btn
+                                class="no-btn"
                                 density="comfortable"
                                 :color="GR_COLOR.RED"
                                 @click="choose(false, idx)">no</v-btn>
                             <SpiralBubble
+                                class="items-no"
                                 :width="obj.size"
                                 :height="obj.size"
                                 :highlights="obj.examplesNo"
@@ -83,7 +86,7 @@
 
 <script setup>
     import * as d3 from 'd3'
-    import { ref, onMounted } from 'vue';
+    import { ref, onMounted, onBeforeUnmount } from 'vue';
     import DM from '@/use/data-manager';
     import { useApp } from '@/stores/app';
     import { GR_COLOR } from '@/stores/games';
@@ -92,11 +95,22 @@
     import { useTooltip } from '@/stores/tooltip';
     import SpiralBubble from '../vis/SpiralBubble.vue';
     import ItemTeaser from './ItemTeaser.vue';
+    import { useShepherd } from 'vue-shepherd'
     import { useTheme } from 'vuetify';
 
     const app = useApp()
     const tt = useTooltip()
     const theme = useTheme()
+
+    const tutorial = useShepherd({
+        useModalOverlay: true,
+        defaultStepOptions: {
+            classes: 'shadow-md bg-surface-light arrow-primary',
+            scrollTo: true
+        }
+    })
+    tutorial.on("complete", onEndTutorial)
+    tutorial.on("cancel", onCancelTutorial)
 
     const props = defineProps({
         imageWidth: {
@@ -124,10 +138,10 @@
         numExamples: {
             type: Number,
             default: 5
-        }
+        },
     })
 
-    const emit = defineEmits(["submit"])
+    const emit = defineEmits(["submit", "tutorial-start", "tutorial-complete", "tutorial-cancel"])
 
     const inventory = ref([])
     const split = ref([])
@@ -173,6 +187,141 @@
             return answer ? GR_COLOR.GREEN : GR_COLOR.RED
         }
         return theme.current.value.colors.background
+    }
+
+
+        /**
+     * Prepare the guided tour tutorial
+     */
+    function prepareTutorial() {
+        const single = app.itemName
+        const plural = single + "s"
+        tutorial.addSteps([
+            {
+                id: "show-target",
+                attachTo: {
+                    element: "#sim-target",
+                    on: "bottom"
+                },
+                buttons: [
+                    { text: "close tutorial", action: tutorial.cancel, classes: "bg-error" },
+                    { text: "next", action: tutorial.next, classes: "bg-primary" },
+                ],
+                text: `This is your target ${single}. Your task is to find
+                    <b>other similar ${plural}</b> from our dataset by answers a few questions.`
+            },{
+                id: "show-question",
+                attachTo: {
+                    element: ".binsearch-q",
+                    on: "top"
+                },
+                buttons: [{ text: "next", action: tutorial.next }],
+                text: `You will be asked a feq questions about the target ${single}.
+                    Each questions reduces the number of ${plural} by roughly half.
+                    When you only have ${props.maxItems} ${plural} left, we automatically
+                    proceed to the next step.`
+            },{
+                id: "show-text",
+                attachTo: {
+                    element: () => getLast(document.querySelectorAll(".qtext")),
+                    on: "top"
+                },
+                buttons: [{ text: "next", action: tutorial.next, classes: "bg-primary" }],
+                text: `Each question asks you about a specific <b>tag</b>, providing the tag name
+                    and description. You need to decide if the tag applies to the target ${single}.`
+            },{
+                id: "click-yes",
+                attachTo: {
+                    element: () => getLast(document.querySelectorAll(".yes-btn")),
+                    on: "bottom"
+                },
+                buttons: [{ text: "next", action: choose.bind(null, true, 0), classes: "bg-primary" }],
+                text: "Let's try by answering <b>yes</b>!"
+            },{
+                id: "reroll",
+                attachTo: {
+                    element: "#reroll-btn",
+                    on: "bottom"
+                },
+                buttons: [{ text: "next", action: rerollTag, classes: "bg-primary" }],
+                text: `If you don't like or understand the current question tag, you can roll
+                    for a different tag by clicking on this button. Try it out!`
+            },{
+                id: "reroll-result",
+                attachTo: {
+                    element: ".binsearch-q",
+                    on: "bottom"
+                },
+                buttons: [{ text: "next", action: tutorial.next, classes: "bg-primary" }],
+                text: `As you can see, the question and the grouping of ${plural} changed.`
+            },{
+                id: "click-no",
+                attachTo: {
+                    element: () => getLast(document.querySelectorAll(".no-btn")),
+                    on: "bottom"
+                },
+                buttons: [{ text: "next", action: choose.bind(null, false, 1), classes: "bg-primary" }],
+                text: `You can change a previous answer by clicking on a different answer button.
+                    Try changing your answer to <b>no</b>!`
+            },{
+                id: "submit",
+                attachTo: {
+                    element: "#submit-btn",
+                    on: "bottom"
+                },
+                buttons: [{ text: "done", action: tutorialClear, classes: "bg-primary" }],
+                text: `When you are already happy with your list of similar ${plural},
+                    click here to go to the next step.`
+            }
+        ])
+    }
+
+    function getLast(list) {
+        const len = list.length
+        return len > 0 ? list[len-1] : null
+    }
+
+    function startTutorial() {
+        // emit event so that things like timers can be cancelled
+        emit("tutorial-start")
+        tutorial.start()
+    }
+
+    function onEndTutorial() {
+        // emit event so that things like timers can be started again
+        emit("tutorial-complete")
+    }
+
+    function onCancelTutorial() {
+        // emit event so that things like timers can be started again
+        emit("tutorial-cancel")
+    }
+
+    function tutorialClear() {
+        tutorial.complete()
+        clearAnswers()
+    }
+
+    function clearAnswers() {
+        // add items back to list of available items
+        for (let i = 0; i < split.value.length; ++i) {
+            const s = split.value.at(i)
+            s.with.forEach(id => itemsLeft.add(id))
+            s.without.forEach(id => itemsLeft.add(id))
+        }
+
+        // reset available tags
+        tagsToUse.forEach(t => {
+            if (!app.excludedTags.has(t.name)) {
+                tagsLeft.add(t.id)
+            }
+        })
+
+        // clear splits
+        split.value = []
+
+        // get the next tag
+        nextTag()
     }
 
     function submit(fromClick=false) {
@@ -233,6 +382,13 @@
 
             last.examplesYes = examplesYes.map(idx => itemsToUse[idx].id)
             last.examplesNo = examplesNo.map(idx => itemsToUse[idx].id)
+
+            if (tutorial.isActive()) {
+                const sid = tutorial.getCurrentStep()
+                if (sid.id === "reroll") {
+                    setTimeout(() => tutorial.next(), 250)
+                }
+            }
         }
     }
 
@@ -333,6 +489,13 @@
         })
         app.addInteraction("step1")
 
+        if (tutorial.isActive()) {
+            const sid = tutorial.getCurrentStep()
+            if (sid.id === "click-yes" || sid.id === "click-no") {
+                setTimeout(() => tutorial.next(), 250)
+            }
+        }
+
         // remove following tags if we clicked on a previous tag
         if (index > 0) {
             // add items back to list of available items
@@ -392,9 +555,16 @@
         }
     }
 
-    defineExpose({ reset, getSubmitData })
+    defineExpose({ reset, getSubmitData, startTutorial })
+
+    onBeforeUnmount(() => {
+        if (tutorial.isActive()) {
+            tutorial.cancel()
+        }
+    })
 
     onMounted(function() {
+        prepareTutorial()
         read()
         reset(nextTag)
     })

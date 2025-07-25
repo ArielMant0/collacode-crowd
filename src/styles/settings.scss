@@ -207,6 +207,33 @@ $v-theme-info: #1976D2;
   @include scrollbars(#444, #222);
 }
 
+.v-theme--customDark .shepherd-arrow:before {
+  background-color: white;
+  outline: 1px solid black;
+}
+.v-theme--customLight .shepherd-arrow:before {
+  background-color: black;
+  outline: 1px solid white;
+}
+
+.arrow-primary > .shepherd-arrow:before {
+  background-color: $v-theme-primary;
+  outline: 1px solid black;
+}
+.arrow-secondary > .shepherd-arrow:before {
+  background-color: $v-theme-secondary;
+  outline: 1px solid black;
+}
+.arrow-black > .shepherd-arrow:before {
+  background-color: black;
+  outline: 1px solid white;
+}
+.arrow-white > .shepherd-arrow:before {
+  background-color: white;
+  outline: 1px solid black;
+}
+
+
 .prevent-select {
   -webkit-user-select: none; /* Safari */
   -ms-user-select: none; /* IE 10 and IE 11 */

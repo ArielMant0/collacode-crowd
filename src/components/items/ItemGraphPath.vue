@@ -1,17 +1,6 @@
 <template>
     <div style="width: min-content" class="pa-2">
 
-        <div style="text-align: center;">
-            <v-btn
-                id="submit-btn"
-                :color="selectionItems.length > 0 ? 'primary' : 'default'"
-                class="mb-4"
-                :disabled="selectionItems.length === 0"
-                @click="submit">
-                next step
-            </v-btn>
-        </div>
-
         <div class="d-flex justify-center align-center mb-2">
             <v-btn
                 color="error"
@@ -107,7 +96,7 @@
 
 <script setup>
     import * as d3 from 'd3'
-    import { ref, onMounted, reactive, computed } from 'vue';
+    import { ref, onMounted, reactive, computed, onUnmounted, onBeforeUnmount } from 'vue';
     import DM from '@/use/data-manager';
     import { getItemClusters } from '@/use/clustering';
     import ItemSimilarityRow from './ItemSimilarityRow.vue';
@@ -115,7 +104,7 @@
     import ItemTeaser from './ItemTeaser.vue';
     import { useTheme } from 'vuetify';
     import { useShepherd } from 'vue-shepherd'
-import { randomInteger } from '@/use/random';
+    import { randomInteger } from '@/use/random';
 
     const app = useApp()
     const theme = useTheme()
@@ -123,12 +112,12 @@ import { randomInteger } from '@/use/random';
     const tutorial = useShepherd({
         useModalOverlay: true,
         defaultStepOptions: {
-            classes: 'shadow-md bg-surface-light',
+            classes: 'shadow-md bg-surface-light arrow-primary',
             scrollTo: true
         }
     })
     tutorial.on("complete", onEndTutorial)
-    tutorial.on("cancel", onEndTutorial)
+    tutorial.on("cancel", onCancelTutorial)
 
     const props = defineProps({
         numClusters: {
@@ -156,7 +145,7 @@ import { randomInteger } from '@/use/random';
         }
     })
 
-    const emit = defineEmits(["submit", "tutorial-start", "tutorial-stop"])
+    const emit = defineEmits(["submit", "tutorial-start", "tutorial-complete", "tutorial-cancel"])
 
     const selection = ref(new Array(props.maxSelect))
     const selectionItems = computed(() => selection.value.filter(d => d !== null && d !== undefined))
@@ -297,15 +286,6 @@ import { randomInteger } from '@/use/random';
         return final
     }
 
-    function submit() {
-        logAction({
-            desc: "submit suggested items",
-            items: candidates.value
-        })
-        app.addInteraction("step1")
-        emit("submit", candidateItems, log)
-    }
-
     function matchValue(mindist, maxdist, size, similar, pow=4) {
         // const v = similar > 0.5 ? 1-mindist : mindist
         return similar > 0.5 ?
@@ -330,7 +310,7 @@ import { randomInteger } from '@/use/random';
         })
         app.addInteraction("step1")
         if (tutorial.isActive()) {
-            tutorial.next()
+            setTimeout(() => tutorial.next(), 250)
         }
         nextClusters()
     }
@@ -349,8 +329,8 @@ import { randomInteger } from '@/use/random';
                     on: "bottom"
                 },
                 buttons: [
-                    { text: "skip tutorial", action: tutorial.cancel },
-                    { text: "next", action: tutorial.next },
+                    { text: "close tutorial", action: tutorial.cancel, classes: "bg-error" },
+                    { text: "next", action: tutorial.next, classes: "bg-primary" },
                 ],
                 text: `This is your target ${single}. Your task is to find
                     <b>other similar ${plural}</b> from our dataset.`
@@ -360,17 +340,17 @@ import { randomInteger } from '@/use/random';
                     element: "#cluster-options",
                     on: "bottom"
                 },
-                buttons: [{ text: "next", action: tutorial.next }],
+                buttons: [{ text: "next", action: tutorial.next, classes: "bg-primary" }],
                 text: `These are different groups of ${plural} from our dataset.
                     Click or drag any ${single} to get a list of similar ${plural} shown below.
                     You can select up to 3 ${plural} to get suggestions of similar ${plural}.`
             },{
                 id: "click-item",
                 attachTo: {
-                    element: "#cluster-options .item-teaser:first-of-type",
+                    element: "#cluster-options .item-teaser",
                     on: "right-start"
                 },
-                buttons: [{ text: "next", action: tutorialAdd }],
+                buttons: [{ text: "next", action: tutorialAdd, classes: "bg-primary"}],
                 text: `Click on this ${single} to get up to ${props.maxItems} suggestions.`
             },{
                 id: "show-collected",
@@ -378,18 +358,27 @@ import { randomInteger } from '@/use/random';
                     element: "#collected-items",
                     on: "top"
                 },
-                buttons: [{ text: "next", action: tutorialAddFromList }],
+                buttons: [{ text: "next", action: tutorialAddFromList, classes: "bg-primary" }],
                 text: `These are now your collected similar ${plural} from which you will select
                     the most similar ${plural} to your target in the next step. You can add
                     other ${plural} by clicking on a different ${single} here or in a group.
                     Click on another ${single} from this list!`
             },{
+                id: "collected-update",
+                attachTo: {
+                    element: "#collected-items",
+                    on: "top"
+                },
+                buttons: [{ text: "next", action: tutorial.next, classes: "bg-primary" }],
+                text: `Now your collection split in two, showing a total of ${props.maxItems}
+                    similar ${plural} for your selected ${plural}.`
+            },{
                 id: "remove-item",
                 attachTo: {
-                    element: ".seed:first-of-type",
-                    on: "right"
+                    element: ".seed",
+                    on: "top"
                 },
-                buttons: [{ text: "next", action: tutorialRemove }],
+                buttons: [{ text: "next", action: tutorialRemove, classes: "bg-primary" }],
                 text: `Click on this ${single} again to remove it from your selection.`
             },{
                 id: "reroll",
@@ -397,16 +386,24 @@ import { randomInteger } from '@/use/random';
                     element: "#reroll-btn",
                     on: "bottom"
                 },
-                buttons: [{ text: "next", action: reroll }],
+                buttons: [{ text: "next", action: reroll, classes: "bg-primary" }],
                 text: `Click here to get different ${single} groups.
                     Groups with selected ${plural} will stay, no need to worry.`
+            },{
+                id: "reroll-result",
+                attachTo: {
+                    element: "#cluster-options",
+                    on: "bottom"
+                },
+                buttons: [{ text: "next", action: tutorial.next, classes: "bg-primary" }],
+                text: `As you can see, some groups changed while selected groups remained.`
             },{
                 id: "submit",
                 attachTo: {
                     element: "#submit-btn",
                     on: "bottom"
                 },
-                buttons: [{ text: "done", action: tutorialClear }],
+                buttons: [{ text: "done", action: tutorialClear, classes: "bg-primary" }],
                 text: `When you are happy with your list of similar ${plural}, click
                     here to go to the next step.`
             }
@@ -418,9 +415,14 @@ import { randomInteger } from '@/use/random';
         tutorial.start()
     }
 
-    function onEndTutorial() {
+   function onEndTutorial() {
         // emit event so that things like timers can be started again
-        emit("tutorial-stop")
+        emit("tutorial-complete")
+    }
+
+    function onCancelTutorial() {
+        // emit event so that things like timers can be started again
+        emit("tutorial-cancel")
     }
 
     // add the first item
@@ -589,7 +591,7 @@ import { randomInteger } from '@/use/random';
         if (tutorial.isActive()) {
             const sid = tutorial.getCurrentStep()
             if (sid.id === 'click-item' || sid.id === 'show-collected' || sid.id === 'remove-item') {
-                tutorial.next()
+                setTimeout(() => tutorial.next(), 150)
             }
         }
     }
@@ -695,6 +697,12 @@ import { randomInteger } from '@/use/random';
     }
 
     defineExpose({ reset, getSubmitData, startTutorial })
+
+    onBeforeUnmount(() => {
+        if (tutorial.isActive()) {
+            tutorial.cancel()
+        }
+    })
 
     onMounted(function() {
         prepareTutorial()

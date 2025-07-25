@@ -20,11 +20,24 @@
             </v-stepper>
         </div>
 
+        <div v-if="state === STATES.INGAME && step === PR_STEPS.GAME" style="position: absolute; top: 50px; right: 10px;">
+            <v-tooltip text="start the tutorial" location="left" open-delay="300">
+                <template v-slot:activator="{ props }">
+                    <v-btn v-bind="props"
+                        icon="mdi-help-circle"
+                        @click="startTutorial"
+                        class="mt-2"
+                        density="compact"
+                        variant="flat"/>
+                </template>
+            </v-tooltip>
+        </div>
+
         <div v-if="state === STATES.INGAME || state === STATES.END" class="d-flex flex-column align-center" style="width: 100%; max-width: 100%;">
 
-            <div class="d-flex align-center mb-4">
+            <div class="d-flex align-center justify-center mb-4">
                 <div v-if="notInCheck" class="d-flex flex-column align-center">
-                    <div>{{ gameData.target.name }}</div>
+                    <div style="max-width: 300px;" class="text-dots">{{ gameData.target.name }}</div>
                     <ItemTeaser
                         element-id="sim-target"
                         :item="gameData.target"
@@ -35,7 +48,12 @@
                         :prevent-context="state !== STATES.END"/>
                 </div>
 
-                <Timer v-if="showTimer" ref="timer" class="ml-8 mt-4" :time-in-sec="timeInSec" @end="nextStep(true)"/>
+                <div v-if="state === STATES.INGAME" class="ml-8">
+                    <Timer v-if="showTimer" ref="timer" class="mb-2" :time-in-sec="timeInSec" @end="nextStep(true)"/>
+                    <v-btn id="submit-btn" color="primary" @click="nextStep(false)" block>
+                        {{ isLastStep ? 'submit' : 'next step' }}
+                    </v-btn>
+                </div>
             </div>
         </div>
 
@@ -50,31 +68,29 @@
             <div v-else-if="step === PR_STEPS.GAME">
                 <ItemGraphPath v-if="method === GAME_IDS.CLUSTERS"
                     ref="clusters"
-                    @submit="setCandidates"
+                    @submit="nextStep(false)"
                     @tutorial-start="onTutorialStart"
-                    @tutorial-stop="onTutorialStop"
+                    @tutorial-complete="onTutorialStop(true)"
+                    @tutorial-cancel="onTutorialStop(false)"
                     :max-items="30"
                     :target="gameData.target.id"/>
                 <ItemBinarySearch v-else
                     ref="binsearch"
                     :min-items="15"
                     :max-items="30"
-                    @submit="setCandidates"
+                    @submit="nextStep(false)"
+                    @tutorial-start="onTutorialStart"
+                    @tutorial-complete="onTutorialStop(true)"
+                    @tutorial-cancel="onTutorialStop(false)"
                     :target="gameData.target.id"/>
             </div>
             <div v-else-if="step === PR_STEPS.SELECT && state === STATES.INGAME" class="mb-8" style="width: 95%; max-width: 100%;">
-                <div style="text-align: center;">
-                    <v-btn class="mb-2" color="primary" @click="nextStep(false)">next step</v-btn>
-                </div>
                 <ItemTagRecommend
                     :item-limit="10"
                     :items="candidates"
                     @update="setResultItems"/>
             </div>
             <div v-else-if="step === PR_STEPS.REFINE && state === STATES.INGAME" class="mb-8" style="width: 95%; max-width: 100%;">
-                <div style="text-align: center;">
-                    <v-btn class="mb-2" color="primary" @click="nextStep(false)">submit</v-btn>
-                </div>
                 <ItemCustomRecommend
                     :item-limit="10"
                     :target="gameData.target.id"
@@ -163,6 +179,13 @@
     const step = ref(PR_STEPS.COMPREHENSION)
     const stepIndex = ref(1)
     const candidates = ref([])
+    const isLastStep = computed(() => {
+        if (!props.attentionChecks) {
+            return step.value === PR_STEPS.REFINE
+        }
+        return attentionDone && step.value === PR_STEPS.SELECT ||
+            !attentionDone && step.value === PR_STEPS.REFINE
+    })
 
     let ilog = null
     let attentionDone = false, attentionNext = null
@@ -233,9 +256,31 @@
             }
         }
     }
+    function pauseTimer() {
+        if (props.useTimer) {
+            if (timer.value) {
+                timer.value.pause()
+            } else {
+                setTimeout(pauseTimer, 100)
+            }
+        }
+    }
+    function unpauseTimer() {
+        if (props.useTimer) {
+            if (timer.value) {
+                timer.value.unpause()
+            } else {
+                setTimeout(unpauseTimer, 100)
+            }
+        }
+    }
     function stopTimer() {
-        if (timer.value) {
-            timer.value.stop()
+        if (props.useTimer) {
+            if (timer.value) {
+                timer.value.stop()
+            } else {
+                setTimeout(stopTimer, 100)
+            }
         }
     }
     function resetTimer() {
@@ -245,21 +290,24 @@
 
     function onTutorialStart() {
         inTutorial = true
-        stopTimer()
+        pauseTimer()
     }
-    function onTutorialStop() {
+    function onTutorialStop(completed) {
         inTutorial = false
         localStorage.setItem("tutorial_"+props.method, true)
-        startTimer()
+        unpauseTimer()
     }
     function checkTutorial() {
         if (!tutorialDone && step.value === PR_STEPS.GAME) {
-            // get the data from clusters/binary search
-            if (clusters.value) {
-                clusters.value.startTutorial()
-            // } else if (binsearch.value) {
-                // binsearch.value.startTutorial()
-            }
+            startTutorial()
+        }
+    }
+    function startTutorial() {
+        // get the data from clusters/binary search
+        if (clusters.value) {
+            clusters.value.startTutorial()
+        } else if (binsearch.value) {
+            binsearch.value.startTutorial()
         }
     }
 
@@ -286,18 +334,16 @@
                 }
                 break
             case PR_STEPS.GAME: {
-                if (onTimerEnd) {
-                    let data
-                    // get the data from clusters/binary search
-                    if (clusters.value) {
-                        data = clusters.value.getSubmitData()
-                    } else if (binsearch.value) {
-                        data = binsearch.value.getSubmitData()
-                    }
+                let data
+                // get the data from clusters/binary search
+                if (clusters.value) {
+                    data = clusters.value.getSubmitData()
+                } else if (binsearch.value) {
+                    data = binsearch.value.getSubmitData()
+                }
 
-                    if (data) {
-                        setCandidates(data.candidates, data.log)
-                    }
+                if (data) {
+                    setCandidates(data.candidates, data.log)
                 }
 
                 // see if we do the attention check now
@@ -341,6 +387,7 @@
                     if (attentionNext !== null) {
                         step.value = attentionNext
                         attentionNext = null
+                        stepIndex.value++
                         resetTimer()
                     } else {
                         stopGame()
@@ -394,7 +441,6 @@
     function setCandidates(items, logs) {
         candidates.value = items
         ilog = logs
-        nextStep()
     }
 
     function setResultItems(items) {
@@ -611,7 +657,7 @@
         reset()
 
         inTutorial = false
-        tutorialDone = localStorage.getItem("tutorial_"+props.method) === true
+        tutorialDone = Boolean(localStorage.getItem("tutorial_"+props.method)) === true
 
         if (!target.value) {
             toast.warning("missing target")

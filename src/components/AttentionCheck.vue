@@ -1,7 +1,9 @@
 <template>
     <div v-if="ready" class="pa-2">
         <div class="mt-8 mb-8" style="font-size: large; text-align: center;">
-            This is an attention check. Please select the <strong>{{ target.color }} {{ target.shape }}</strong>.
+            This is an attention check.
+            Please select the <strong>{{ target.color }} {{ target.shape }}</strong>
+            <v-icon size="sm" class="ml-1 mb-1" :color="target.color">{{ 'mdi-'+target.shape }}</v-icon>
         </div>
         <div class="d-flex align-center" style="min-height: 100px;">
             <v-btn v-for="o in options"

@@ -55,6 +55,8 @@
 
     let int = null, lastSecond = props.timeInSec
 
+    let lastPauseSecs = 0
+
     function tick() {
         timer.value = timeEnd.value.diffNow(["minutes", "seconds"])
         const s = Math.floor(secondsLeft.value)
@@ -86,14 +88,25 @@
         int = requestAnimationFrame(tick)
         emit("start")
     }
+    function togglePause() {
+        if (int === null) {
+            unpause()
+        } else {
+            pause()
+        }
+    }
     function pause() {
         timer.value = timeEnd.value.diffNow(["minutes", "seconds"])
-        if (int === null) {
-            int = requestAnimationFrame(tick)
-            emit("pause")
-        } else {
-            stop("pause")
-        }
+        lastPauseSecs = Math.floor(secondsLeft.value)
+        clear()
+        emit("pause")
+    }
+    function unpause() {
+        timeEnd.value = DateTime.local().plus({ seconds: lastPauseSecs })
+        timer.value = timeEnd.value.diffNow(["minutes", "seconds"])
+        lastPauseSecs = Math.floor(secondsLeft.value)
+        int = requestAnimationFrame(tick)
+        emit("pause")
     }
     function stop(emitName="stop") {
         timer.value = timeEnd.value.diffNow(["minutes", "seconds"])
@@ -110,7 +123,7 @@
 
     onUnmounted(clear)
 
-    defineExpose({ start, pause, stop })
+    defineExpose({ start, pause, unpause, togglePause, stop })
 
 </script>
 
