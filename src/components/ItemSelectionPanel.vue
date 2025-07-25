@@ -6,7 +6,12 @@
         </v-card-title>
         <v-card-text>
 
-            <div class="d-flex align-center justify-space-between ml-4 mr-4">
+            <div
+                class="d-flex align-center ml-4 mr-4"
+                :class="{
+                    'justify-space-between': sortable && numPages > 1,
+                    'justify-end': !sortable && numPages > 1
+                }">
                 <v-btn-toggle v-if="sortable"
                     v-model="sortBy"
                     :mandatory="false"
@@ -79,7 +84,7 @@
         },
         sortable: {
             type: Boolean,
-            default: true
+            default: false
         },
         countTarget: {
             type: Number,
@@ -130,6 +135,7 @@
     })
 
     function applySort() {
+        if (!props.sortable) return
         settings.panelSort[props.subset] = sortBy.value
         items.value.sort((a, b) => {
             switch(sortBy.value) {

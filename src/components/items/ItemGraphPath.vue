@@ -14,13 +14,16 @@
             <v-btn
                 id="reroll-btn"
                 color="primary"
-                class="ml-2"
+                class="ml-2 mr-2"
                 density="comfortable"
                 variant="outlined"
                 prepend-icon="mdi-sync"
                 @click="reroll">
                 reroll
             </v-btn>
+            <v-sheet style="font-size: smaller;" rounded="sm" color="surface-light" class="ml-2 pt-1 pb-1 pl-3 pr-3">
+                {{ clusterLeft.size }} groups left
+            </v-sheet>
         </div>
         <div>
             <div id="cluster-options" class="d-flex align-start justify-center">
@@ -39,9 +42,8 @@
                     @click-item="d => toggleItem(d.id, 'cluster')"/>
             </div>
 
-            <div class="d-flex justify-space-around mt-4 mb-8 pa-2">
+            <div class="d-flex justify-space-around mt-2 mb-4 pa-2">
                 <div v-for="(sel, i) in selection" class="mr-1 ml-1 seed">
-                    <div style="text-align: center;" class="text-caption">{{ app.itemNameCaptial }} {{ i+1 }}</div>
                     <ItemTeaser v-if="sel"
                         :id="sel.id"
                         prevent-open
@@ -96,7 +98,7 @@
 
 <script setup>
     import * as d3 from 'd3'
-    import { ref, onMounted, reactive, computed, onUnmounted, onBeforeUnmount } from 'vue';
+    import { ref, onMounted, reactive, computed, onUnmounted, onBeforeUnmount, onUpdated } from 'vue';
     import DM from '@/use/data-manager';
     import { getItemClusters } from '@/use/clustering';
     import ItemSimilarityRow from './ItemSimilarityRow.vue';
@@ -109,6 +111,7 @@
     const app = useApp()
     const theme = useTheme()
 
+    let tutorialNeedsNext = false
     const tutorial = useShepherd({
         useModalOverlay: true,
         defaultStepOptions: {
@@ -296,12 +299,12 @@
     function resetRerolls() {
         logAction({ desc: "reset rerolls" })
         for (let i = 0; i < clusters.clusters.length; ++i) {
-            if (!clsOrder.selected.has(i)) {
+            // add all clusters except for the ones currently visible
+            if (!clsOrder.selected.has(i) && !clsOrder.list.includes(i)) {
                 clusterLeft.add(i)
             }
         }
         app.addInteraction("step1")
-        nextClusters()
     }
     function reroll() {
         logAction({
@@ -309,9 +312,14 @@
             clusters: clsOrder.list
         })
         app.addInteraction("step1")
+
         if (tutorial.isActive()) {
-            setTimeout(() => tutorial.next(), 250)
+            const sid = tutorial.getCurrentStep()
+            if (sid.id === "reroll") {
+                tutorialNeedsNext = true
+            }
         }
+
         nextClusters()
     }
 
@@ -388,7 +396,7 @@
                 },
                 buttons: [{ text: "next", action: reroll, classes: "bg-primary" }],
                 text: `Click here to get different ${single} groups.
-                    Groups with selected ${plural} will stay, no need to worry.`
+                    Groups with selected ${plural} will stay fixed.`
             },{
                 id: "reroll-result",
                 attachTo: {
@@ -448,6 +456,7 @@
     }
 
     function tutorialClear() {
+        tutorialNeedsNext = false
         tutorial.complete()
         clearSelection()
         resetRerolls()
@@ -591,7 +600,7 @@
         if (tutorial.isActive()) {
             const sid = tutorial.getCurrentStep()
             if (sid.id === 'click-item' || sid.id === 'show-collected' || sid.id === 'remove-item') {
-                setTimeout(() => tutorial.next(), 150)
+                tutorialNeedsNext = true
             }
         }
     }
@@ -620,13 +629,6 @@
             })
             app.addInteraction("step1")
 
-            if (tutorial.isActive()) {
-                const sid = tutorial.getCurrentStep()
-                if (sid.id === 'remove-item') {
-                    tutorial.next()
-                }
-            }
-
             const c = selection.value[index].cluster
             const numCls = selectionItems.value.reduce((acc, d) => acc + (d.cluster === c ? 1 : 0), 0)
             // remove cluster highlight (if this was the only related item)
@@ -634,8 +636,16 @@
                 clsOrder.selected.delete(selection.value[index].cluster)
             }
             selection.value[index] = null
+
             // update candidates for suggestion
             updateCandidates()
+
+            if (tutorial.isActive()) {
+                const sid = tutorial.getCurrentStep()
+                if (sid.id === 'remove-item') {
+                    tutorialNeedsNext = true
+                }
+            }
         }
     }
 
@@ -671,6 +681,7 @@
 
     function reset(update=true) {
         log = []
+        tutorialNeedsNext = false
         clusterLeft.clear()
         itemsToUse = DM.getDataBy("items", d => d.allTags.length > 0 && (!props.target || d.id !== props.target))
         clusters = null
@@ -698,6 +709,12 @@
 
     defineExpose({ reset, getSubmitData, startTutorial })
 
+    onUpdated(() => {
+        if (tutorialNeedsNext) {
+            tutorialNeedsNext = false
+            tutorial.next()
+        }
+    })
     onBeforeUnmount(() => {
         if (tutorial.isActive()) {
             tutorial.cancel()

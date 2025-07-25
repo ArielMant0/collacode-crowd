@@ -86,7 +86,7 @@
 
 <script setup>
     import * as d3 from 'd3'
-    import { ref, onMounted, onBeforeUnmount } from 'vue';
+    import { ref, onMounted, onBeforeUnmount, onUpdated } from 'vue';
     import DM from '@/use/data-manager';
     import { useApp } from '@/stores/app';
     import { GR_COLOR } from '@/stores/games';
@@ -102,6 +102,7 @@
     const tt = useTooltip()
     const theme = useTheme()
 
+    let tutorialNeedsNext = false
     const tutorial = useShepherd({
         useModalOverlay: true,
         defaultStepOptions: {
@@ -215,7 +216,7 @@
                     element: ".binsearch-q",
                     on: "top"
                 },
-                buttons: [{ text: "next", action: tutorial.next }],
+                buttons: [{ text: "next", action: tutorial.next, classes: "bg-primary" }],
                 text: `You will be asked a feq questions about the target ${single}.
                     Each questions reduces the number of ${plural} by roughly half.
                     When you only have ${props.maxItems} ${plural} left, we automatically
@@ -298,6 +299,7 @@
     }
 
     function tutorialClear() {
+        tutorialNeedsNext = false
         tutorial.complete()
         clearAnswers()
     }
@@ -386,7 +388,7 @@
             if (tutorial.isActive()) {
                 const sid = tutorial.getCurrentStep()
                 if (sid.id === "reroll") {
-                    setTimeout(() => tutorial.next(), 250)
+                    tutorialNeedsNext = true
                 }
             }
         }
@@ -489,13 +491,6 @@
         })
         app.addInteraction("step1")
 
-        if (tutorial.isActive()) {
-            const sid = tutorial.getCurrentStep()
-            if (sid.id === "click-yes" || sid.id === "click-no") {
-                setTimeout(() => tutorial.next(), 250)
-            }
-        }
-
         // remove following tags if we clicked on a previous tag
         if (index > 0) {
             // add items back to list of available items
@@ -509,6 +504,13 @@
         }
 
         nextTag()
+
+        if (tutorial.isActive()) {
+            const sid = tutorial.getCurrentStep()
+            if (sid.id === "click-yes" || sid.id === "click-no") {
+                tutorialNeedsNext = true
+            }
+        }
     }
 
     function logAction(obj) {
@@ -529,6 +531,7 @@
 
     function reset(update=true) {
         log = []
+        tutorialNeedsNext = false
         split.value = []
         inventory.value = []
         itemsLeft.clear()
@@ -557,6 +560,12 @@
 
     defineExpose({ reset, getSubmitData, startTutorial })
 
+    onUpdated(() => {
+        if (tutorialNeedsNext) {
+            tutorialNeedsNext = false
+            tutorial.next()
+        }
+    })
     onBeforeUnmount(() => {
         if (tutorial.isActive()) {
             tutorial.cancel()
@@ -566,7 +575,7 @@
     onMounted(function() {
         prepareTutorial()
         read()
-        reset(nextTag)
+        reset()
     })
 
 </script>

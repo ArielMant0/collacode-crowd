@@ -102,6 +102,7 @@
         emit("pause")
     }
     function unpause() {
+        clear()
         timeEnd.value = DateTime.local().plus({ seconds: lastPauseSecs })
         timer.value = timeEnd.value.diffNow(["minutes", "seconds"])
         lastPauseSecs = Math.floor(secondsLeft.value)

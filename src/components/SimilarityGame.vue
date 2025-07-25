@@ -1,26 +1,23 @@
 <template>
     <div>
+        <div v-if="state === STATES.INGAME && notInCheck" style="max-width: 300px; position: absolute; top: 60px; left: 5px;">
+            <v-stepper-vertical flat :model-value="stepIndex" class="mr-4 cursor-default" hide-actions>
+                <template #default>
+                    <v-stepper-vertical-item  v-for="(s, idx) in gameData.steps"
+                        bg-color="transparent"
+                        :title="s.title"
+                        :value="idx+1"
+                        color="primary text-wrap"
+                        :complete="s.step < step"/>
+                </template>
+            </v-stepper-vertical>
+        </div>
+
         <div v-if="state === STATES.START"class="d-flex align-center justify-center">
             <LoadingScreen/>
         </div>
 
-        <div v-if="state === STATES.INGAME && notInCheck" class="d-flex justify-center">
-            <v-stepper flat :model-value="stepIndex" style="min-width: 85%; max-width: 95%;" class="mb-4">
-                <v-stepper-header>
-                    <template v-for="(s, idx) in gameData.steps">
-                        <v-stepper-item
-                            :title="s.title"
-                            :value="idx+1"
-                            color="primary"
-                            :complete="s.step < step"/>
-
-                        <v-divider v-if="idx < gameData.steps.length-1"></v-divider>
-                    </template>
-                </v-stepper-header>
-            </v-stepper>
-        </div>
-
-        <div v-if="state === STATES.INGAME && step === PR_STEPS.GAME" style="position: absolute; top: 50px; right: 10px;">
+        <div v-if="state === STATES.INGAME && step === PR_STEPS.GAME" style="position: absolute; top: 60px; right: 10px;">
             <v-tooltip text="start the tutorial" location="left" open-delay="300">
                 <template v-slot:activator="{ props }">
                     <v-btn v-bind="props"
@@ -139,7 +136,6 @@
                     </div>
                 </div>
             </div>
-
         </div>
     </div>
 </template>
@@ -183,8 +179,8 @@
         if (!props.attentionChecks) {
             return step.value === PR_STEPS.REFINE
         }
-        return attentionDone && step.value === PR_STEPS.SELECT ||
-            !attentionDone && step.value === PR_STEPS.REFINE
+        return attentionDone && step.value === PR_STEPS.REFINE ||
+            !attentionDone && step.value === PR_STEPS.ATTENTION
     })
 
     let ilog = null
@@ -349,7 +345,6 @@
                 // see if we do the attention check now
                 if (!attentionDone && props.attentionChecks && Math.random() > 0.75) {
                     step.value = PR_STEPS.ATTENTION
-                    attentionDone = true
                     attentionNext = PR_STEPS.SELECT
                 } else {
                     stepIndex.value++
@@ -361,7 +356,6 @@
             case PR_STEPS.SELECT:
                 if (!attentionDone && props.attentionChecks && Math.random() > 0.5) {
                     step.value = PR_STEPS.ATTENTION
-                    attentionDone = true
                     attentionNext = PR_STEPS.REFINE
                 } else {
                     stepIndex.value++
@@ -372,7 +366,6 @@
             case PR_STEPS.REFINE:
                 if (!attentionDone && props.attentionChecks) {
                     step.value = PR_STEPS.ATTENTION
-                    attentionDone = true
                     attentionNext = null
                     resetTimer()
                 } else {
@@ -380,6 +373,7 @@
                 }
                 break
             case PR_STEPS.ATTENTION:
+                attentionDone = true
                 if (onTimerEnd) {
                     // user did not complete attention check in time
                     testAttention(false)
