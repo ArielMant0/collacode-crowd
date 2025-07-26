@@ -41,7 +41,7 @@
             default: 200
         },
         dataColors: {
-            type: Array,
+            type: Object,
         },
         imageThreshold: {
             type: Number,
@@ -72,7 +72,7 @@
 
     function getColor(d, set, high) {
         if (props.dataColors !== undefined) {
-            return props.dataColors[d.index]
+            return props.dataColors[d.id] ? props.dataColors[d.id] : props.color
         }
         return set.has(d.id) ? props.selectedColor : (high.has(d.id) ? props.highlightsColor : props.color)
     }

@@ -746,6 +746,7 @@
     }
 
     function logAction(obj) {
+        obj.timestamp = Date.now()
         log.push(obj)
     }
 

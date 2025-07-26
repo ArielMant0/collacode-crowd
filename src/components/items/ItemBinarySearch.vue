@@ -25,12 +25,14 @@
 
                     <div class="d-flex align-center pa-1 rounded" :style="{ border: '2px solid '+answerColor(true, obj.hasTag) }">
                         <div class="mr-1">
-                            <ItemTeaser v-for="exId in obj.examplesYes"
+                            <ItemTeaser v-for="(exId, j) in obj.examplesYes"
                                 :id="exId"
                                 :width="obj.width"
                                 :height="obj.height"
                                 prevent-click
                                 prevent-context
+                                :border-size="3"
+                                :border-color="obj.examplesYesColors[j]"
                                 class="mb-1"/>
                         </div>
                         <div class="d-flex flex-column align-center answer-yes" :style="{ minWidth: '300px' }">
@@ -46,6 +48,7 @@
                                 :highlights="obj.examplesYes"
                                 :highlights-color="theme.current.value.colors.secondary"
                                 @hover="onHover"
+                                :data-colors="obj.colorsYes"
                                 :selected="target ? [target] : []"
                                 :data="obj.with.map(idx => itemsToUse[idx])"/>
                         </div>
@@ -65,14 +68,17 @@
                                 :highlights="obj.examplesNo"
                                 :highlights-color="theme.current.value.colors.secondary"
                                 @hover="onHover"
+                                :data-colors="obj.colorsNo"
                                 :selected="target ? [target] : []"
                                 :data="obj.without.map(idx => itemsToUse[idx])"/>
                         </div>
                         <div class="ml-1">
-                            <ItemTeaser v-for="exId in obj.examplesNo"
+                            <ItemTeaser v-for="(exId, j) in obj.examplesNo"
                                 :id="exId"
                                 :width="obj.width"
                                 :height="obj.height"
+                                :border-size="3"
+                                :border-color="obj.examplesNoColors[j]"
                                 prevent-click
                                 prevent-context
                                 class="mb-1"/>
@@ -97,6 +103,7 @@
     import ItemTeaser from './ItemTeaser.vue';
     import { useShepherd } from 'vue-shepherd'
     import { useTheme } from 'vuetify';
+    import { getItemClusters } from '@/use/clustering';
 
     const app = useApp()
     const tt = useTooltip()
@@ -151,6 +158,8 @@
     let itemsToUse, tagsToUse
     const itemsLeft = new Set()
     const tagsLeft = new Set()
+
+    let allClusters
 
 
     function getImageHeight(n, m) {
@@ -360,6 +369,44 @@
             })
 
             const last = split.value.at(0)
+
+            let examplesYes, examplesNo
+            // redo the clustering
+            if (split.value.length === 1) {
+                const c1 = getItemClusters(withTag.map(idx => itemsToUse[idx]))
+                const c2 = getItemClusters(without.map(idx => itemsToUse[idx]))
+
+                const clustersYes = []
+                const clustersNo = []
+                allClusters = []
+                for (let i = 0; i < props.numExamples; ++i) {
+                    if (i < c1.clusters.length) {
+                        clustersYes.push(c1.clusters[i].map(dd => itemsToUse.findIndex(d => d.id === dd.id)))
+                        allClusters.push(clustersYes.at(-1))
+                    }
+                    if (i < c2.clusters.length) {
+                        clustersNo.push(c2.clusters[i].map(dd => itemsToUse.findIndex(d => d.id === dd.id)))
+                        allClusters.push(clustersNo.at(-1))
+                    }
+
+                }
+                examplesYes = clustersYes.map(list => list[0])
+                examplesNo = clustersNo.map(list => list[0])
+            } else {
+                const numEx = Math.max(last.examplesYes.length, last.examplesNo.length)
+                // get random examples
+                examplesYes = withTag.length > numEx ?
+                    randomChoice(withTag, numEx) :
+                    withTag
+
+                examplesNo = without.length > numEx ?
+                    randomChoice(without, numEx) :
+                    without
+            }
+
+            withTag.sort((a, b) => getCluster(b) - getCluster(a))
+            without.sort((a, b) => getCluster(b) - getCluster(a))
+
             logAction({
                 desc: "reroll",
                 step: split.value.length,
@@ -367,24 +414,19 @@
                 with: withTag.map(i => itemsToUse[i].id),
                 without: without.map(i => itemsToUse[i].id),
             })
+
             last.rerolls.push(last.tag)
             last.hasTag = null
             last.tag = splitTag
             last.with = withTag
             last.without = without
-
-            const numEx = Math.max(last.examplesYes.length, last.examplesNo.length)
-            // get random examples
-            const examplesYes = withTag.length > numEx ?
-                randomChoice(withTag, numEx) :
-                withTag
-
-            const examplesNo = without.length > numEx ?
-                randomChoice(without, numEx) :
-                without
+            last.colorsYes = getColorsByCluster(withTag)
+            last.colorsNo = getColorsByCluster(without)
 
             last.examplesYes = examplesYes.map(idx => itemsToUse[idx].id)
             last.examplesNo = examplesNo.map(idx => itemsToUse[idx].id)
+            last.examplesYesColors = examplesYes.map(idx => getClusterColor(getCluster(idx)))
+            last.examplesNoColors = examplesNo.map(idx => getClusterColor(getCluster(idx)))
 
             if (tutorial.isActive()) {
                 const sid = tutorial.getCurrentStep()
@@ -398,10 +440,24 @@
     function itemHasTag(item, tag) {
         return item.allTags.find(t => t.id === tag)
     }
-    function getItemColor(idx, tag) {
-        return itemHasTag(itemsToUse[idx], tag) ?
-            theme.current.value.colors.primary :
-            theme.current.value.colors.error
+    function getCluster(idx) {
+        return allClusters.findIndex(list => list.includes(idx))
+    }
+    function getClusterColor(cidx) {
+        return cidx >= 0 ?
+            (cidx < 9 ? d3.schemeObservable10[cidx] : '#e7298a') :
+            "lightgrey"
+    }
+    function getItemColor(idx) {
+        return getClusterColor(getCluster(idx))
+        // return itemHasTag(itemsToUse[idx], tag) ?
+        //     theme.current.value.colors.primary :
+        //     theme.current.value.colors.error
+    }
+    function getColorsByCluster(indices) {
+        const obj = {}
+        indices.forEach(idx => obj[itemsToUse[idx].id] = getItemColor(idx))
+        return obj
     }
 
     async function nextTag() {
@@ -441,7 +497,7 @@
         // sort tags by difference to 50%
         tagsToUse.sort((a, b) => Math.abs(0.5 - a.freq.at(-1)) - Math.abs(0.5 - b.freq.at(-1)))
 
-        // choose first tag as the one to split on (if there are enough items on both sides)
+        // choose first tag as the one to split on
         const splitTag = tagsToUse[0]
 
         // divide items based on split tag
@@ -457,15 +513,43 @@
 
         tagsLeft.delete(splitTag.id)
 
-        const numEx = Math.max(2, props.numExamples - split.value.length)
-        // get random examples
-        const examplesYes = withTag.length > numEx ?
-            randomChoice(withTag, numEx) :
-            withTag
+        let examplesYes, examplesNo
+        // if we are doing this for the first time, cluster both sides
+        if (split.value.length === 0) {
+            const c1 = getItemClusters(withTag.map(idx => itemsToUse[idx]))
+            const c2 = getItemClusters(without.map(idx => itemsToUse[idx]))
 
-        const examplesNo = without.length > numEx ?
-            randomChoice(without, numEx) :
-            without
+            const clustersYes = []
+            const clustersNo = []
+            allClusters = []
+            for (let i = 0; i < props.numExamples; ++i) {
+                if (i < c1.clusters.length) {
+                    clustersYes.push(c1.clusters[i].map(dd => itemsToUse.findIndex(d => d.id === dd.id)))
+                    allClusters.push(clustersYes.at(-1))
+                }
+                if (i < c2.clusters.length) {
+                    clustersNo.push(c2.clusters[i].map(dd => itemsToUse.findIndex(d => d.id === dd.id)))
+                    allClusters.push(clustersNo.at(-1))
+                }
+
+            }
+            examplesYes = clustersYes.map(list => list[0])
+            examplesNo = clustersNo.map(list => list[0])
+
+        } else {
+            const numEx = Math.max(2, props.numExamples - split.value.length)
+            // get random examples
+            examplesYes = withTag.length > numEx ?
+                randomChoice(withTag, numEx) :
+                withTag
+
+            examplesNo = without.length > numEx ?
+                randomChoice(without, numEx) :
+                without
+        }
+
+        withTag.sort((a, b) => getCluster(b) - getCluster(a))
+        without.sort((a, b) => getCluster(b) - getCluster(a))
 
         // split.value.forEach(s => {
         //     s.colorsYes = s.with.map(idx => getItemColor(idx, splitTag.id))
@@ -478,11 +562,13 @@
             hasTag: null,
             with: withTag,
             without: without,
-            // colorsYes: withTag.map(idx => getItemColor(idx, splitTag.id)),
-            // colorsNo: without.map(idx => getItemColor(idx, splitTag.id)),
+            colorsYes: getColorsByCluster(withTag),
+            colorsNo: getColorsByCluster(without),
             rerolls: [],
             examplesYes: examplesYes.map(idx => itemsToUse[idx].id),
+            examplesYesColors: examplesYes.map(idx => getClusterColor(getCluster(idx))),
             examplesNo: examplesNo.map(idx => itemsToUse[idx].id),
+            examplesNoColors: examplesNo.map(idx => getClusterColor(getCluster(idx))),
             size: getBubbleSize(withTag.length, without.length),
             width: h*2,
             height: h
@@ -534,6 +620,7 @@
     }
 
     function logAction(obj) {
+        obj.timestamp = Date.now()
         log.push(obj)
     }
 
