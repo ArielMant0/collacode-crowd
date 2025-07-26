@@ -1,5 +1,5 @@
 <template>
-    <div style="max-width: 100vw; max-height: 100vh; overflow-y: auto; overflow-x: hidden;">
+    <div>
         <v-overlay v-if="allowOverlay" :model-value="showOverlay" class="d-flex justify-center align-center" persistent>
             <v-progress-circular indeterminate size="64" color="white"></v-progress-circular>
         </v-overlay>

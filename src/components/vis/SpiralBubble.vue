@@ -235,15 +235,13 @@
                 const c = d3.color(getColor(d, set, high))
                 return animate ? c.brighter(1.5) : c
             })
-            .attr("stroke", d => getColor(d, set, high))
+            .attr("stroke", d => d3.color(getColor(d, set, high)).darker(1))
             .attr("r", animate ? 0 : pointRadius)
             .style("cursor", "pointer")
             .on("pointerenter", function(event, d) {
                 emit("hover", d.data, event)
-                const c = d3.color(getColor(d, set, high))
                 d3.select(this)
                     .transition(50)
-                    .attr("stroke", c.darker(2))
                     .attr("r", pointRadius+1)
             })
             .on("pointermove", function(event, d) {
@@ -251,10 +249,8 @@
             })
             .on("pointerleave", function(d) {
                 emit("hover", null, null)
-                const c = d3.color(getColor(d, set, high))
                 d3.select(this)
                     .transition(50)
-                    .attr("stroke", c)
                     .attr("r", pointRadius)
             })
             .on("click", function(event, d) {

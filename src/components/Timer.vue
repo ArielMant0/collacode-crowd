@@ -10,9 +10,9 @@
 </template>
 
 <script setup>
-    import { SOUND, useSounds } from '@/stores/sounds';
     import { DateTime } from 'luxon';
-    import { computed, onUnmounted } from 'vue';
+    import { SOUND, useSounds } from '@/stores/sounds';
+    import { computed, onBeforeUnmount } from 'vue';
 
     const sounds = useSounds()
 
@@ -46,7 +46,7 @@
             default: 10
         },
     })
-    const emit = defineEmits(["start", "pause", "stop", "tick", "end"])
+    const emit = defineEmits(["start", "pause", "stop", "end"])
 
     const timeEnd = ref(DateTime.local())
     const timer = ref(DateTime.local())
@@ -76,7 +76,6 @@
         // emit tick when seconds change
         if (s < lastSecond) {
             lastSecond = s;
-            emit("tick", secondsLeft.value)
         }
         int = requestAnimationFrame(tick)
     }
@@ -86,7 +85,7 @@
         timer.value = timeEnd.value.diffNow(["minutes", "seconds"])
         lastSecond = Math.floor(secondsLeft.value)
         int = requestAnimationFrame(tick)
-        emit("start")
+        emit("start", lastSecond)
     }
     function togglePause() {
         if (int === null) {
@@ -99,7 +98,7 @@
         timer.value = timeEnd.value.diffNow(["minutes", "seconds"])
         lastPauseSecs = Math.floor(secondsLeft.value)
         clear()
-        emit("pause")
+        emit("pause", lastPauseSecs)
     }
     function unpause() {
         clear()
@@ -107,13 +106,15 @@
         timer.value = timeEnd.value.diffNow(["minutes", "seconds"])
         lastPauseSecs = Math.floor(secondsLeft.value)
         int = requestAnimationFrame(tick)
-        emit("pause")
+        emit("pause", lastPauseSecs)
     }
-    function stop(emitName="stop") {
+    function stop(name="stop") {
         timer.value = timeEnd.value.diffNow(["minutes", "seconds"])
         lastSecond = Math.floor(secondsLeft.value)
-        emit(emitName)
         clear()
+        if (name) {
+            emit(name, lastSecond)
+        }
     }
     function clear() {
         if (int !== null) {
@@ -122,7 +123,7 @@
         }
     }
 
-    onUnmounted(clear)
+    onBeforeUnmount(clear)
 
     defineExpose({ start, pause, unpause, togglePause, stop })
 
@@ -130,5 +131,5 @@
 
 <style scoped>
 .wobble-fast {
-  animation: wobble 300ms infinite;
+  animation: wobble 300ms ease-in-out infinite;
 }</style>

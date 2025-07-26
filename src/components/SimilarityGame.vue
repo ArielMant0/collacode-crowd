@@ -47,7 +47,12 @@
 
                 <div v-if="state === STATES.INGAME" class="ml-8">
                     <Timer v-if="showTimer" ref="timer" class="mb-2" :time-in-sec="timeInSec" @end="nextStep(true)"/>
-                    <v-btn id="submit-btn" color="primary" @click="nextStep(false)" block>
+                    <v-btn
+                        id="submit-btn"
+                        :color="allowNext ? 'primary' : 'default'"
+                        :disabled="!allowNext"
+                        @click="nextStep(false)"
+                        block>
                         {{ isLastStep ? 'submit' : 'next step' }}
                     </v-btn>
                 </div>
@@ -65,7 +70,7 @@
             <div v-else-if="step === PR_STEPS.GAME">
                 <ItemGraphPath v-if="method === GAME_IDS.CLUSTERS"
                     ref="clusters"
-                    @submit="nextStep(false)"
+                    @ready="isReady => allowNext = isReady"
                     @tutorial-start="onTutorialStart"
                     @tutorial-complete="onTutorialStop(true)"
                     @tutorial-cancel="onTutorialStop(false)"
@@ -73,9 +78,9 @@
                     :target="gameData.target.id"/>
                 <ItemBinarySearch v-else
                     ref="binsearch"
-                    :min-items="15"
+                    :min-items="20"
                     :max-items="30"
-                    @submit="nextStep(false)"
+                    @ready="isReady => allowNext = isReady"
                     @tutorial-start="onTutorialStart"
                     @tutorial-complete="onTutorialStop(true)"
                     @tutorial-cancel="onTutorialStop(false)"
@@ -172,6 +177,7 @@
     const clusters = useTemplateRef("clusters")
     const binsearch = useTemplateRef("binsearch")
 
+    const allowNext = ref(true)
     const step = ref(PR_STEPS.COMPREHENSION)
     const stepIndex = ref(1)
     const candidates = ref([])
@@ -203,7 +209,10 @@
         },
     })
 
-    const showTimer = computed(() => props.useTimer && state.value === STATES.INGAME)
+    const state = ref(STATES.START)
+    const notInCheck = computed(() => step.value !== PR_STEPS.ATTENTION && step.value !== PR_STEPS.COMPREHENSION)
+    const showTimer = computed(() => props.useTimer && notInCheck.value && state.value === STATES.INGAME)
+
     const timeInSec = computed(() => {
         switch (step.value) {
             // attention check
@@ -216,16 +225,19 @@
 
             // comprehension check
             case PR_STEPS.COMPREHENSION:
-                return 160
+                return 60
 
             // selection phases
-            default:
+            case PR_STEPS.SELECT:
                 return 120
+
+            case PR_STEPS.REFINE:
+            default:
+                return 60
         }
     })
 
     // game related stuff
-    const state = ref(STATES.START)
     const gameData = reactive({
         target: null,
         steps: [],
@@ -235,9 +247,8 @@
         comprehension: []
     })
 
-    const notInCheck = computed(() => step.value !== PR_STEPS.ATTENTION && step.value !== PR_STEPS.COMPREHENSION)
 
-    let inTutorial = false, tutorialDone = false
+    let tutorialDone = false, inTutorial = false
 
     // ---------------------------------------------------------------------
     // Functions
@@ -291,6 +302,7 @@
     function onTutorialStop(completed) {
         inTutorial = false
         localStorage.setItem("tutorial_"+props.method, true)
+        tutorialDone = tutorialDone || completed
         unpauseTimer()
     }
     function checkTutorial() {
@@ -299,6 +311,7 @@
         }
     }
     function startTutorial() {
+        if (inTutorial) return
         // get the data from clusters/binary search
         if (clusters.value) {
             clusters.value.startTutorial()
@@ -309,8 +322,10 @@
 
     function setFirstStep() {
         if (gameData.comprehension.length > 0) {
+            allowNext.value = true
             step.value = PR_STEPS.COMPREHENSION
         } else {
+            allowNext.value = false
             step.value = PR_STEPS.GAME
         }
         stepIndex.value = 1
@@ -324,6 +339,7 @@
                     // the user did not answer the questions in time
                     testComp()
                 } else {
+                    allowNext.value = false
                     step.value = PR_STEPS.GAME
                     resetTimer()
                     setTimeout(checkTutorial, 200)
@@ -343,13 +359,14 @@
                 }
 
                 // see if we do the attention check now
-                if (!attentionDone && props.attentionChecks && Math.random() > 0.75) {
+                if (!attentionDone && props.attentionChecks) { // && Math.random() > 0.75) {
                     step.value = PR_STEPS.ATTENTION
                     attentionNext = PR_STEPS.SELECT
                 } else {
-                    stepIndex.value++
                     step.value = PR_STEPS.SELECT
+                    stepIndex.value++
                 }
+                allowNext.value = true
                 resetTimer()
                 break
             }
@@ -361,12 +378,14 @@
                     stepIndex.value++
                     step.value = PR_STEPS.REFINE
                 }
+                allowNext.value = true
                 resetTimer()
                 break
             case PR_STEPS.REFINE:
                 if (!attentionDone && props.attentionChecks) {
                     step.value = PR_STEPS.ATTENTION
                     attentionNext = null
+                    allowNext.value = true
                     resetTimer()
                 } else {
                     stopGame()
@@ -382,6 +401,7 @@
                         step.value = attentionNext
                         attentionNext = null
                         stepIndex.value++
+                        allowNext.value = true
                         resetTimer()
                     } else {
                         stopGame()
@@ -629,6 +649,7 @@
         ilog = null
         attentionDone = false
         attentionNext = null
+        allowNext.value = true
         stepIndex.value = 1
         candidates.value = []
         gameData.target = null

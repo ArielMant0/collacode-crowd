@@ -2,7 +2,7 @@
     <v-sheet class="d-flex align-center" :class="{ 'flex-column': vertical, 'align-center': vertical }">
 
         <div class="text-caption mt-1 mb-1">
-            <div v-for="t in tags" style="text-align: center;">
+            <div v-for="t in tags" class="text-dots" style="text-align: center;" :style="{ maxWidth: imageWidth+'px' }">
                 <TagText :tag="t"/>
             </div>
         </div>
@@ -87,6 +87,7 @@
             :data="otherItems"
             :width="imageWidth"
             :rect-size="30"
+            :padding="5"
             :class="[vertical ? 'mt-1 mb-1' : 'ml-1 mr-1']"
             :highlights="highlights"
             :highlights-color="theme.current.value.colors.secondary"

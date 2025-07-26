@@ -1,18 +1,20 @@
 <template>
-    <div style="text-align: center; min-width: 100%;">
+    <div style="text-align: center; width: 100%;">
 
         <div class="text-h5 mb-2">
-            click or drag <b class="text-decoration-underline">only</b> similar {{ app.itemName }}s into a fitting category
+            click or drag <b class="text-decoration-underline">only</b> similar {{ app.itemName }}s into their fitting category
         </div>
 
-        <div class="d-flex align-start justify-center" style="min-width: 100%;">
+        <div class="d-flex align-start justify-center" style="width: 100%;">
 
-            <div class="d-flex flex-column align-center bordered-grey-light-thin pa-2 mr-4" style="max-width: 49%; min-width: 30%; border-radius: 4px;">
-                <h3 class="sectitle bordered-secondary">Suggested Similar {{ app.itemNameCaptial }}s</h3>
+            <div
+                class="d-flex flex-column align-center bordered-grey-light-thin pa-2 mr-4 rounded-lg"
+                style="max-width: 49%; width: 35%; border: 2px dashed black;">
+                <h3 class="sectitle">Candidates</h3>
                 <div class="d-flex flex-wrap justify-center align-start"
                     @drop.prevent="e => dropItem(e, 0)"
                     @dragover.prevent
-                    :style="{ minWidth: '100%', maxWidth: '100%', minHeight: ((imageHeight+10)*4)+'px' }">
+                    :style="{ Width: '100%', maxWidth: '100%', minHeight: ((imageHeight+10)*4)+'px' }">
                     <ItemTeaser v-for="item in restItems"
                         :item="item"
                         :width="imageWidth"
@@ -23,13 +25,19 @@
                         @click="setItem(item.id, 2)"
                         @dragstart="startDrag(item.id)"
                         style="cursor: grab"
-                        class="mr-1 mb-1"/>
+                        class="mr-3 mb-3"/>
                 </div>
             </div>
 
-            <div class="ml-4" style="max-width: 49%; min-width: 30%;">
+            <div class="ml-4" style="max-width: 49%; width: 35%;">
 
-                <div class="d-flex flex-column align-center bordered-grey-light-thin pa-2 mb-1" style="min-width: 100%; border-radius: 4px;">
+                <div class="d-flex flex-column align-center rounded-lg pa-2 mb-1 drop-area"
+                    @drop.prevent="e => dropItem(e, 2)"
+                    @dragover.prevent
+                    @dragenter="e => onDragEnter(e, 'bg-primary-light')"
+                    @dragleave="e => onDragLeave(e, 'bg-primary-light')"
+                    :style="{ border: '2px dashed '+theme.current.value.colors.primary }"
+                    style="width: 100%;">
                     <h3 class="d-flex align-center">
                         <v-tooltip location="top center">
                             <template v-slot:activator="{ props }">
@@ -49,11 +57,8 @@
                         <span v-if="itemLimit > 0" class="ml-1 text-caption">(max. {{ itemLimit }})</span>
                     </h3>
                     <div class="d-flex flex-wrap justify-center align-start pa-2"
-                        @drop.prevent="e => dropItem(e, 2)"
-                        @dragover.prevent
-                        @dragenter="onDragEnter"
-                        @dragleave="onDragLeave"
-                        :style="{ minWidth: '100%', maxWidth: '100%', minHeight: ((imageHeight+10)*2)+'px' }">
+                        style="pointer-events: none;"
+                        :style="{ minWidth: '100%', maxWidth: '100%', minHeight: ((imageHeight+10)*3)+'px' }">
                         <ItemTeaser v-for="item in highItems"
                             :item="item"
                             :width="imageWidth"
@@ -63,12 +68,18 @@
                             @click="resetItem(item.id)"
                             draggable
                             @dragstart="startDrag(item.id)"
-                            style="cursor: grab"
+                            style="cursor: grab; pointer-events: all;"
                             class="mr-1 mb-1"/>
                     </div>
                 </div>
 
-                <div class="d-flex flex-column align-center bordered-grey-light-thin pa-2 mt-1" style="min-width: 100%; border-radius: 4px;">
+                <div class="d-flex flex-column align-center pa-2 mt-4 rounded-lg drop-area"
+                    :style="{ border: '2px dashed '+theme.current.value.colors.tertiary }"
+                    @drop.prevent="e => dropItem(e, 1)"
+                    @dragover.prevent
+                    @dragenter="e => onDragEnter(e, 'bg-tertiary-light')"
+                    @dragleave="e => onDragLeave(e, 'bg-tertiary-light')"
+                    style="width: 100%">
                     <h3 class="d-flex align-center">
                         <v-tooltip location="top center">
                             <template v-slot:activator="{ props }">
@@ -88,11 +99,8 @@
                         <span v-if="itemLimit > 0" class="ml-1 text-caption">(max. {{ itemLimit }})</span>
                     </h3>
                     <div class="d-flex flex-wrap justify-center align-start pa-2"
-                        @drop.prevent="e => dropItem(e, 1)"
-                        @dragover.prevent
-                        @dragenter="onDragEnter"
-                        @dragleave="onDragLeave"
-                        :style="{ minWidth: '100%', width: minW+'px', maxWidth: '100%', minHeight: ((imageHeight+10)*2)+'px' }">
+                        style="pointer-events: none;"
+                        :style="{ width: minW+'px', maxWidth: '100%', minHeight: ((imageHeight+10)*3)+'px' }">
                         <ItemTeaser v-for="item in medItems"
                             :item="item"
                             :width="imageWidth"
@@ -102,7 +110,7 @@
                             @click="resetItem(item.id)"
                             draggable
                             @dragstart="startDrag(item.id)"
-                            style="cursor: grab"
+                            style="cursor: grab; pointer-events: all;"
                             class="mr-1 mb-1"/>
                     </div>
                 </div>
@@ -115,10 +123,11 @@
     import { useApp } from '@/stores/app'
     import { reactive, computed } from 'vue'
     import ItemTeaser from './ItemTeaser.vue'
-    import { useDisplay } from 'vuetify'
+    import { useDisplay, useTheme } from 'vuetify'
     import { useToast } from 'vue-toastification'
 
     const app = useApp()
+    const theme = useTheme()
     const toast = useToast()
     const { md, lg, xl, xxl } = useDisplay()
 
@@ -166,7 +175,7 @@
         return Math.min(mul, Math.floor(props.items.length / 4)) * (props.imageWidth+10)
     })
 
-    let dragId = null
+    let dragId = null, dragClassName = "", dragElem = null
 
     function startDrag(id) {
         dragId = id
@@ -176,15 +185,27 @@
         if (!dragId) return
         setItem(dragId, where)
         dragId = null
-        onDragLeave(event)
+        if (dragElem) {
+            dragElem.classList.remove(dragClassName)
+            dragClassName = ""
+            dragElem = null
+        }
     }
-    function onDragEnter(event) {
+    function onDragEnter(event, classname) {
         // color background of drop area on enter
-        event.target.classList.add("bg-surface-light")
+        if (event.target.classList.contains("drop-area")) {
+            event.target.classList.add(classname)
+            dragElem = event.target
+            dragClassName = classname
+        }
     }
-    function onDragLeave(event) {
+    function onDragLeave(event, classname) {
         // reset background color of drop area on leave
-        event.target.classList.remove("bg-surface-light")
+        if (event.target.classList.contains("drop-area")) {
+            event.target.classList.remove(classname)
+            dragElem = null
+            dragClassName = ""
+        }
     }
     function setItem(id, where=0) {
         app.addInteraction("step2")
@@ -223,6 +244,9 @@
 
 <style scoped>
 .sectitle {
+    font-size: 22px;
+    font-weight: 400;
+    text-transform: uppercase;
     border-radius: 4px;
     width: 100%;
     padding: 3px 0px;

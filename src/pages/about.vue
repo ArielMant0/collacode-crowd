@@ -6,8 +6,7 @@
                     <h2 style="color: #428775;">Background</h2>
                     <p>
                         We are building a database that describes video games with a large hierarchy of tags.
-                        These tags and how they are given to different games is curated by a handful of experts,
-                        but we want to extend and validate it with the help of other gaming enthusiast!
+                        These tags are curated by a handful of experts, but we want to extend and validate this database with the help of other games enthusiast!
                     </p>
                 </article>
             </v-sheet>
@@ -16,7 +15,7 @@
                     <h2 style="color: #6f51a6;">Goal</h2>
                     <p>
                         To support our experts during tagging and help them extend the database, we are gathering <b>similarity judgements</b>
-                        from other gaming enthusiasts, so that we can build a large graph of which video games are <b>how</b> similar to each other.
+                        from others who are knowledgeable about games, so that we can build a large graph of which video games are <b>how</b> similar to each other.
                     </p>
                 </article>
             </v-sheet>
@@ -24,8 +23,9 @@
                 <article>
                     <h2 style="color: #b56251;">How it works</h2>
                     <p>
-                        For each game in our database, you can complete 1 of 2 different game-like activities, where we use our exisingt data to help you find similar games.
-                        Doing this should take 2-3 minutes per game, and you can do it for as many or as few games as you like.
+                        For each game in our database, you can complete 1 of 2 different game-like activities, where we use our existing data to help you find similar games.
+                        Doing this should take 3-6 minutes per game, depending on how familiar you are with many games.
+                        You can do it for as many or as few games as you like, it's up to you.
                         If you do at least 5 games, you get to explore how the similarity graph looks like so far here (TODO).
                     </p>
                 </article>

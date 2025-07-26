@@ -425,7 +425,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@floating-ui/dom@npm:^1.7.0":
+"@floating-ui/dom@npm:^1.7.0, @floating-ui/dom@npm:^1.7.2":
   version: 1.7.2
   resolution: "@floating-ui/dom@npm:1.7.2"
   dependencies:
@@ -439,6 +439,17 @@ __metadata:
   version: 0.2.10
   resolution: "@floating-ui/utils@npm:0.2.10"
   checksum: ffc4c24a46a665cfd0337e9aaf7de8415b572f8a0f323af39175e4b575582aed13d172e7f049eedeece9eaf022bad019c140a2d192580451984ae529bdf1285c
+  languageName: node
+  linkType: hard
+
+"@floating-ui/vue@npm:^1.1.7":
+  version: 1.1.7
+  resolution: "@floating-ui/vue@npm:1.1.7"
+  dependencies:
+    "@floating-ui/dom": ^1.7.2
+    "@floating-ui/utils": ^0.2.10
+    vue-demi: ">=0.13.0"
+  checksum: 34aa41db7ef1ebf8479c56b1b688d84cd538364c0f2d7e15a19dec79ade4e65b5d1beadffba9537ad264b6bfba88af680584e2e1632a6b9d7cfd67ce8f80bfa6
   languageName: node
   linkType: hard
 
@@ -1632,6 +1643,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "collacode-crowd@workspace:."
   dependencies:
+    "@floating-ui/vue": ^1.1.7
     "@fontsource/roboto": 5.2.6
     "@mdi/font": 7.4.47
     "@vitejs/plugin-vue": ^5.2.3
@@ -5246,6 +5258,22 @@ __metadata:
   bin:
     vite: bin/vite.js
   checksum: b7f1ebaae483090441f17ca09ea2c9b803688d2a2ed9860fbd8b72271918776ea3ceca643e807a5ee00628d65b79656d32529a4b8dd388aa33e41bc3f38732d0
+  languageName: node
+  linkType: hard
+
+"vue-demi@npm:>=0.13.0":
+  version: 0.14.10
+  resolution: "vue-demi@npm:0.14.10"
+  peerDependencies:
+    "@vue/composition-api": ^1.0.0-rc.1
+    vue: ^3.0.0-0 || ^2.6.0
+  peerDependenciesMeta:
+    "@vue/composition-api":
+      optional: true
+  bin:
+    vue-demi-fix: bin/vue-demi-fix.js
+    vue-demi-switch: bin/vue-demi-switch.js
+  checksum: 9b4106f99be3b0c1dd4a6dc5725f5e8f79c6b98d1eeb849bf2c54416cd77f4aa344960b202768865245cfa82d57f49a9d96f67f5d8e256604b9dac1c5df9a8d6
   languageName: node
   linkType: hard
 

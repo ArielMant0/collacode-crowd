@@ -1,31 +1,42 @@
 <template>
     <div style="width: min-content" class="pa-2">
 
-        <div class="d-flex justify-center align-center mb-2">
-            <v-btn
-                color="error"
-                class="mr-2"
-                density="comfortable"
-                variant="outlined"
-                prepend-icon="mdi-delete"
-                @click="resetRerolls">
-                reset rerolls
-            </v-btn>
-            <v-btn
-                id="reroll-btn"
-                color="primary"
-                class="ml-2 mr-2"
-                density="comfortable"
-                variant="outlined"
-                prepend-icon="mdi-sync"
-                @click="reroll">
-                reroll
-            </v-btn>
-            <v-sheet style="font-size: smaller;" rounded="sm" color="surface-light" class="ml-2 pt-1 pb-1 pl-3 pr-3">
-                {{ numClsLeft }} groups left
-            </v-sheet>
-        </div>
-        <div>
+        <div class="d-flex align-center">
+            <div class="d-flex flex-column align-start mr-4">
+
+                <v-sheet
+                    style="font-size: smaller; text-align: center; width: 100%;"
+                    rounded="sm"
+                    color="surface-light"
+                    class="mb-2 pt-1 pb-1 pl-3 pr-3">
+                    {{ numCls-numClsLeft }} / {{ numCls }} groups seen
+                </v-sheet>
+
+                <v-btn
+                    class="text-lowercase mb-2"
+                    id="reroll-btn"
+                    color="primary"
+                    density="comfortable"
+                    variant="outlined"
+                    prepend-icon="mdi-sync"
+                    block
+                    :disabled="numClsLeft <= 0"
+                    @click="reroll">
+                    reroll
+                </v-btn>
+                <v-btn
+                    color="error"
+                    density="comfortable"
+                    variant="outlined"
+                    prepend-icon="mdi-delete"
+                    class="text-lowercase"
+                    block
+                    @click="resetRerolls">
+                    reset rerolls
+                </v-btn>
+
+            </div>
+
             <div id="cluster-options" class="d-flex align-start justify-center">
                 <ItemSimilarityRow v-for="(index, idx2) in clsOrder.list"
                     :items="clusters.clusters[index]"
@@ -41,86 +52,85 @@
                     @click="d => toggleItem(d.id, 'cluster')"
                     @click-item="d => toggleItem(d.id, 'cluster')"/>
             </div>
+        </div>
 
-            <div class="d-flex justify-space-around mt-8 mb-8 pa-2">
-                <div v-for="(sel, i) in selection" class="mr-1 ml-1 seed">
-                    <ItemTeaser v-if="sel"
-                        :id="sel.id"
+        <div class="d-flex justify-space-around mt-8 mb-8 pa-2">
+            <div v-for="(sel, i) in selection" class="mr-1 ml-1 seed">
+                <ItemTeaser v-if="sel"
+                    :id="sel.id"
+                    prevent-open
+                    prevent-context
+                    rounded
+                    @click="removeSelection(i, 'selection')"
+                    @dragover.prevent
+                    @drop="onDrop(i)"
+                    @dragstart="onStartDrag(sel.id, 'selection-drag')"
+                    draggable
+                    :width="imageWidth"
+                    :height="imageHeight"/>
+                <v-card v-else
+                    :min-width="imageWidth"
+                    :min-height="imageHeight"
+                    :max-width="imageWidth"
+                    :max-height="imageHeight"
+                    @dragover.prevent
+                    @drop="onDrop(i)"
+                    color="surface-light"
+                    class="d-flex pa-1 align-center justify-center prevent-select">
+                    <v-icon size="large">mdi-image-area</v-icon>
+                </v-card>
+            </div>
+        </div>
+
+        <div class="d-flex align-start" style="min-width: 100%; max-width: 100%;">
+
+            <div class="mr-2" style="max-width: 20%;" :style="{ minWidth: (miniImageWidth+25)+'px' }">
+                <div style="text-align: center;">
+                    <v-icon>mdi-history</v-icon>
+                    history
+                </div>
+                <v-sheet class="pa-2" rounded="lg" border
+                    :style="{
+                        width: '100%',
+                        minHeight: ((miniImageHeight+10)*5)+'px',
+                        maxHeight: ((miniImageHeight+10)*5)+'px',
+                        overflowY: 'auto',
+                    }">
+                    <ItemTeaser v-for="id in history"
+                        :id="id"
                         prevent-open
                         prevent-context
-                        rounded
-                        @click="removeSelection(i, 'selection')"
-                        @dragover.prevent
-                        @drop="onDrop(i)"
-                        @dragstart="onStartDrag(sel.id, 'selection-drag')"
+                        :width="miniImageWidth-5"
+                        :height="miniImageHeight-10"
                         draggable
-                        :width="imageWidth"
-                        :height="imageHeight"/>
-                    <v-card v-else
-                        :min-width="imageWidth"
-                        :min-height="imageHeight"
-                        :max-width="imageWidth"
-                        :max-height="imageHeight"
-                        @dragover.prevent
-                        @drop="onDrop(i)"
-                        color="surface-light"
-                        class="d-flex pa-1 align-center justify-center prevent-select">
-                        <v-icon size="large">mdi-image-area</v-icon>
-                    </v-card>
-                </div>
+                        class="mb-1"
+                        @click="toggleItem(id, 'history')"
+                        @dragstart="onStartDrag(id, 'history-drag')"/>
+                </v-sheet>
             </div>
 
-            <div class="d-flex align-start" style="min-width: 100%; max-width: 100%;">
-
-                <div class="mr-2" style="max-width: 15%;" :style="{ minWidth: (miniImageWidth+20)+'px' }">
-                    <div style="text-align: center;">
-                        <v-icon>mdi-history</v-icon>
-                        history
-                    </div>
-                    <v-sheet class="pa-2" rounded border
-                        :style="{
-                            width: '100%',
-                            minHeight: ((miniImageHeight+10)*5)+'px',
-                            maxHeight: ((miniImageHeight+10)*5)+'px',
-                            overflowY: 'auto',
-                        }">
-                        <ItemTeaser v-for="id in history"
-                            :id="id"
-                            prevent-open
-                            prevent-context
-                            :width="miniImageWidth-5"
-                            :height="miniImageHeight-10"
-                            draggable
-                            class="mb-1"
-                            @click="toggleItem(id, 'history')"
-                            @dragstart="onStartDrag(id, 'history-drag')"/>
-                    </v-sheet>
-                </div>
-
-                <div class="ml-2" style="width: 100%;">
-                    <div style="text-align: center;">similar {{ app.itemName }}s</div>
-                    <v-sheet id="collected-items" class="pa-2" rounded border :style="{ width: '100%', minHeight: ((miniImageHeight+10)*5)+'px' }">
-                        <div class="d-flex justify-start align-start">
-                            <div v-for="list in candidates" :style="{ maxWidth: Math.floor(100/selectionItems.length)+'%' }">
-                                <div class="d-flex flex-wrap justify-center">
-                                    <ItemTeaser v-for="id in list"
-                                        class="mr-1 mb-1"
-                                        :id="id"
-                                        :border-color="isSelectedItem(id) ? theme.current.value.colors.secondary : undefined"
-                                        :border-size="3"
-                                        prevent-open
-                                        prevent-context
-                                        draggable
-                                        @click="toggleItem(id, 'suggestions')"
-                                        @dragstart="onStartDrag(id, 'suggestions-drag')"
-                                        :width="miniImageWidth"
-                                        :height="miniImageHeight"/>
-                                </div>
+            <div id="collected-items" class="ml-2" style="width: 100%;">
+                <div style="text-align: center;">similar {{ app.itemName }}s</div>
+                <v-sheet class="pa-2" rounded border :style="{ width: '100%', height: ((miniImageHeight+10)*5)+'px' }">
+                    <div class="d-flex justify-start align-start">
+                        <div v-for="list in candidates" :style="{ maxWidth: Math.floor(100/selectionItems.length)+'%' }">
+                            <div class="d-flex flex-wrap justify-center">
+                                <ItemTeaser v-for="id in list"
+                                    class="mr-1 mb-1"
+                                    :id="id"
+                                    :border-color="isSelectedItem(id) ? theme.current.value.colors.secondary : undefined"
+                                    :border-size="3"
+                                    prevent-open
+                                    prevent-context
+                                    draggable
+                                    @click="toggleItem(id, 'suggestions')"
+                                    @dragstart="onStartDrag(id, 'suggestions-drag')"
+                                    :width="miniImageWidth"
+                                    :height="miniImageHeight"/>
                             </div>
                         </div>
-                    </v-sheet>
-                </div>
-
+                    </div>
+                </v-sheet>
             </div>
         </div>
     </div>
@@ -128,7 +138,7 @@
 
 <script setup>
     import * as d3 from 'd3'
-    import { ref, onMounted, reactive, computed, onUnmounted, onBeforeUnmount, onUpdated } from 'vue';
+    import { ref, onMounted, reactive, computed, onBeforeUnmount, onUpdated } from 'vue';
     import DM from '@/use/data-manager';
     import { getItemClusters } from '@/use/clustering';
     import ItemSimilarityRow from './ItemSimilarityRow.vue';
@@ -137,6 +147,7 @@
     import { useTheme } from 'vuetify';
     import { useShepherd } from 'vue-shepherd'
     import { randomInteger } from '@/use/random';
+    import { offset } from '@floating-ui/vue';
 
     const app = useApp()
     const theme = useTheme()
@@ -146,7 +157,10 @@
         useModalOverlay: true,
         defaultStepOptions: {
             classes: 'shadow-md bg-surface-light arrow-primary',
-            scrollTo: true
+            scrollTo: { behavior: 'smooth', block: 'start' },
+            modalOverlayOpeningPadding: 8,
+            modalOverlayOpeningRadius: 4,
+            floatingUIOptions: { middleware: [offset(25)] }
         }
     })
     tutorial.on("complete", onEndTutorial)
@@ -159,11 +173,11 @@
         },
         imageWidth: {
             type: Number,
-            default: 180
+            default: 160
         },
         imageHeight: {
             type: Number,
-            default: 90
+            default: 80
         },
         maxItems:{
             type: Number,
@@ -175,10 +189,14 @@
         },
         target: {
             type: Number,
+        },
+        fixedSelection: {
+            type: Boolean,
+            default: false
         }
     })
 
-    const emit = defineEmits(["submit", "tutorial-start", "tutorial-complete", "tutorial-cancel"])
+    const emit = defineEmits(["ready", "tutorial-start", "tutorial-complete", "tutorial-cancel"])
 
     const selection = ref(new Array(props.maxSelect))
     const selectionItems = computed(() => selection.value.filter(d => d !== null && d !== undefined))
@@ -188,6 +206,7 @@
         selected: new Set(),
         show: []
     })
+    const numCls = ref(0)
     const numClsLeft = ref(0)
 
     const miniImageWidth = computed(() => Math.max(50, Math.round(props.imageWidth * 0.66)))
@@ -336,6 +355,7 @@
                 clusterLeft.add(i)
             }
         }
+        numCls.value = clusterLeft.size + clsOrder.list.length
         numClsLeft.value = clusterLeft.size
         app.addInteraction("step1")
     }
@@ -369,6 +389,9 @@
                     element: "#sim-target",
                     on: "bottom"
                 },
+                scrollToHandler: function() {
+                    window.scrollTo(0, 0)
+                },
                 buttons: [
                     { text: "close tutorial", action: tutorial.cancel, classes: "bg-error" },
                     { text: "next", action: tutorial.next, classes: "bg-primary" },
@@ -391,15 +414,13 @@
                     element: "#cluster-options .item-teaser",
                     on: "right-start"
                 },
-                buttons: [{ text: "next", action: tutorialAdd, classes: "bg-primary"}],
-                text: `Click on this ${single} to get up to ${props.maxItems} suggestions.`
+                text: `Click on this ${single} to see other similar ${plural}.`
             },{
                 id: "show-collected",
                 attachTo: {
                     element: "#collected-items",
                     on: "top"
                 },
-                buttons: [{ text: "next", action: tutorialAddFromList, classes: "bg-primary" }],
                 text: `These are now your collected similar ${plural} from which you will select
                     the most similar ${plural} to your target in the next step. You can add
                     other ${plural} by clicking on a different ${single} here or in a group.
@@ -419,7 +440,6 @@
                     element: ".seed",
                     on: "top"
                 },
-                buttons: [{ text: "next", action: tutorialRemove, classes: "bg-primary" }],
                 text: `Click on this ${single} again to remove it from your selection.`
             },{
                 id: "reroll",
@@ -427,9 +447,7 @@
                     element: "#reroll-btn",
                     on: "bottom"
                 },
-                buttons: [{ text: "next", action: reroll, classes: "bg-primary" }],
-                text: `Click here to get different ${single} groups.
-                    Groups with selected ${plural} will stay fixed.`
+                text: `Click here to get a different set of ${single} groups.`
             },{
                 id: "reroll-result",
                 attachTo: {
@@ -437,14 +455,15 @@
                     on: "bottom"
                 },
                 buttons: [{ text: "next", action: tutorial.next, classes: "bg-primary" }],
-                text: `As you can see, some groups changed while selected groups remained.`
+                text: `You can reroll until you find a similar ${single} or you can use the bottom
+                    panel to get find ${plural} and get suggestions.`
             },{
                 id: "submit",
                 attachTo: {
                     element: "#submit-btn",
                     on: "bottom"
                 },
-                buttons: [{ text: "done", action: tutorialClear, classes: "bg-primary" }],
+                buttons: [{ text: "okay", action: tutorialClear, classes: "bg-primary" }],
                 text: `When you are happy with your list of similar ${plural}, click
                     here to go to the next step.`
             }
@@ -466,32 +485,11 @@
         emit("tutorial-cancel")
     }
 
-    // add the first item
-    function tutorialAdd() {
-        const first = clsOrder.list.at(0)
-        if (first >= 0) {
-            toggleItem(clusters.clusters[first][0].id, "tutorial")
-        }
-    }
-
-    function tutorialAddFromList() {
-        const first = candidateItems[randomInteger(1, candidateItems.length-1)]
-        if (first) {
-            toggleItem(first.id, "tutorial")
-        }
-    }
-
-    function tutorialRemove() {
-        const index = selection.value.findIndex(d => d !== null)
-        if (index >= 0) {
-            removeSelection(index, "tutorial")
-        }
-    }
-
     function tutorialClear() {
         tutorialNeedsNext = false
         tutorial.complete()
         clearSelection()
+        history.value = []
         resetRerolls()
     }
 
@@ -502,7 +500,7 @@
             }
 
             const metric = "euclidean"
-            clusters = await getItemClusters(itemsToUse, metric, 2, ALL_TAGS.value, FREQ_WEIGHTS.value)
+            clusters = getItemClusters(itemsToUse, metric, 2, ALL_TAGS.value, FREQ_WEIGHTS.value)
             clusterLeft.clear()
             maxClsSize = 0
 
@@ -511,6 +509,7 @@
                 maxClsSize = Math.max(maxClsSize, clusters.size[i])
             })
 
+            numCls.value = clusterLeft.size
             numClsLeft.value = clusterLeft.size
 
             if (!clusters) {
@@ -523,9 +522,12 @@
 
     async function nextClusters() {
 
-        const fixed = clsOrder.list
-            .map((d, i) => ({ cluster: d, index: i }))
-            .filter(d => clsOrder.selected.has(d.cluster))
+        let fixed = []
+        if (props.fixedSelection) {
+            fixed = clsOrder.list
+                .map((d, i) => ({ cluster: d, index: i }))
+                .filter(d => clsOrder.selected.has(d.cluster))
+        }
 
         const k = clusters.clusters.length
         // get indices of all clusters
@@ -537,7 +539,7 @@
         }
 
         // get next clusters with the highest distances to each other
-        const subset = cf.slice(0, props.numClusters*4)
+        const subset = cf.slice(0, props.numClusters*5)
         const tmp = subset.map(i => {
             const scores = subset.map((d, j) => {
                 if (i === j) return 0
@@ -563,15 +565,22 @@
             return b.value - a.value
         })
 
-        const next = new Array()
-        fixed.forEach(d => next[d.index] = d.cluster)
+        let next
 
-        for (let i = 0, j = 0; i < props.numClusters; ++i) {
-            if (next[i] === undefined && !clsOrder.selected.has(tmp[j].index)) {
-                next[i] = tmp[j].index
-                j++
-                clusterLeft.delete(next[i])
+        if (props.fixedSelection) {
+            next = new Array()
+            fixed.forEach(d => next[d.index] = d.cluster)
+
+            for (let i = 0, j = 0; i < props.numClusters; ++i) {
+                if (next[i] === undefined && !clsOrder.selected.has(tmp[j].index)) {
+                    next[i] = tmp[j].index
+                    j++
+                    clusterLeft.delete(next[i])
+                }
             }
+        } else {
+            next = tmp.slice(0, props.numClusters).map(d => d.index)
+            next.forEach(d => clusterLeft.delete(d))
         }
 
         // log which clusters are shown to the user
@@ -593,6 +602,7 @@
         const cand = getCandidates()
         candidateItems = cand.flat()
         candidates.value = cand.map(list => list.map(d => d.id))
+        emit("ready", candidates.value.length > 0)
     }
 
     function toggleItem(id, source="", target=null) {
@@ -605,6 +615,13 @@
         const add = index < 0 || selection.value[index].id !== id
         const move = index >= 0 && target !== null && newIdx !== index
         const replace = index < 0 && newIdx >= 0 && selection.value[newIdx]
+
+        if (tutorial.isActive()) {
+            const sid = tutorial.getCurrentStep()
+            if (sid.id === 'click-item' || sid.id === 'show-collected' || sid.id === 'remove-item') {
+                tutorialNeedsNext = true
+            }
+        }
 
         // move the item to another position
         if (move) {
@@ -631,13 +648,6 @@
         } else {
             removeSelection(index, source)
             lastIndexUsed = index
-        }
-
-        if (tutorial.isActive()) {
-            const sid = tutorial.getCurrentStep()
-            if (sid.id === 'click-item' || sid.id === 'show-collected' || sid.id === 'remove-item') {
-                tutorialNeedsNext = true
-            }
         }
     }
 
@@ -731,6 +741,7 @@
         tutorialNeedsNext = false
         history.value = []
         clusterLeft.clear()
+        numCls.value = clusterLeft.size
         numClsLeft.value = clusterLeft.size
         itemsToUse = DM.getDataBy("items", d => d.allTags.length > 0 && (!props.target || d.id !== props.target))
         clusters = null

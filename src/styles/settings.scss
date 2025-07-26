@@ -10,6 +10,7 @@
 
 $v-theme-primary: #078766;
 $v-theme-secondary: #0ad39f;
+$v-theme-tertiary: #673AB7;
 $v-theme-error: #b61431;
 $v-theme-info: #1976D2;
 
@@ -170,6 +171,16 @@ $v-theme-info: #1976D2;
 }
 .bordered-primary-thin {
   border: 1px solid $v-theme-primary
+}
+
+.bg-primary-light {
+  background-color: #07876633;
+}
+.bg-secondary-light {
+  background-color: #0ad39f33;
+}
+.bg-tertiary-light {
+  background-color: #673AB733;
 }
 
 

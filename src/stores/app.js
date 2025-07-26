@@ -39,6 +39,7 @@ export const useApp = defineStore('app', {
         // by default, we randomly pick one
         method: 0,
         methodCounts: new Map(),
+        lastMethod: 0,
 
         // which items the user can still do
         itemsLeft: new Set(),
@@ -158,6 +159,7 @@ export const useApp = defineStore('app', {
 
         addMethodCount(method) {
             this.methodCounts.set(method, (this.methodCounts.get(method) || 0) + 1)
+            this.lastMethod = method
         },
 
         getMethodCount(method) {

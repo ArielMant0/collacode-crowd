@@ -1,11 +1,24 @@
 <template>
     <div style="width: min-content;" class="pa-2">
         <div>
+            <div v-if="inLastStep">
+                <div style="text-align: center;">this would be your final set of {{ app.itemName }}s</div>
+                <v-sheet v-if="inLastStep" rounded="lg" border class="pa-2 d-flex flex-wrap justify-center" style="max-width: 100%; width: 100%;">
+                    <ItemTeaser v-for="id in finalItems"
+                        :id="id"
+                        class="mr-2 mb-2"
+                        :width="imageWidth"
+                        :height="imageHeight"
+                        prevent-click
+                        prevent-context/>
+                </v-sheet>
+            </div>
+
             <div v-for="(obj, idx) in split" :key="obj.tag.id" class="binsearch-q">
 
                 <div style="text-align: center;" class="qtext">
-                    <div v-if="idx === 0">
-                        Does this tag apply to the {{ app.itemName }}?
+                    <div v-if="idx === 0 && !inLastStep" style="font-size: large;">
+                        Which side is the better fit?
                     </div>
                     <div class="mt-4 mb-2 d-flex align-center justify-center">
                         <h4>{{ obj.tag.name }}</h4>
@@ -24,16 +37,14 @@
                 <div class="d-flex mt-8 item-groups">
 
                     <div class="d-flex align-center pa-1 rounded" :style="{ border: '2px solid '+answerColor(true, obj.hasTag) }">
-                        <div class="mr-1">
-                            <ItemTeaser v-for="(exId, j) in obj.examplesYes"
+                        <div class="mr-1 d-flex flex-wrap" :style="{ minWidth: ((obj.width+5)*2)+'px', maxHeight: (obj.size+10)+'px' }">
+                            <ItemTeaser v-for="exId in obj.examplesYes"
                                 :id="exId"
                                 :width="obj.width"
                                 :height="obj.height"
                                 prevent-click
                                 prevent-context
-                                :border-size="3"
-                                :border-color="obj.examplesYesColors[j]"
-                                class="mb-1"/>
+                                class="mb-1 ml-1"/>
                         </div>
                         <div class="d-flex flex-column align-center answer-yes" :style="{ minWidth: '300px' }">
                             <v-btn
@@ -48,7 +59,6 @@
                                 :highlights="obj.examplesYes"
                                 :highlights-color="theme.current.value.colors.secondary"
                                 @hover="onHover"
-                                :data-colors="obj.colorsYes"
                                 :selected="target ? [target] : []"
                                 :data="obj.with.map(idx => itemsToUse[idx])"/>
                         </div>
@@ -68,20 +78,17 @@
                                 :highlights="obj.examplesNo"
                                 :highlights-color="theme.current.value.colors.secondary"
                                 @hover="onHover"
-                                :data-colors="obj.colorsNo"
                                 :selected="target ? [target] : []"
                                 :data="obj.without.map(idx => itemsToUse[idx])"/>
                         </div>
-                        <div class="ml-1">
-                            <ItemTeaser v-for="(exId, j) in obj.examplesNo"
+                        <div class="ml-1 d-flex flex-wrap" :style="{ minWidth: ((obj.width+5)*2)+'px', maxHeight: (obj.size+10)+'px' }">
+                            <ItemTeaser v-for="exId in obj.examplesNo"
                                 :id="exId"
                                 :width="obj.width"
                                 :height="obj.height"
-                                :border-size="3"
-                                :border-color="obj.examplesNoColors[j]"
                                 prevent-click
                                 prevent-context
-                                class="mb-1"/>
+                                class="mb-1 mr-1"/>
                         </div>
                     </div>
                 </div>
@@ -92,7 +99,7 @@
 
 <script setup>
     import * as d3 from 'd3'
-    import { ref, onMounted, onBeforeUnmount, onUpdated } from 'vue';
+    import { ref, onMounted, onBeforeUnmount, onUpdated, computed } from 'vue';
     import DM from '@/use/data-manager';
     import { useApp } from '@/stores/app';
     import { GR_COLOR } from '@/stores/games';
@@ -104,6 +111,7 @@
     import { useShepherd } from 'vue-shepherd'
     import { useTheme } from 'vuetify';
     import { getItemClusters } from '@/use/clustering';
+    import { offset } from '@floating-ui/vue';
 
     const app = useApp()
     const tt = useTooltip()
@@ -114,7 +122,10 @@
         useModalOverlay: true,
         defaultStepOptions: {
             classes: 'shadow-md bg-surface-light arrow-primary',
-            scrollTo: true
+            scrollTo: { behavior: 'smooth', block: 'start' },
+            modalOverlayOpeningPadding: 10,
+            modalOverlayOpeningRadius: 8,
+            floatingUIOptions: { middleware: [offset(25)] }
         }
     })
     tutorial.on("complete", onEndTutorial)
@@ -149,18 +160,19 @@
         },
     })
 
-    const emit = defineEmits(["submit", "tutorial-start", "tutorial-complete", "tutorial-cancel"])
+    const emit = defineEmits(["ready", "tutorial-start", "tutorial-complete", "tutorial-cancel"])
 
-    const inventory = ref([])
     const split = ref([])
+    const finalItems = ref([])
+    const inLastStep = computed(() => finalItems.value.length > 0)
 
     let log = []
     let itemsToUse, tagsToUse
     const itemsLeft = new Set()
     const tagsLeft = new Set()
 
-    let allClusters
 
+    let allClusters
 
     function getImageHeight(n, m) {
         const bs = getBubbleSize(n, m)
@@ -169,7 +181,7 @@
 
     function getBubbleSize(n, m) {
         const s = Math.max(n, m)
-        return Math.max(100, Math.min(Math.round(Math.sqrt(s) * 20), 300))
+        return Math.max(100, Math.min(Math.round(Math.sqrt(s) * 25), 300))
     }
 
     function onHover(d, event) {
@@ -213,39 +225,39 @@
                     element: "#sim-target",
                     on: "bottom"
                 },
+                scrollToHandler: function() {
+                    window.scrollTo(0, 0)
+                },
                 buttons: [
                     { text: "close tutorial", action: tutorial.cancel, classes: "bg-error" },
                     { text: "next", action: tutorial.next, classes: "bg-primary" },
                 ],
                 text: `This is your target ${single}. Your task is to find
-                    <b>other similar ${plural}</b> from our dataset by answers a few questions.`
+                    <b>other similar ${plural}</b> from our dataset by answering a few questions.`
             },{
                 id: "show-question",
                 attachTo: {
                     element: ".binsearch-q",
-                    on: "top"
+                    on: "bottom"
                 },
                 buttons: [{ text: "next", action: tutorial.next, classes: "bg-primary" }],
-                text: `You will be asked a feq questions about the target ${single}.
-                    Each questions reduces the number of ${plural} by roughly half.
-                    When you only have ${props.maxItems} ${plural} left, we automatically
-                    proceed to the next step.`
+                text: `Each questions splits the remaining ${plural} in half based on a specific tag.
+                    You have to decide which group (left or right) makes for a better fit, i.e. which is more similar
+                    to your target.`
             },{
                 id: "show-text",
                 attachTo: {
                     element: () => getLast(document.querySelectorAll(".qtext")),
-                    on: "top"
+                    on: "bottom"
                 },
                 buttons: [{ text: "next", action: tutorial.next, classes: "bg-primary" }],
-                text: `Each question asks you about a specific <b>tag</b>, providing the tag name
-                    and description. You need to decide if the tag applies to the target ${single}.`
+                text: `Each question asks you about a specific <b>tag</b>, providing the tag name and description.`
             },{
                 id: "click-yes",
                 attachTo: {
                     element: () => getLast(document.querySelectorAll(".yes-btn")),
                     on: "bottom"
                 },
-                buttons: [{ text: "next", action: choose.bind(null, true, 0), classes: "bg-primary" }],
                 text: "Let's try by answering <b>yes</b>!"
             },{
                 id: "reroll",
@@ -253,7 +265,6 @@
                     element: "#reroll-btn",
                     on: "bottom"
                 },
-                buttons: [{ text: "next", action: rerollTag, classes: "bg-primary" }],
                 text: `If you don't like or understand the current question tag, you can roll
                     for a different tag by clicking on this button. Try it out!`
             },{
@@ -263,14 +274,13 @@
                     on: "bottom"
                 },
                 buttons: [{ text: "next", action: tutorial.next, classes: "bg-primary" }],
-                text: `As you can see, the question and the grouping of ${plural} changed.`
+                text: `Now you have a different tag and the grouping of ${plural} changed.`
             },{
                 id: "click-no",
                 attachTo: {
                     element: () => getLast(document.querySelectorAll(".no-btn")),
                     on: "bottom"
                 },
-                buttons: [{ text: "next", action: choose.bind(null, false, 1), classes: "bg-primary" }],
                 text: `You can change a previous answer by clicking on a different answer button.
                     Try changing your answer to <b>no</b>!`
             },{
@@ -279,7 +289,7 @@
                     element: "#submit-btn",
                     on: "bottom"
                 },
-                buttons: [{ text: "done", action: tutorialClear, classes: "bg-primary" }],
+                buttons: [{ text: "okay", action: tutorialClear, classes: "bg-primary" }],
                 text: `When you are already happy with your list of similar ${plural},
                     click here to go to the next step.`
             }
@@ -335,18 +345,6 @@
         nextTag()
     }
 
-    function submit(fromClick=false) {
-        const indices = itemsLeft.size <= props.maxItems ?
-            Array.from(itemsLeft.values()) :
-            randomChoice(Array.from(itemsLeft.values()), props.maxItems)
-
-        if (fromClick) {
-            app.addInteraction("step1")
-        }
-
-        emit("submit", indices.map(idx => itemsToUse[idx]), log)
-    }
-
     function rerollTag() {
         let splitTag = null;
         for (let i = 0; i < tagsToUse.length && splitTag === null; ++i) {
@@ -370,7 +368,7 @@
 
             const last = split.value.at(0)
 
-            let examplesYes, examplesNo
+            let examplesYes = [], examplesNo = []
             // redo the clustering
             if (split.value.length === 1) {
                 const c1 = getItemClusters(withTag.map(idx => itemsToUse[idx]))
@@ -379,7 +377,8 @@
                 const clustersYes = []
                 const clustersNo = []
                 allClusters = []
-                for (let i = 0; i < props.numExamples; ++i) {
+                const maxnum = Math.max(c1.clusters.length, c2.clusters.length)
+                for (let i = 0; i < maxnum; ++i) {
                     if (i < c1.clusters.length) {
                         clustersYes.push(c1.clusters[i].map(dd => itemsToUse.findIndex(d => d.id === dd.id)))
                         allClusters.push(clustersYes.at(-1))
@@ -390,18 +389,45 @@
                     }
 
                 }
-                examplesYes = clustersYes.map(list => list[0])
-                examplesNo = clustersNo.map(list => list[0])
+                examplesYes = clustersYes.slice(0, props.numExamples*2).map(list => list[0])
+                examplesNo = clustersNo.slice(0, props.numExamples*2).map(list => list[0])
             } else {
                 const numEx = Math.max(last.examplesYes.length, last.examplesNo.length)
-                // get random examples
-                examplesYes = withTag.length > numEx ?
-                    randomChoice(withTag, numEx) :
-                    withTag
+                const clsYes = new Set()
+                const used = new Set()
+                for (let i = 0; i < withTag.length && i < numEx; ++i) {
+                    const cidx = getCluster(withTag[i])
+                    if (cidx >= 0 && !clsYes.has(cidx)) {
+                        examplesYes.push(withTag[i])
+                        clsYes.add(cidx)
+                        used.add(withTag[i])
+                    }
+                }
+                // add items from already used clusters if there are too few clusters
+                if (examplesYes.length < numEx && withTag.length >= examplesYes.length) {
+                    examplesYes = examplesYes.concat(randomChoice(
+                        withTag.filter(idx => !used.has(idx)),
+                        Math.min(numEx - examplesYes.length, withTag.length - examplesYes.length)
+                    ))
+                }
 
-                examplesNo = without.length > numEx ?
-                    randomChoice(without, numEx) :
-                    without
+                const clsNo = new Set()
+                for (let i = 0; i < without.length && i < numEx; ++i) {
+                    const cidx = getCluster(without[i])
+                    if (cidx >= 0 && !clsNo.has(cidx)) {
+                        examplesNo.push(without[i])
+                        clsNo.add(cidx)
+                        used.add(without[i])
+                    }
+                }
+
+                // add items from already used clusters if there are too few clusters
+                if (examplesNo.length < numEx && without.length >= examplesNo.length) {
+                    examplesNo = examplesNo.concat(randomChoice(
+                        without.filter(idx => !used.has(idx)),
+                        Math.min(numEx - examplesNo.length, without.length - examplesNo.length)
+                    ))
+                }
             }
 
             withTag.sort((a, b) => getCluster(b) - getCluster(a))
@@ -420,13 +446,13 @@
             last.tag = splitTag
             last.with = withTag
             last.without = without
-            last.colorsYes = getColorsByCluster(withTag)
-            last.colorsNo = getColorsByCluster(without)
+            // last.colorsYes = getColorsByCluster(withTag)
+            // last.colorsNo = getColorsByCluster(without)
 
             last.examplesYes = examplesYes.map(idx => itemsToUse[idx].id)
             last.examplesNo = examplesNo.map(idx => itemsToUse[idx].id)
-            last.examplesYesColors = examplesYes.map(idx => getClusterColor(getCluster(idx)))
-            last.examplesNoColors = examplesNo.map(idx => getClusterColor(getCluster(idx)))
+            // last.examplesYesColors = examplesYes.map(idx => getClusterColor(getCluster(idx)))
+            // last.examplesNoColors = examplesNo.map(idx => getClusterColor(getCluster(idx)))
 
             if (tutorial.isActive()) {
                 const sid = tutorial.getCurrentStep()
@@ -462,7 +488,7 @@
 
     async function nextTag() {
         // remove
-        if (split.value.length > 0) {
+        if (!inLastStep.value && split.value.length > 0) {
             const last = split.value.at(0)
             const choice = last.tag.id
             const indices = Array.from(itemsLeft.values())
@@ -474,8 +500,12 @@
             })
         }
 
-        if (itemsLeft.size / 2 <= props.minItems) {
-            return submit()
+        // we should not split again
+        if (itemsLeft.size <= props.minItems) {
+            const last = split.value.at(0)
+            finalItems.value = last.with.concat(last.without).map(idx => itemsToUse[idx].id)
+            emit("ready", true)
+            return
         }
 
         // calculate tag frequencies
@@ -513,7 +543,7 @@
 
         tagsLeft.delete(splitTag.id)
 
-        let examplesYes, examplesNo
+        let examplesYes = [], examplesNo = []
         // if we are doing this for the first time, cluster both sides
         if (split.value.length === 0) {
             const c1 = getItemClusters(withTag.map(idx => itemsToUse[idx]))
@@ -522,7 +552,8 @@
             const clustersYes = []
             const clustersNo = []
             allClusters = []
-            for (let i = 0; i < props.numExamples; ++i) {
+            const maxnum = Math.max(c1.clusters.length, c2.clusters.length)
+            for (let i = 0; i < maxnum; ++i) {
                 if (i < c1.clusters.length) {
                     clustersYes.push(c1.clusters[i].map(dd => itemsToUse.findIndex(d => d.id === dd.id)))
                     allClusters.push(clustersYes.at(-1))
@@ -531,21 +562,49 @@
                     clustersNo.push(c2.clusters[i].map(dd => itemsToUse.findIndex(d => d.id === dd.id)))
                     allClusters.push(clustersNo.at(-1))
                 }
-
             }
-            examplesYes = clustersYes.map(list => list[0])
-            examplesNo = clustersNo.map(list => list[0])
+
+            examplesYes = clustersYes.slice(0, props.numExamples*2).map(list => list[0])
+            examplesNo = clustersNo.slice(0, props.numExamples*2).map(list => list[0])
 
         } else {
-            const numEx = Math.max(2, props.numExamples - split.value.length)
-            // get random examples
-            examplesYes = withTag.length > numEx ?
-                randomChoice(withTag, numEx) :
-                withTag
+            const numEx = Math.max(2, props.numExamples - split.value.length) * 2
 
-            examplesNo = without.length > numEx ?
-                randomChoice(without, numEx) :
-                without
+            const clsYes = new Set()
+            const used = new Set()
+            for (let i = 0; i < withTag.length && i < numEx; ++i) {
+                const cidx = getCluster(withTag[i])
+                if (cidx >= 0 && !clsYes.has(cidx)) {
+                    examplesYes.push(withTag[i])
+                    clsYes.add(cidx)
+                    used.add(withTag[i])
+                }
+            }
+            // add items from already used clusters if there are too few clusters
+            if (examplesYes.length < numEx && withTag.length >= examplesYes.length) {
+                examplesYes = examplesYes.concat(randomChoice(
+                    withTag.filter(idx => !used.has(idx)),
+                    Math.min(numEx - examplesYes.length, withTag.length - examplesYes.length)
+                ))
+            }
+
+            const clsNo = new Set()
+            for (let i = 0; i < without.length && i < numEx; ++i) {
+                const cidx = getCluster(without[i])
+                if (cidx >= 0 && !clsNo.has(cidx)) {
+                    examplesNo.push(without[i])
+                    clsNo.add(cidx)
+                    used.add(without[i])
+                }
+            }
+
+            // add items from already used clusters if there are too few clusters
+            if (examplesNo.length < numEx && without.length >= examplesNo.length) {
+                examplesNo = examplesNo.concat(randomChoice(
+                    without.filter(idx => !used.has(idx)),
+                    Math.min(numEx - examplesNo.length, without.length - examplesNo.length)
+                ))
+            }
         }
 
         withTag.sort((a, b) => getCluster(b) - getCluster(a))
@@ -562,13 +621,13 @@
             hasTag: null,
             with: withTag,
             without: without,
-            colorsYes: getColorsByCluster(withTag),
-            colorsNo: getColorsByCluster(without),
+            // colorsYes: getColorsByCluster(withTag),
+            // colorsNo: getColorsByCluster(without),
             rerolls: [],
             examplesYes: examplesYes.map(idx => itemsToUse[idx].id),
-            examplesYesColors: examplesYes.map(idx => getClusterColor(getCluster(idx))),
             examplesNo: examplesNo.map(idx => itemsToUse[idx].id),
-            examplesNoColors: examplesNo.map(idx => getClusterColor(getCluster(idx))),
+            // examplesYesColors: examplesYes.map(idx => getClusterColor(getCluster(idx))),
+            // examplesNoColors: examplesNo.map(idx => getClusterColor(getCluster(idx))),
             size: getBubbleSize(withTag.length, without.length),
             width: h*2,
             height: h
@@ -609,6 +668,11 @@
             split.value.splice(0, index)
         }
 
+        if (inLastStep.value) {
+            finalItems.value = []
+            emit("ready", false)
+        }
+
         nextTag()
 
         if (tutorial.isActive()) {
@@ -640,7 +704,7 @@
         log = []
         tutorialNeedsNext = false
         split.value = []
-        inventory.value = []
+        finalItems.value = []
         itemsLeft.clear()
         tagsLeft.clear()
         itemsToUse.forEach((_, idx) => itemsLeft.add(idx))

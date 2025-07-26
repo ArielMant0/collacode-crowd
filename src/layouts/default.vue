@@ -1,6 +1,6 @@
 <template>
   <v-app>
-    <v-app-bar flat density="compact" class="pa-0 top-bar">
+    <v-app-bar flat density="compact" class="pa-0 top-bar" height="50" absolute>
         <v-app-bar-title density="compact">
             <span style="font-size: 18px;">
                 <v-icon class="mr-2 mb-1">mdi-crowd</v-icon>

@@ -15,8 +15,6 @@ import { createApp } from 'vue'
 
 // Styles
 import 'unfonts.css'
-import 'shepherd.js/dist/css/shepherd.css'
-import "vue-toastification/dist/index.css";
 
 const app = createApp(App)
 

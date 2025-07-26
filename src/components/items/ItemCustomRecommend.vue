@@ -5,16 +5,17 @@
             click or drag <b class="text-decoration-underline">only</b> similar {{ app.itemName }}s into a fitting category
         </div>
 
-        <div class="d-flex align-start justify-center" style="max-width: 100%;">
+        <div class="d-flex align-start justify-center" style="width: 100%;">
 
-            <div class="d-flex flex-column mr-4" style="max-width: 49%; min-width: 30%;">
-                <div class="bordered-grey-light-thin pa-2 mt-1" style="width: 100%; border-radius: 4px;">
-                    <h3 class="sectitle bordered-secondary">{{ app.itemNameCaptial }}s with similar names</h3>
+            <div class="d-flex flex-column mr-4" style="max-width: 49%; width: 35%;">
 
+                <div class="pa-2 mt-1 rounded-lg" style="width: 100%; border: 2px dashed black;">
+
+                    <h3 class="sectitle">{{ app.itemNameCaptial }}s with similar names</h3>
                     <div class="d-flex flex-wrap justify-center align-start"
-                        @drop.prevent="e => dropItem(e, 0)"
+                        @drop.prevent="dropItem(0)"
                         @dragover.prevent
-                        :style="{ minWidth: minW+'px', width: minW+'px', maxWidth: '100%', minHeight: ((imageHeight+10)*2)+'px' }">
+                        :style="{ width: minW+'px', maxWidth: '100%', minHeight: ((imageHeight+10)*2)+'px' }">
                         <ItemTeaser v-for="(item, idx) in suggs.byName"
                             :id="item.id"
                             :width="imageWidth"
@@ -29,12 +30,12 @@
                     </div>
                 </div>
 
-                <div class="bordered-grey-light-thin pa-2 mt-1" style="width: 100%; border-radius: 4px;">
-                    <h3 class="sectitle bordered-secondary">Additional {{ app.itemName }}s others picked</h3>
+                <div class="rounded-lg pa-2 mt-2" style="width: 100%; border: 2px dashed black;">
+                    <h3 class="sectitle">{{ app.itemNameCaptial }}s picked by others</h3>
                     <div class="d-flex flex-wrap justify-center align-start"
-                        @drop.prevent="e => dropItem(e, 0)"
+                        @drop.prevent="dropItem(0)"
                         @dragover.prevent
-                        :style="{ minWidth: minW+'px', width: minW+'px', maxWidth: '100%', minHeight: ((imageHeight+10)*2)+'px' }">
+                        :style="{ width: minW+'px', maxWidth: '100%', minHeight: ((imageHeight+10)*2)+'px' }">
                         <ItemTeaser v-for="(item, idx) in suggs.byCrowd"
                             :id="item.id"
                             :width="imageWidth"
@@ -49,12 +50,11 @@
                     </div>
                 </div>
 
-                <div class="bordered-grey-light-thin pa-2 mt-1" style="width: 100%; border-radius: 4px;">
+                <div class="rounded-lg pa-2 mt-2" style="width: 100%; border: 2px dashed black">
 
                     <v-text-field v-model="search"
                         label="Search for items by name.."
                         prepend-inner-icon="mdi-magnify"
-                        color="secondary"
                         variant="outlined"
                         density="compact"
                         class="mb-1"
@@ -64,11 +64,11 @@
                         hide-details
                         single-line/>
                     <div class="d-flex flex-wrap justify-center align-start"
-                        @drop.prevent="e => dropItem(e, 0)"
+                        @drop.prevent="dropItem(0)"
                         @dragover.prevent
                         @dragenter="onDragEnter"
                         @dragleave="onDragLeave"
-                        :style="{ minWidth: minW+'px', width: minW+'px', maxWidth: '100%', minHeight: ((imageHeight+10)*2)+'px' }">
+                        :style="{ width: minW+'px', maxWidth: '100%', minHeight: ((imageHeight+10)*1)+'px' }">
                         <ItemTeaser v-for="(item, idx) in bySearch"
                             :id="item.id"
                             :width="imageWidth"
@@ -84,9 +84,15 @@
                 </div>
             </div>
 
-            <div class="ml-4" style="max-width: 49%; min-width: 30%;">
+            <div class="ml-4" style="max-width: 49%; width: 35%;">
 
-                <div class="d-flex flex-column align-center bordered-grey-light-thin pa-2 mb-1" style="min-width: 100%; border-radius: 4px;">
+                <div class="d-flex flex-column align-center pa-2 mb-1 rounded-lg drop-area"
+                    @drop.prevent="dropItem(2)"
+                    @dragover.prevent
+                    @dragenter="e => onDragEnter(e, 'bg-primary-light')"
+                    @dragleave="e => onDragLeave(e, 'bg-primary-light')"
+                    :style="{ border: '2px dashed '+theme.current.value.colors.primary }"
+                    style="min-width: 100%">
                     <h3 class="d-flex align-center">
                         <v-tooltip location="top center">
                             <template v-slot:activator="{ props }">
@@ -106,11 +112,8 @@
                         <span v-if="itemLimit > 0" class="ml-1 text-caption">(max. {{ itemLimit }})</span>
                     </h3>
                     <div class="d-flex flex-wrap justify-center align-start pa-2"
-                        @drop.prevent="e => dropItem(e, 2)"
-                        @dragover.prevent
-                        @dragenter="onDragEnter"
-                        @dragleave="onDragLeave"
-                        :style="{ minWidth: minW+'px', width: minW+'px', maxWidth: '100%', minHeight: ((imageHeight+10)*3)+'px' }">
+                        style="pointer-events: none; max-width: 100%;"
+                        :style="{ width: minW+'px', minHeight: ((imageHeight+10)*3)+'px' }">
                         <ItemTeaser v-for="item in highFixed"
                             :id="item.id"
                             :width="imageWidth"
@@ -118,6 +121,9 @@
                             prevent-open
                             prevent-context
                             prevent-click
+                            draggable
+                            @dragstart="startDrag(item.id)"
+                            style="cursor: grab; pointer-events: all;"
                             class="mr-1 mb-1"/>
                         <ItemTeaser v-for="item in highItems"
                             :id="item.id"
@@ -128,12 +134,19 @@
                             @click="resetItem(item.id)"
                             draggable
                             @dragstart="startDrag(item.id)"
-                            style="cursor: grab"
+                            style="cursor: grab; pointer-events: all;"
                             class="mr-1 mb-1"/>
                     </div>
                 </div>
 
-                <div class="d-flex flex-column align-center bordered-grey-light-thin pa-2 mt-1" style="min-width: 100%; border-radius: 4px;">
+                <div
+                    @drop.prevent="dropItem(1)"
+                    @dragover.prevent
+                    @dragenter="e => onDragEnter(e, 'bg-tertiary-light')"
+                    @dragleave="e => onDragLeave(e, 'bg-tertiary-light')"
+                    class="d-flex flex-column align-center rounded-lg pa-2 mt-4 drop-area"
+                    :style="{ border: '2px dashed '+theme.current.value.colors.tertiary }"
+                    style="width: 100%;">
                     <h3 class="d-flex align-center">
                         <v-tooltip location="top center">
                             <template v-slot:activator="{ props }">
@@ -153,11 +166,8 @@
                         <span v-if="itemLimit > 0" class="ml-1 text-caption">(max. {{ itemLimit }})</span>
                     </h3>
                     <div class="d-flex flex-wrap justify-center align-start pa-2"
-                        @drop.prevent="e => dropItem(e, 1)"
-                        @dragover.prevent
-                        @dragenter="onDragEnter"
-                        @dragleave="onDragLeave"
-                        :style="{ minWidth: minW+'px', width: minW+'px', maxWidth: '100%', minHeight: ((imageHeight+10)*4)+'px' }">
+                        style="pointer-events: none; max-width: 100%;"
+                        :style="{ width: minW+'px', minHeight: ((imageHeight+10)*3)+'px' }">
                         <ItemTeaser v-for="item in medFixed"
                             :id="item.id"
                             :width="imageWidth"
@@ -165,6 +175,9 @@
                             prevent-open
                             prevent-context
                             prevent-click
+                            draggable
+                            @dragstart="startDrag(item.id)"
+                            style="cursor: grab; pointer-events: all;"
                             class="mr-1 mb-1"/>
                         <ItemTeaser v-for="item in medItems"
                             :id="item.id"
@@ -175,7 +188,7 @@
                             @click="resetItem(item.id)"
                             draggable
                             @dragstart="startDrag(item.id)"
-                            style="cursor: grab"
+                            style="cursor: grab; pointer-events: all;"
                             class="mr-1 mb-1"/>
                     </div>
                 </div>
@@ -188,13 +201,15 @@
     import { useApp } from '@/stores/app'
     import { reactive, computed, onMounted } from 'vue'
     import ItemTeaser from './ItemTeaser.vue'
-    import { useDisplay } from 'vuetify'
+    import { useDisplay, useTheme } from 'vuetify'
     import DM from '@/use/data-manager'
     import { getSimilarByTarget } from '@/use/data-api'
     import * as sc from "string-comparison"
     import { useToast } from 'vue-toastification'
+    import { getStopWords } from '@/use/utility'
 
     const app = useApp()
+    const theme = useTheme()
     const toast = useToast()
     const { md, lg, xl, xxl } = useDisplay()
 
@@ -258,6 +273,7 @@
     })
 
     let dragId = null, dragOrigin, dragIndex
+    let dragElem = null, dragClassName = ""
 
     function searchByName() {
         app.addInteraction("step3")
@@ -277,16 +293,17 @@
     async function getSuggestions() {
         const rRep = new RegExp("[_\-]", "gi")
         const rDel = new RegExp("[®©™:\(\)0-9]", "gi")
-        const process = name => name.toLowerCase().replaceAll(rRep, " ").replaceAll(rDel, "")
+        const stopWords = getStopWords()
+        const process = name => {
+            const str = name.toLowerCase().replaceAll(rRep, " ").replaceAll(rDel, "")
+            return str.split(" ").filter(w => !stopWords.includes(w)).join(" ")
+        }
         const names = DM.getDataBy("items", d => isFixedItem(d.id)).map(d => process(d.name))
         const other = DM.getDataBy("items", d => {
             const dn = process(d.name)
             return d.allTags.length > 0 &&
                 !isFixedItem(d.id) &&
-                (
-                    names.some(n => sc.default.jaroWinkler.similarity(n, dn) >= 0.85) ||
-                    names.some(n => sc.default.lcs.similarity(n, dn) >= 0.85)
-                )
+                names.some(n => sc.default.jaroWinkler.similarity(n, dn) >= 0.85)
         })
         suggs.byName = other.map(d => ({ id: d.id }))
         const crowd = await getSimilarByTarget(props.target, 20)
@@ -309,22 +326,34 @@
         dragIndex = index
         app.addInteraction("step3")
     }
-    function dropItem(event, where=0) {
+    function dropItem(where=0) {
         if (!dragId) return
         setItem(dragId, dragOrigin, dragIndex, where)
         dragId = null
         dragOrigin = null
         dragIndex = -1
-        onDragLeave(event)
+        if (dragElem) {
+            dragElem.classList.remove(dragClassName)
+            dragClassName = ""
+            dragElem = null
+        }
     }
 
-    function onDragEnter(event) {
+    function onDragEnter(event, classname="") {
         // color background of drop area on enter
-        event.target.classList.add("bg-surface-light")
+        if (event.target.classList.contains("drop-area")) {
+            event.target.classList.add(classname)
+            dragElem = event.target
+            dragClassName = classname
+        }
     }
-    function onDragLeave(event) {
+    function onDragLeave(event, classname="") {
         // reset background color of drop area on leave
-        event.target.classList.remove("bg-surface-light")
+        if (event.target.classList.contains("drop-area")) {
+            event.target.classList.remove(classname)
+            dragElem = null
+            dragClassName = ""
+        }
     }
 
     function addToOrigin(origin, id) {
@@ -361,26 +390,41 @@
             if (props.itemLimit > 0 && (itemHigh.size+highFixed.value.length) >= props.itemLimit) {
                 return toast.warning(`maximum number of ${app.itemName}s reached`)
             }
-            if (!itemMed.has(id) && !itemHigh.has(id)) {
-                chosen.value.push({ id: id, origin: origin })
-            }
-            removeFromOrigin(origin, index)
 
-            itemMed.delete(id)
-            itemHigh.add(id)
+            const inFixed = props.items.find(d => d.id === id)
+            if (inFixed) {
+                inFixed.value = 2
+            } else {
+                if (!itemMed.has(id) && !itemHigh.has(id)) {
+                    chosen.value.push({ id: id, origin: origin })
+                }
+                removeFromOrigin(origin, index)
+
+                itemMed.delete(id)
+                itemHigh.add(id)
+            }
+
         } else if (where === 1) {
             if (props.itemLimit > 0 && (itemMed.size+medFixed.value.length) >= props.itemLimit) {
                 return toast.warning(`maximum number of ${app.itemName}s reached`)
             }
-            if (!itemMed.has(id) && !itemHigh.has(id)) {
-                chosen.value.push({ id: id, origin: origin })
+
+            const inFixed = props.items.find(d => d.id === id)
+            if (inFixed) {
+                inFixed.value = 1
+            } else {
+                if (!itemMed.has(id) && !itemHigh.has(id)) {
+                    chosen.value.push({ id: id, origin: origin })
+                }
+
+                removeFromOrigin(origin, index)
+                itemHigh.delete(id)
+                itemMed.add(id)
             }
-            removeFromOrigin(origin, index)
-            itemHigh.delete(id)
-            itemMed.add(id)
         } else {
             const idx = chosen.value.findIndex(d => d.id === id)
-            let org
+
+            let org = null
             if (idx >= 0) {
                 org = chosen.value[idx].origin
                 chosen.value.splice(idx, 1)
@@ -415,10 +459,13 @@
 
 <style scoped>
 .sectitle {
+    font-size: 22px;
+    font-weight: 400;
+    text-transform: uppercase;
     border-radius: 4px;
     width: 100%;
     padding: 3px 0px;
-    vertical-align: middle;
     margin-bottom: 10px;
+    vertical-align: middle;
 }
 </style>

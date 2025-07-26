@@ -2,6 +2,7 @@
     <div class="pa-2">
         <SimilarityGame v-if="validMethod"
             :method="method"
+            :use-timer="false"
             @close="onClose"
             @end="onEnd"
             @cancel="onCancel"/>
@@ -14,16 +15,12 @@
     import { useApp } from '@/stores/app';
     import { GAME_IDS } from '@/stores/games';
     import { useTimes } from '@/stores/times';
-    import { randomWeighted } from '@/use/random';
-    import { storeToRefs } from 'pinia';
     import { computed, onMounted } from 'vue';
     import { useToast } from 'vue-toastification';
 
     const app = useApp()
     const times = useTimes()
     const toast = useToast()
-
-    const { isCrowdWorker } = storeToRefs(app)
 
     const method = ref(0)
     const validMethod = computed(() => method.value === 1 || method.value === 2)
@@ -45,12 +42,15 @@
     function read() {
         switch (app.method) {
             case 0:
-                const c1 = app.getMethodCount(GAME_IDS.CLUSTERS)
-                const c2 = app.getMethodCount(GAME_IDS.BINSEARCH)
-                const sum = Math.max(1, c1 + c2)
-                const w1 = 1 - (c1 / sum)
-                const w2 = 1 - (c2 / sum)
-                method.value = randomWeighted([GAME_IDS.CLUSTERS, GAME_IDS.BINSEARCH], [w1, w2])
+                if (app.lastMethod === 0) {
+                    method.value = Math.random() > 0.5 ?
+                        GAME_IDS.BINSEARCH :
+                        GAME_IDS.CLUSTERS
+                } else {
+                    method.value = app.lastMethod === GAME_IDS.CLUSTERS ?
+                        GAME_IDS.BINSEARCH :
+                        GAME_IDS.CLUSTERS
+                }
                 app.addMethodCount(method.value)
                 break
             case 1:

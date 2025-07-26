@@ -12,6 +12,10 @@ import { VStepperVertical, VStepperVerticalItem } from 'vuetify/labs/VStepperVer
 import { createVuetify } from 'vuetify'
 import { aliases, mdi } from "vuetify/iconsets/mdi"
 
+// Plugin Styles
+import 'shepherd.js/dist/css/shepherd.css'
+import "vue-toastification/dist/index.css";
+
 const customLight = {
   dark: false,
   colors: {
@@ -28,8 +32,8 @@ const customLight = {
     'primary-lighten-1': '#4ca68f',
     secondary: '#0ad39f',
     'secondary-darken-1': '#06a179',
-    tertiary: '#0cf5b8',
-    'tertiary-darken-1': '#09b88a',
+    tertiary: '#673AB7',
+    'tertiary-darken-1': '#673AB7',
     info: '#1976D2',
     error: "#b61431"
   },
@@ -50,8 +54,8 @@ const customDark = {
     'primary-darken-1': '#045c45',
     secondary: '#0ad39f',
     'secondary-darken-1': '#06a179',
-    tertiary: '#0cf5b8',
-    'tertiary-darken-1': '#09b88a',
+    tertiary: '#673AB7',
+    'tertiary-darken-1': '#673AB7',
     info: '#1565C0',
     error: "#b61431"
   },
