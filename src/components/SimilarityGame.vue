@@ -429,7 +429,7 @@
                 setTimeout(() => router.push("/"), 2000)
             }
         } catch(e) {
-            console.error(e.toJSON())
+            console.error(e.toString())
             toast.error("error testing comprehension")
             goHome(1000)
         }
@@ -447,7 +447,7 @@
                 )
                 setTimeout(() => router.push("/"), 2000)
             } catch(e) {
-                console.error(e.toJSON())
+                console.error(e.toString())
                 toast.error("error adding attention fail")
                 goHome(1000)
             }
@@ -525,7 +525,7 @@
         try {
             gameData.comprehension = await loadComprehensionData(target.value.id)
         } catch(e) {
-            console.error(e.toJSON())
+            console.error(e.toString())
             toast.error("error loading comprehension check data")
             gameData.comprehension = []
         }
@@ -606,7 +606,7 @@
             await getClientStatus()
             console.info("client status is OK")
         } catch (e) {
-            console.error(e.toJSON())
+            console.error(e.toString())
             const str = app.isCrowdWorker ?
                 "reached maximum number of submissions" :
                 "blocked due to suspicious activity / too many failed checks"
@@ -655,7 +655,7 @@
             step.value = PR_STEPS.FEEDBACK
 
         } catch(e) {
-            console.error(e.toJSON())
+            console.error(e.toString())
             toast.error("error adding similarity")
         }
     }

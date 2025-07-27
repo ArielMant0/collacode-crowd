@@ -64,7 +64,7 @@
             const result = await api.loadCrowdMeta()
             app.setCrowdMeta(result)
         } catch (e) {
-            console.error(e.toJSON())
+            console.error(e.toString())
             toast.error("error loading crowd info")
         }
     }
@@ -74,7 +74,7 @@
             const result = await api.loadCrowdItems()
             app.setCrowdItems(result)
         } catch (e) {
-            console.error(e.toJSON())
+            console.error(e.toString())
             toast.error("error loading crowd items")
         }
         times.reloaded("crowd")
@@ -85,7 +85,7 @@
             await loadCrowdMeta()
             await loadCrowdItems()
         } catch (e) {
-            console.error(e.toJSON())
+            console.error(e.toString())
             toast.error("error loading crowd data")
         }
     }
@@ -96,7 +96,7 @@
             const result = await api.loadItemsByCode(app.code)
             updateAllItems(result);
         } catch (e) {
-            console.error(e.toJSON())
+            console.error(e.toString())
             toast.error("error loading items for code")
         }
         times.reloaded("items")
@@ -128,7 +128,7 @@
             DM.setData("tags_name", new Map(result.map(d => ([d.id, d.name ? d.name : '']))))
             DM.setData("tags_desc", new Map(result.map(d => ([d.id, d.description ? d.description : 'no description']))))
         } catch (e) {
-            console.error(e.toJSON())
+            console.error(e.toString())
             toast.error("error loading tags")
         }
         times.reloaded("tags")
@@ -207,7 +207,7 @@
 
             DM.setData("datatags", result)
         } catch (e) {
-            console.error(e.toJSON())
+            console.error(e.toString())
             toast.error("error loading datatags")
         }
         times.reloaded("datatags")
@@ -335,7 +335,7 @@
                 const ipaddr = await ipres.json()
                 app.ipAddress = ipaddr.ip
             } catch (e) {
-                console.error(e.toJSON())
+                console.error(e.toString())
                 console.error("could not get ip address")
             }
 
