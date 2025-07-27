@@ -146,7 +146,6 @@
     import ItemTeaser from './ItemTeaser.vue';
     import { useTheme } from 'vuetify';
     import { useShepherd } from 'vue-shepherd'
-    import { randomInteger } from '@/use/random';
     import { offset } from '@floating-ui/vue';
 
     const app = useApp()
@@ -221,9 +220,6 @@
 
     const history = ref([])
     const clusterLeft = new Set()
-
-    const ALL_TAGS = ref(true)
-    const FREQ_WEIGHTS = ref(true)
 
     let dragId = null, dragSrc = null
 
@@ -500,7 +496,7 @@
             }
 
             const metric = "euclidean"
-            clusters = getItemClusters(itemsToUse, metric, 2, ALL_TAGS.value, FREQ_WEIGHTS.value)
+            clusters = getItemClusters(itemsToUse, metric)
             clusterLeft.clear()
             maxClsSize = 0
 

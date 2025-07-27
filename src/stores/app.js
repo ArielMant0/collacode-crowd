@@ -19,6 +19,10 @@ export const PR_STEPS = Object.freeze({
     FEEDBACK: 5
 })
 
+export const CW_MAX_SUB = 3
+// TODO: replace
+const PROLIFIC_LINK = "https://arielmant0.github.io/collacode-crowd/"
+
 export const useApp = defineStore('app', {
     state: () => ({
         initialized: false,
@@ -31,9 +35,12 @@ export const useApp = defineStore('app', {
 
         // user data
         activeUserId: null,
+        guid: null,
         ipAddress: null,
         cwSource: null,
         cwId: null,
+
+        numSubmissions: 0,
 
         // which method (clusters = 1 or binary search = 2) to prefer
         // by default, we randomly pick one
@@ -64,6 +71,8 @@ export const useApp = defineStore('app', {
         itemNameCaptial: state => capitalize(state.itemName),
         hasNextItem: state => state.itemsLeft.size > 0,
         isCrowdWorker: state => state.cwId !== null,
+        isCrowdWorkerDone: state => state.cwId !== null && state.numSubmissions >= CW_MAX_SUB,
+        cwLink: state => state.isCrowdWorker ? PROLIFIC_LINK : "/"
     },
 
     actions: {
@@ -105,13 +114,13 @@ export const useApp = defineStore('app', {
             this.dataset = meta.dataset
             this.ds = meta.dataset.id
             this.excludedTags = new Set(meta.excludedTags)
-            if (meta.cwId) {
-                this.cwId = meta.cwId
-                this.cwSource = meta.cwSource
-            }
-            if (meta.guid) {
-                this.setActiveUser(meta.guid)
-            }
+            this.setActiveUser(
+                meta.client,
+                meta.guid,
+                meta.cwId,
+                meta.cwSource
+            )
+            this.numSubmissions = meta.submissions
         },
 
         setCrowdItems(meta) {
@@ -120,6 +129,7 @@ export const useApp = defineStore('app', {
             this.itemsGone = new Set(meta.itemsGone)
             this.itemCounts = meta.itemCounts
             this.method = meta.method ? meta.method : 0
+            this.numSubmissions = meta.submissions
             this.itemTime = Date.now()
         },
 
@@ -150,11 +160,13 @@ export const useApp = defineStore('app', {
             }
         },
 
-        setActiveUser(id) {
-            if (id !== this.activeUserId) {
-                this.methodCounts.clear()
-                this.activeUserId = id
-            }
+        setActiveUser(id, guid, cwId=null, cwSource="prolific") {
+            this.methodCounts.clear()
+            this.activeUserId = id
+            this.guid = guid
+            this.cwId = cwId ? cwId : null
+            this.cwSource = cwId ? cwSource : null
+            this.numSubmissions = 0
         },
 
         addMethodCount(method) {

@@ -107,15 +107,16 @@
 
         <div v-else-if="state === STATES.END" class="d-flex flex-column align-center" style="width: 100%; max-width: 100%;">
 
-            <div class="mb-8 d-flex flex-column align-center" :style="{ maxWidth: (190*5)+'px' }">
+            <div class="mt-4 d-flex flex-column align-center">
 
-                <div class="d-flex align-center justify-center mb-4">
+                <CrowdWorkerNotice v-if="showRedirect" max-width="1000"/>
+                <div v-else class="d-flex align-center justify-center mb-4">
                     <v-btn class="mr-1" size="large" color="error" @click="close">back to home</v-btn>
                 </div>
 
                 <div style="max-width: 100%; text-align: center;">
                     <h3>Your Choices</h3>
-                    <div class="d-flex flex-wrap justify-center">
+                    <div class="d-flex flex-wrap justify-center" :style="{ maxWidth: (190*5)+'px' }">
                         <ItemTeaser v-for="item in gameData.resultItems"
                             :id="item.id"
                             prevent-click
@@ -130,7 +131,7 @@
                 </div>
                 <div v-if="gameData.otherItems.length" class="mt-4" style="max-width: 100%; text-align: center;">
                     <h3>Most Common Choices</h3>
-                    <div class="d-flex flex-wrap justify-center">
+                    <div class="d-flex flex-wrap justify-center" :style="{ maxWidth: (190*5)+'px' }">
                         <ItemTeaser v-for="item in gameData.otherItems"
                             :id="item.id"
                             :border-size="4"
@@ -153,7 +154,7 @@
     import LoadingScreen from './LoadingScreen.vue'
     import ItemTeaser from './items/ItemTeaser.vue'
     import ItemGraphPath from './items/ItemGraphPath.vue'
-    import { PR_STEPS, useApp } from '@/stores/app'
+    import { CW_MAX_SUB, PR_STEPS, useApp } from '@/stores/app'
     import ItemBinarySearch from './items/ItemBinarySearch.vue'
     import ItemTagRecommend from './items/ItemTagRecommend.vue'
     import ItemCustomRecommend from './items/ItemCustomRecommend.vue'
@@ -163,6 +164,7 @@
     import Timer from './Timer.vue';
     import ComprehensionCheck from './ComprehensionCheck.vue';
     import AttentionCheck from './AttentionCheck.vue';
+import CrowdWorkerNotice from './CrowdWorkerNotice.vue';
 
     const emit = defineEmits(["end", "close", "cancel"])
 
@@ -210,8 +212,10 @@
     })
 
     const state = ref(STATES.START)
+    const showRedirect = ref(false)
+
     const notInCheck = computed(() => step.value !== PR_STEPS.ATTENTION && step.value !== PR_STEPS.COMPREHENSION)
-    const showTimer = computed(() => props.useTimer && notInCheck.value && state.value === STATES.INGAME)
+    const showTimer = computed(() => props.useTimer && state.value === STATES.INGAME)
 
     const timeInSec = computed(() => {
         switch (step.value) {
@@ -249,6 +253,7 @@
 
 
     let tutorialDone = false, inTutorial = false
+    let userGeoLoc = null
 
     // ---------------------------------------------------------------------
     // Functions
@@ -427,7 +432,7 @@
                 setTimeout(() => router.push("/"), 2000)
             }
         } catch(e) {
-            console.error(e.toString())
+            console.error(e.toJSON())
             toast.error("error testing comprehension")
             goHome(1000)
         }
@@ -445,7 +450,7 @@
                 )
                 setTimeout(() => router.push("/"), 2000)
             } catch(e) {
-                console.error(e.toString())
+                console.error(e.toJSON())
                 toast.error("error adding attention fail")
                 goHome(1000)
             }
@@ -523,7 +528,7 @@
         try {
             gameData.comprehension = await loadComprehensionData(target.value.id)
         } catch(e) {
-            console.error(e.toString())
+            console.error(e.toJSON())
             toast.error("error loading comprehension check data")
             gameData.comprehension = []
         }
@@ -542,8 +547,6 @@
 
     async function stopGame() {
         stopTimer()
-        state.value = STATES.END
-        step.value = PR_STEPS.FEEDBACK
         timeEnd = Date.now()
 
         // check if we already have a guid
@@ -576,14 +579,18 @@
             .concat(gameData.customItems)
             .map(d => transform(d, gameData.target.id))
 
-        if (allItems.length === 0) {
-            return toast.warning("no similarities specified")
-        }
-
         // get all highly similar items
-        const highSim = new Set(allItems.filter(d => d.value > 1).map(d => d.item_id))
+        const highSim = new Set(
+            allItems
+                .filter(d => d.item_id !== gameData.target.id && d.value > 1)
+                .map(d => d.item_id)
+            )
         // get all "normally" similar items
-        const normalSim = new Set(allItems.filter(d => d.value === 1).map(d => d.item_id))
+        const normalSim = new Set(
+            allItems
+                .filter(d => d.item_id !== gameData.target.id && d.value === 1)
+                .map(d => d.item_id)
+        )
 
         // add automatic similarity judgements
         for (let i = 0; i < highSim.length; ++i) {
@@ -595,6 +602,19 @@
             for (let j = 0; j < normalSim.length; ++j) {
                 allItems.push(transform({ id: normalSim[j], value: 1, origin: "auto" }, highSim[i]))
             }
+        }
+
+        try {
+            // check whether this client should be blocked (e.g. too many requests)
+            await getClientStatus()
+            console.info("client status is OK")
+        } catch (e) {
+            console.error(e.toJSON())
+            const str = app.isCrowdWorker ?
+                "reached maximum number of submissions" :
+                "blocked due to suspicious activity / too many failed checks"
+            toast.error(str, { timeout: 2000, position: POSITION.TOP_CENTER })
+            return goHome(2500)
         }
 
         const info = {
@@ -609,32 +629,36 @@
                 duration: Math.floor((timeEnd-timeStart) / 1000),
                 language: window.navigator.language,
                 userAgent: window.navigator.userAgent,
+                location: userGeoLoc,
                 ip: app.ipAddress,
                 log: ilog
             }
         }
 
         try {
-            // check whether this client should be blocked (e.g. too many requests)
-            await getClientStatus()
-            console.info("client status is OK")
-        } catch (e) {
-            console.error(e.toString())
-            toast.error("blocked due to suspicious activity", { timeout: 1500, position: POSITION.TOP_CENTER })
-            goHome(2000)
-        }
-
-        try {
             // post the similarity data to the backend
-            await addSimilarity(info, allItems)
+            const response = await addSimilarity(info, allItems)
             // fetch common similar items for all players
             const set = new Set(allItems.map(d => d.item_id))
-            const other = await getSimilarByTarget(gameData.target.id)
+            const other = await getSimilarByTarget(gameData.target.id, 5)
             gameData.otherItems = other.map(d => ({ id: d["item_id"], same: set.has(d["item_id"]) }))
+            app.numSubmissions = response.submissions
+
             // tell the parent we're done so that items get updated
             emit("end")
+
+            // redirect crowd workers
+            showRedirect.value = app.isCrowdWorker && app.isCrowdWorkerDone
+
+            if (showRedirect.value) {
+                setTimeout(function() { window.location.replace(app.cwLink) }, 3000)
+            }
+
+            state.value = STATES.END
+            step.value = PR_STEPS.FEEDBACK
+
         } catch(e) {
-            console.error(e.toString())
+            console.error(e.toJSON())
             toast.error("error adding similarity")
         }
     }
@@ -670,6 +694,16 @@
 
     async function init () {
         reset()
+
+        window.navigator.geolocation.getCurrentPosition(
+            function(loc) { userGeoLoc = loc.toJSON() },
+            function() { userGeoLoc = null },
+            {
+                enableHighAccuracy: true,
+                timeout: 2000,
+                maximumAge: 0
+            }
+        )
 
         inTutorial = false
         tutorialDone = Boolean(localStorage.getItem("tutorial_"+props.method)) === true

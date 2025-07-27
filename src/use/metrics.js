@@ -31,11 +31,11 @@ export function euclidean_squared(a, b) {
     return sum
 }
 
-export function jaccard(a, b) {
+export function jaccard(a, b, exact_equal=true) {
     let int = 0, union = 0;
     let n = a.length;
     for (let i = 0; i < n; ++i) {
-        int += a[i] !== 0 && a[i] === b[i] ? 1 : 0
+        int += a[i] !== 0 && (!exact_equal || a[i] === b[i]) ? 1 : 0
         union += a[i] !== 0 || b[i] !== 0 ? 1 : 0
     }
     return 1 - (union > 0 ? int / union : 0)

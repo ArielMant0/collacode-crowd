@@ -64,7 +64,7 @@
             const result = await api.loadCrowdMeta()
             app.setCrowdMeta(result)
         } catch (e) {
-            console.error(e.toString())
+            console.error(e.toJSON())
             toast.error("error loading crowd info")
         }
     }
@@ -74,7 +74,7 @@
             const result = await api.loadCrowdItems()
             app.setCrowdItems(result)
         } catch (e) {
-            console.error(e.toString())
+            console.error(e.toJSON())
             toast.error("error loading crowd items")
         }
         times.reloaded("crowd")
@@ -85,7 +85,7 @@
             await loadCrowdMeta()
             await loadCrowdItems()
         } catch (e) {
-            console.error(e.toString())
+            console.error(e.toJSON())
             toast.error("error loading crowd data")
         }
     }
@@ -96,7 +96,7 @@
             const result = await api.loadItemsByCode(app.code)
             updateAllItems(result);
         } catch (e) {
-            console.error(e.toString())
+            console.error(e.toJSON())
             toast.error("error loading items for code")
         }
         times.reloaded("items")
@@ -128,7 +128,7 @@
             DM.setData("tags_name", new Map(result.map(d => ([d.id, d.name ? d.name : '']))))
             DM.setData("tags_desc", new Map(result.map(d => ([d.id, d.description ? d.description : 'no description']))))
         } catch (e) {
-            console.error(e.toString())
+            console.error(e.toJSON())
             toast.error("error loading tags")
         }
         times.reloaded("tags")
@@ -207,7 +207,7 @@
 
             DM.setData("datatags", result)
         } catch (e) {
-            console.error(e.toString())
+            console.error(e.toJSON())
             toast.error("error loading datatags")
         }
         times.reloaded("datatags")
@@ -324,26 +324,30 @@
     }
 
     async function readClient() {
-        readQuery()
+        if (readQuery()) {
+            app.activeUserId = null
+            app.guid = null
+            loadCrowd()
+        } else {
+            // try to get the user's ip address
+            try {
+                const ipres = await fetch("https://api.ipify.org?format=json")
+                const ipaddr = await ipres.json()
+                app.ipAddress = ipaddr.ip
+            } catch (e) {
+                console.error(e.toJSON())
+                console.error("could not get ip address")
+            }
 
-        // try to read the users id
-        const guid = localStorage.getItem("crowd-guid")
-        if (guid) {
-            app.setActiveUser(guid)
-        }
-
-        // try to get the user's ip address
-        try {
-            const ipres = await fetch("https://api.ipify.org?format=json")
-            const ipaddr = await ipres.json()
-            app.ipAddress = ipaddr.ip
-        } catch (e) {
-            console.error(e.toString())
-            console.error("could not get ip address")
+            // try to read the users id
+            const clientId = localStorage.getItem("crowd-client")
+            const guid = localStorage.getItem("crowd-guid")
+            // crowd sourcing data
+            const cwid = localStorage.getItem("cw-id")
+            const cwsrc = localStorage.getItem("cw-source")
+            app.setActiveUser(clientId, guid, cwid, cwsrc)
         }
     }
-
-
 
     onMounted(async () => {
         allowOverlay.value = true
@@ -390,7 +394,8 @@
 
     watch(activeUserId, function() {
         if (app.activeUserId) {
-            localStorage.setItem("crowd-guid", app.activeUserId)
+            localStorage.setItem("crowd-client", app.activeUserId)
+            localStorage.setItem("crowd-guid", app.guid)
             if (app.isCrowdWorker) {
                 localStorage.setItem("cw-id", app.cwId)
                 localStorage.setItem("cw-source", app.cwSource)

@@ -1,8 +1,10 @@
 <template>
     <div class="pa-2">
-        <SimilarityGame v-if="validMethod"
+        <div v-if="app.isCrowdWorkerDone" class="d-flex justify-center">
+            <CrowdWorkerNotice max-width="1000"/>
+        </div>
+        <SimilarityGame v-else-if="validMethod"
             :method="method"
-            :use-timer="false"
             @close="onClose"
             @end="onEnd"
             @cancel="onCancel"/>
@@ -10,6 +12,7 @@
 </template>
 
 <script setup>
+    import CrowdWorkerNotice from '@/components/CrowdWorkerNotice.vue';
     import SimilarityGame from '@/components/SimilarityGame.vue';
     import router from '@/router';
     import { useApp } from '@/stores/app';
@@ -37,7 +40,7 @@
         times.needsReload("crowd")
     }
     function onClose() {
-        router.push("/")
+        onCancel(100)
     }
     function read() {
         switch (app.method) {

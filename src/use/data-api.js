@@ -30,10 +30,11 @@ export async function loadDataTagsByCode(code) {
 ////////////////////////////////////////////////////////////
 
 export async function loadCrowdMeta() {
-    const loader = useLoader();
     const app = useApp()
+    const loader = useLoader();
     return loader.get("crowd", {
-        guid: app.activeUserId,
+        client: app.activeUserId,
+        guid: app.guid,
         ip: app.ipAddress,
         cwId: app.cwId,
         cwSource: app.cwSource
@@ -41,37 +42,24 @@ export async function loadCrowdMeta() {
 }
 
 export async function loadCrowdItems() {
-    const loader = useLoader();
     const app = useApp()
+    const loader = useLoader();
     return loader.get("crowd/items", {
-        guid: app.activeUserId,
+        client: app.activeUserId,
+        guid: app.guid,
         ip: app.ipAddress,
-        cwId: app.cwId,
+        cwId: app.cwId
     })
 }
 
 export async function getClientStatus() {
-    const loader = useLoader()
     const app = useApp()
+    const loader = useLoader()
     return loader.get("similarity/status", {
-        guid: app.activeUserId,
+        client: app.activeUserId,
+        guid: app.guid,
         ip: app.ipAddress,
         cwId: app.cwId,
-    })
-}
-
-export async function getCrowdGUID() {
-    const loader = useLoader()
-    return loader.get("similarity/guid")
-}
-
-export async function postUserCrowdGUID(userId, guid, dataset=null) {
-    const app = useApp()
-    const loader = useLoader()
-    return loader.post("similarity/guid", {
-        user_id: userId,
-        guid: guid,
-        dataset_id: dataset ? dataset : app.ds
     })
 }
 
@@ -84,7 +72,8 @@ export async function testComprehensionData(itemId, answers, game) {
     const app = useApp()
     const loader = useLoader();
     return loader.post("crowd/comprehension/test", {
-        guid: app.activeUserId,
+        client: app.activeUserId,
+        guid: app.guid,
         ip: app.ipAddress,
         cwId: app.cwId,
         gameId: game,
@@ -98,7 +87,8 @@ export async function addAttentionFail(itemId, game) {
     const app = useApp()
     const loader = useLoader();
     return loader.post("crowd/attention/fail", {
-        guid: app.activeUserId,
+        client: app.activeUserId,
+        guid: app.guid,
         ip: app.ipAddress,
         cwId: app.cwId,
         gameId: game,
@@ -122,8 +112,15 @@ export async function getSimilarByTarget(target, limit=5) {
 }
 
 export async function addSimilarity(info, data) {
+    const app = useApp()
     const loader = useLoader();
     return loader.post("add/similarity", {
+        // client data
+        client: app.activeUserId,
+        guid: app.guid,
+        ip: app.ipAddress,
+        cwId: app.cwId,
+        // data
         info: info,
         rows: Array.isArray(data) ? data : [data]
     })

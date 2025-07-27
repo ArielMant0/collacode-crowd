@@ -1,13 +1,5 @@
 <template>
     <div class="pa-2" :style="{ maxWidth: maxWidth }">
-
-        <v-card v-if="app.cwId" rounded="lg" color="error" class="mt-2 mb-4" title="Attention" density="compact">
-            <v-card-text>
-                Crowd workers can only do up to 3 {{ app.itemName }}s.
-                After 3 {{ app.itemName }}s, other {{ app.itemName }}s can longer longer be completed
-            </v-card-text>
-        </v-card>
-
         <ItemSelectionPanel
             :subset="0"
             @click="chooseItem"

@@ -1,7 +1,6 @@
-import { deviation, max, mean, range } from "d3"
 import DM from "./data-manager"
+import { deviation, max, mean, range } from "d3"
 import { cosine, euclidean, jaccard } from "./metrics"
-import { randomShuffle } from "./random"
 
 export function getSet(d) {
     return new Set(d.allTags.map(t => t.id))
@@ -12,7 +11,7 @@ export function getGroupSet(items) {
 
 export function getDistance(a, b, metric="cosine") {
     switch(metric) {
-        case "jaccard": return jaccard(a, b)
+        case "jaccard": return jaccard(a, b, false)
         case "cosine": return cosine(a, b)
         case "euclidean":
         default: return euclidean(a, b)
@@ -75,6 +74,7 @@ export function getMinMaxMeanDistBetweenClusters(ca, cb, pwd) {
     let meand = 0
     ca.forEach(da => {
         cb.forEach(db => {
+            if (da === db) return
             const d = pwd[da][db]
             meand += d
             if (d < mind) {
@@ -88,9 +88,9 @@ export function getMinMaxMeanDistBetweenClusters(ca, cb, pwd) {
     return [mind, maxd, meand / (ca.length*cb.length)]
 }
 
-export function getItemClusters(data, metric="euclidean", minSize=2, allTags=false, useWeights=false) {
+export function getItemClusters(data, metric="euclidean", minSize=2, allTags=true, useWeights=true) {
     const n = data.length
-    if (n <= 5) return null
+    if (n <= minSize) return null
 
     const pwd = new Array(n)
     for (let i = 0; i < n; ++i) {
@@ -135,12 +135,13 @@ export function getItemClusters(data, metric="euclidean", minSize=2, allTags=fal
 
     let indices = range(n).map(i => [i])
 
-    let mergeMinBase = meanD - 3.75*stdD
-    let mergeMaxBase = meanD - 1*stdD
+    let mergeMinBase = meanD - 4*stdD
+    let mergeMaxBase = meanD - 1.15*stdD
 
-    let changes = true
+    let changes = true, single = 0
+    const minIter = 10, maxIter = 30
 
-    for (let iter = 0; iter < 20 && changes; ++iter) {
+    for (let iter = 0; iter < maxIter && (changes || iter < minIter); ++iter) {
 
         changes = false
         // indices = randomShuffle(indices)
@@ -177,12 +178,12 @@ export function getItemClusters(data, metric="euclidean", minSize=2, allTags=fal
             taken.add(ca.from)
             taken.add(ca.to)
             merged.push(indices[ca.from].concat(indices[ca.to]))
-            changes = true
             numMerges++
         })
 
+        changes = numMerges > 0
 
-        let single = 0
+        single = 0
         // leftover clusters
         indices.forEach((list, i) => {
             single += list.length > 1 ? 0 : 1
@@ -193,17 +194,34 @@ export function getItemClusters(data, metric="euclidean", minSize=2, allTags=fal
         })
 
         indices = merged
-        if (mergeMinBase < meanD - stdD) {
+        if (mergeMinBase < meanD) {
             mergeMinBase *= 1.1
         }
-        if (mergeMaxBase > meanD + 0.5*stdD) {
-            mergeMaxBase *= 0.85
+        if (mergeMaxBase > meanD) {
+            mergeMaxBase *= 0.9
         }
     }
 
     indices.sort((a, b) => b.length - a.length)
-    const clusters = indices.map(list => list.map(i => data[i]))
+    // sort all items in a cluster by their avg distance to each other
+    indices.forEach(list => {
+        if (list.length < 2) return
+        const meanBetween = {}
+        // calculate mean distance to others for each item
+        list.forEach((d, j) => {
+            meanBetween[d] = 0
+            for (let i = 0; i < list.length; ++i) {
+                if (i !== j) {
+                    meanBetween[d] += pwd[j][i]
+                }
+            }
+            meanBetween[d] = meanBetween[d] / (list.length-1)
+        })
 
+        list.sort((a, b) => meanBetween[a] - meanBetween[b])
+    })
+
+    const clusters = indices.map(list => list.map(i => data[i]))
     const k = clusters.length
     const maxDistances = new Array(k)
     const minDistances = new Array(k)
@@ -235,6 +253,7 @@ export function getItemClusters(data, metric="euclidean", minSize=2, allTags=fal
             }
         }
     }
+
     // normalize distances
     for (let i = 0; i < k; ++i) {
         for (let j = i+1; j < k; ++j) {
