@@ -12,7 +12,7 @@
                 style="max-width: 49%; width: 35%; border: 2px dashed black;">
                 <h3 class="sectitle">Candidates</h3>
                 <div class="d-flex flex-wrap justify-center align-start"
-                    @drop.prevent="e => dropItem(e, 0)"
+                    @drop.prevent="dropItem(0)"
                     @dragover.prevent
                     :style="{ Width: '100%', maxWidth: '100%', minHeight: ((imageHeight+10)*4)+'px' }">
                     <ItemTeaser v-for="item in restItems"
@@ -32,7 +32,7 @@
             <div class="ml-4" style="max-width: 49%; width: 35%;">
 
                 <div class="d-flex flex-column align-center rounded-lg pa-2 mb-1 drop-area"
-                    @drop.prevent="e => dropItem(e, 2)"
+                    @drop.prevent="dropItem(2)"
                     @dragover.prevent
                     @dragenter="e => onDragEnter(e, 'bg-primary-light')"
                     @dragleave="e => onDragLeave(e, 'bg-primary-light')"
@@ -75,7 +75,7 @@
 
                 <div class="d-flex flex-column align-center pa-2 mt-4 rounded-lg drop-area"
                     :style="{ border: '2px dashed '+theme.current.value.colors.tertiary }"
-                    @drop.prevent="e => dropItem(e, 1)"
+                    @drop.prevent="dropItem(1)"
                     @dragover.prevent
                     @dragenter="e => onDragEnter(e, 'bg-tertiary-light')"
                     @dragleave="e => onDragLeave(e, 'bg-tertiary-light')"
@@ -125,10 +125,13 @@
     import ItemTeaser from './ItemTeaser.vue'
     import { useDisplay, useTheme } from 'vuetify'
     import { useToast } from 'vue-toastification'
+    import { SOUND, useSounds } from '@/stores/sounds'
 
     const app = useApp()
     const theme = useTheme()
     const toast = useToast()
+    const sounds = useSounds()
+
     const { md, lg, xl, xxl } = useDisplay()
 
     const props = defineProps({
@@ -181,7 +184,7 @@
         dragId = id
         app.addInteraction("step2")
     }
-    function dropItem(event, where=0) {
+    function dropItem(where=0) {
         if (!dragId) return
         setItem(dragId, where)
         dragId = null
@@ -213,12 +216,14 @@
             if (props.itemLimit > 0 && itemHigh.size >= props.itemLimit) {
                 return toast.warning(`maximum number of ${app.itemName}s reached`)
             }
+            sounds.play(SOUND.PLOP)
             itemMed.delete(id)
             itemHigh.add(id)
         } else if (where === 1) {
             if (props.itemLimit > 0 && itemMed.size >= props.itemLimit) {
                 return toast.warning(`maximum number of ${app.itemName}s reached`)
             }
+            sounds.play(SOUND.PLOP)
             itemHigh.delete(id)
             itemMed.add(id)
         } else {

@@ -62,6 +62,10 @@
             type: Number,
             default: 0
         },
+        selectable: {
+            type: Boolean,
+            default: true
+        },
     })
 
     const el = ref(null)
@@ -121,7 +125,7 @@
             .data(props.data)
             .join("g")
             .attr("transform", (_d, i) => `translate(${(i % cols) * w},${(Math.floor(i / cols)) * h})`)
-            .style("cursor", "pointer")
+            .style("cursor", props.selectable ? "pointer" : "default")
             .on("pointerenter", function(event, d) {
                 emit("hover", d, event)
                 d3.select(this)
@@ -237,7 +241,7 @@
             })
             .attr("stroke", d => d3.color(getColor(d, set, high)).darker(1))
             .attr("r", animate ? 0 : pointRadius)
-            .style("cursor", "pointer")
+            .style("cursor", props.selectable ? "pointer" : "default")
             .on("pointerenter", function(event, d) {
                 emit("hover", d.data, event)
                 d3.select(this)

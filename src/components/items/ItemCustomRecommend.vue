@@ -207,10 +207,12 @@
     import * as sc from "string-comparison"
     import { useToast } from 'vue-toastification'
     import { getStopWords } from '@/use/utility'
+    import { SOUND, useSounds } from '@/stores/sounds'
 
     const app = useApp()
     const theme = useTheme()
     const toast = useToast()
+    const sounds = useSounds()
     const { md, lg, xl, xxl } = useDisplay()
 
     const props = defineProps({
@@ -391,6 +393,7 @@
                 return toast.warning(`maximum number of ${app.itemName}s reached`)
             }
 
+            sounds.play(SOUND.PLOP)
             const inFixed = props.items.find(d => d.id === id)
             if (inFixed) {
                 inFixed.value = 2
@@ -409,6 +412,7 @@
                 return toast.warning(`maximum number of ${app.itemName}s reached`)
             }
 
+            sounds.play(SOUND.PLOP)
             const inFixed = props.items.find(d => d.id === id)
             if (inFixed) {
                 inFixed.value = 1

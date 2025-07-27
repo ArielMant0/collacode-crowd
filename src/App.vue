@@ -126,6 +126,17 @@
 
             DM.setData("tags", result)
             DM.setData("tags_name", new Map(result.map(d => ([d.id, d.name ? d.name : '']))))
+
+            // store long form of tag names
+            const prefix = /^([a-zA-Z0-9\-_]+:)/gi
+            DM.setData("tags_name_long", new Map(result.map(d => {
+                const pname = d.is_leaf === 1 && d.parent > 0 ?
+                    DM.getDataItem("tags_name", d.parent).replace(prefix, "").trim() :
+                    null
+                return [d.id, d.is_leaf === 1 ? d.name.replace(prefix, pname+":") : d.name]
+            })))
+            result.forEach(d => d.longName = DM.getDataItem("tags_name_long", d.id))
+
             DM.setData("tags_desc", new Map(result.map(d => ([d.id, d.description ? d.description : 'no description']))))
         } catch (e) {
             console.error(e.toString())

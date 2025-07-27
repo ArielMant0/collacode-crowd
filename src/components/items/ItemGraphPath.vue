@@ -357,7 +357,9 @@
         numClsLeft.value = clusterLeft.size
         app.addInteraction("step1")
     }
+
     function reroll() {
+        sounds.play(SOUND.WIN_MINI)
         logAction({
             desc: "reroll",
             clusters: clsOrder.list

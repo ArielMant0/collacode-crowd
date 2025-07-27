@@ -18,10 +18,10 @@
 
                 <div style="text-align: center;" class="qtext">
                     <div v-if="idx === 0 && !inLastStep" style="font-size: large;">
-                        Which side is the better fit?
+                        Find the most similar {{ app.itemName }}s to your target!
                     </div>
                     <div class="mt-4 mb-2 d-flex align-center justify-center">
-                        <h4>{{ obj.tag.name }}</h4>
+                        <h4>{{ obj.tag.longName }}</h4>
                         <v-btn v-if="idx === 0"
                             variant="outlined"
                             class="ml-2"
@@ -59,6 +59,7 @@
                                 :highlights="obj.examplesYes"
                                 :highlights-color="theme.current.value.colors.secondary"
                                 @hover="onHover"
+                                :selectable="false"
                                 :selected="target ? [target] : []"
                                 :data="obj.with.map(idx => itemsToUse[idx])"/>
                         </div>
@@ -78,6 +79,7 @@
                                 :highlights="obj.examplesNo"
                                 :highlights-color="theme.current.value.colors.secondary"
                                 @hover="onHover"
+                                :selectable="false"
                                 :selected="target ? [target] : []"
                                 :data="obj.without.map(idx => itemsToUse[idx])"/>
                         </div>
@@ -192,6 +194,7 @@
         } else {
             const [mx, my] = d3.pointer(event, document.body)
             const extra = app.itemColumns.reduce((acc, c) => acc + `<div><b>${capitalize(c.name)}:</b> ${d[c.name]}</div>`, "")
+            // sounds.play(SOUND.CLICK_REVERB)
             tt.show(
                 `<div>
                     <img src="${mediaPath('teaser', d.teaser)}" style="max-height: 150px; object-fit: contain;"/>
@@ -646,6 +649,8 @@
 
     function choose(hasTag, index) {
         if (split.value.length === 0) return
+        sounds.play(SOUND.WIN_MINI)
+
         const it = split.value.at(index)
         it.hasTag = hasTag === true
         logAction({

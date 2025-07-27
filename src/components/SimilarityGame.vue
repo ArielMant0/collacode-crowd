@@ -47,11 +47,11 @@
 
                 <div v-if="state === STATES.INGAME" class="ml-8">
                     <Timer v-if="showTimer" ref="timer" class="mb-2" :time-in-sec="timeInSec" @end="nextStep(true)"/>
-                    <v-btn
+                    <v-btn v-if="notInCheck"
                         id="submit-btn"
                         :color="allowNext ? 'primary' : 'default'"
                         :disabled="!allowNext"
-                        @click="nextStep(false)"
+                        @click="nextStepButton"
                         block>
                         {{ isLastStep ? 'submit' : 'next step' }}
                     </v-btn>
@@ -78,7 +78,7 @@
                     :target="gameData.target.id"/>
                 <ItemBinarySearch v-else
                     ref="binsearch"
-                    :min-items="20"
+                    :min-items="30"
                     :max-items="30"
                     @ready="isReady => allowNext = isReady"
                     @tutorial-start="onTutorialStart"
@@ -334,6 +334,11 @@
         setTimeout(checkTutorial, 200)
     }
 
+    function nextStepButton() {
+        sounds.play(SOUND.WIN_MINI)
+        nextStep(false)
+    }
+
     function nextStep(onTimerEnd=false) {
         switch(step.value) {
             case PR_STEPS.COMPREHENSION:
@@ -420,8 +425,10 @@
             }
             const result = await testComprehensionData(target.value.id, answers, props.method)
             if (result.passed === true) {
+                sounds.play(SOUND.WIN_MINI)
                 nextStep()
             } else {
+                sounds.play(SOUND.FAIL_MINI)
                 toast.error(
                     "you failed the comprehension check",
                     { timeout: 1500, position: POSITION.TOP_CENTER }
@@ -437,9 +444,11 @@
 
     async function testAttention(passed) {
         if (passed) {
+            sounds.play(SOUND.WIN_MINI)
             nextStep()
         } else {
             try {
+                sounds.play(SOUND.FAIL_MINI)
                 await addAttentionFail(target.value.id, props.method)
                 toast.error(
                     "you failed the attention check",
@@ -469,7 +478,7 @@
     function startRound(timestamp=null) {
         state.value = STATES.START
         setFirstStep()
-        sounds.play(SOUND.START_SHORT)
+        sounds.play(SOUND.START)
         setTimeout(
             () => {
                 state.value = STATES.INGAME
@@ -534,7 +543,6 @@
     }
     function startGame() {
         sounds.stopAll()
-        sounds.play(SOUND.START)
         state.value = STATES.START
         // clear previous data
         clear()
@@ -653,6 +661,7 @@
 
             state.value = STATES.END
             step.value = PR_STEPS.FEEDBACK
+            sounds.play(SOUND.WIN)
 
         } catch(e) {
             console.error(e.toString())
