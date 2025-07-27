@@ -1,11 +1,16 @@
 <template>
 
     <v-card rounded="lg" class="panel" :class="[textClass, panelClass]">
-        <v-card-title v-if="title" style="font-weight: 400; font-size: 30px;" class="bitcount-prop-double">
-            {{ title }}
+        <v-card-title v-if="title">
+            <div style="font-weight: 400; font-size: 30px;" class="bitcount-prop-double">
+                {{ title }}
+            </div>
+            <div v-if="subtitle" class="text-caption" style="margin-top: -5px;">
+                {{ subtitle }}
+            </div>
         </v-card-title>
-        <v-card-text>
 
+        <v-card-text>
             <div
                 class="d-flex align-center ml-4 mr-4"
                 :class="{
@@ -16,6 +21,7 @@
                     v-model="sortBy"
                     :mandatory="false"
                     variant="flat"
+                    density="comfortable"
                     :color="mainColor"
                     @update:model-value="applySort">
                     <v-btn icon="mdi-sort-variant" :value="1"></v-btn>
@@ -26,6 +32,7 @@
                     v-model="page"
                     :length="numPages"
                     show-first-last-page
+                    density="compact"
                     :total-visible="5">
                 </v-pagination>
             </div>
@@ -74,6 +81,9 @@
         title: {
             type: String
         },
+        subtitle: {
+            type: String
+        },
         numPerPage: {
             type: Number,
             default: 30,
@@ -84,7 +94,7 @@
         },
         sortable: {
             type: Boolean,
-            default: false
+            default: true
         },
         countTarget: {
             type: Number,

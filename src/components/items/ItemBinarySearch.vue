@@ -14,23 +14,61 @@
                 </v-sheet>
             </div>
 
-            <div v-for="(obj, idx) in split" :key="obj.tag.id" class="binsearch-q">
+            <div v-for="(obj, idx) in split" :key="obj.tag" class="binsearch-q">
 
                 <div style="text-align: center;" class="qtext">
                     <div v-if="idx === 0 && !inLastStep" style="font-size: large;">
                         Find the most similar {{ app.itemName }}s to your target!
                     </div>
-                    <div class="mt-4 mb-2 d-flex align-center justify-center">
+
+                    <div class="mt-4 mb-2 d-flex align-center justify-space-around">
+                        <div id="prev-btn" v-if="idx === 0 && hasPrevTag" class="d-flex">
+
+                            <v-tooltip :text="tagList[tagIndex-1].longName" open-delay="300" location="top">
+                                <template v-slot:activator="{ props }">
+                                    <div v-bind="props"
+                                        @click="prevTag"
+                                        class="text-dots mr-2 cursor-pointer"
+                                        style="opacity: 0.5; max-width: 150px;">
+                                        {{ tagList[tagIndex-1].longName }}
+                                    </div>
+                                </template>
+                            </v-tooltip>
+
+                            <v-btn
+                                variant="outlined"
+                                icon="mdi-arrow-left"
+                                size="small"
+                                density="comfortable"
+                                @click="prevTag"/>
+                        </div>
+                        <div v-else style="min-width: 100px;"></div>
+
                         <h4>{{ obj.tag.longName }}</h4>
-                        <v-btn v-if="idx === 0"
-                            variant="outlined"
-                            class="ml-2"
-                            id="reroll-btn"
-                            icon="mdi-sync"
-                            size="small"
-                            density="comfortable"
-                            @click="rerollTag"/>
+
+                        <div id="next-btn" v-if="idx === 0 && hasNextTag" class="d-flex">
+                            <v-btn
+                                variant="outlined"
+                                icon="mdi-arrow-right"
+                                size="small"
+                                density="comfortable"
+                                @click="nextTag"/>
+
+                            <v-tooltip :text="tagList[tagIndex+1].longName" open-delay="300" location="top">
+                                <template v-slot:activator="{ props }">
+                                    <div v-bind="props"
+                                        @click="nextTag"
+                                        class="text-dots ml-2 cursor-pointer"
+                                        style="opacity: 0.5; max-width: 150px;">
+                                        {{ tagList[tagIndex+1].longName }}
+                                    </div>
+                                </template>
+                            </v-tooltip>
+                        </div>
+                        <div v-else style="min-width: 100px;"></div>
+
                     </div>
+
                     <p>{{ obj.tag.description }}</p>
                 </div>
 
@@ -167,6 +205,13 @@
     const emit = defineEmits(["ready", "tutorial-start", "tutorial-complete", "tutorial-cancel"])
 
     const split = ref([])
+
+    const tagList = ref([])
+    const tagIndex = ref(0)
+    const hasPrevTag = computed(() => tagIndex.value > 0)
+    const hasNextTag = computed(() => tagIndex.value < tagList.value.length-1)
+    const selectedTag = computed(() => tagList.value[tagIndex.value])
+
     const finalItems = ref([])
     const inLastStep = computed(() => finalItems.value.length > 0)
 
@@ -267,11 +312,12 @@
             },{
                 id: "reroll",
                 attachTo: {
-                    element: "#reroll-btn",
+                    element: "#next-btn",
                     on: "bottom"
                 },
-                text: `If you don't like or understand the current question tag, you can roll
-                    for a different tag by clicking on this button. Try it out!`
+                text: `If the current question tag is not a good fit, it's better to look for a
+                    different tag using the arrow button. Select the next tag by clicking on
+                    this button!`
             },{
                 id: "reroll-result",
                 attachTo: {
@@ -279,7 +325,7 @@
                     on: "bottom"
                 },
                 buttons: [{ text: "next", action: tutorial.next, classes: "bg-primary" }],
-                text: `Now you have a different tag and the grouping of ${plural} changed.`
+                text: `Now you have a different tag and the grouping of ${plural} has changed.`
             },{
                 id: "click-no",
                 attachTo: {
@@ -295,8 +341,8 @@
                     on: "bottom"
                 },
                 buttons: [{ text: "okay", action: tutorialClear, classes: "bg-primary" }],
-                text: `When you are already happy with your list of similar ${plural},
-                    click here to go to the next step.`
+                text: `When you have answered enough questions to only have ${props.minItems} left,
+                    you can click here to go to the next step.`
             }
         ])
     }
@@ -347,20 +393,19 @@
         split.value = []
 
         // get the next tag
-        nextTag()
+        splitItems()
     }
 
-    function rerollTag() {
-        let splitTag = null;
-        for (let i = 0; i < tagsToUse.length && splitTag === null; ++i) {
-            if (tagsLeft.has(tagsToUse[i].id)) {
-                splitTag = tagsToUse[i]
-            }
-        }
-        app.addInteraction("step1")
-        if (splitTag !== null) {
-            tagsLeft.delete(splitTag.id)
-            // divide items based on split tag
+    function getCluster(idx) {
+        return allClusters.findIndex(list => list.includes(idx))
+    }
+
+    function goToTag() {
+        if (split.value.length > 0) {
+            const last = split.value.at(0)
+            const splitTag = selectedTag.value
+            tagsLeft.add(last.tag.id)
+            // split items by with out without again
             const withTag = [], without = []
             itemsLeft.forEach(idx => {
                 const has = itemsToUse[idx].allTags.find(t => t.id === splitTag.id)
@@ -370,8 +415,6 @@
                     without.push(idx)
                 }
             })
-
-            const last = split.value.at(0)
 
             let examplesYes = [], examplesNo = []
             // redo the clustering
@@ -438,26 +481,26 @@
             withTag.sort((a, b) => getCluster(b) - getCluster(a))
             without.sort((a, b) => getCluster(b) - getCluster(a))
 
-            logAction({
-                desc: "reroll",
-                step: split.value.length,
-                tag: splitTag,
-                with: withTag.map(i => itemsToUse[i].id),
-                without: without.map(i => itemsToUse[i].id),
-            })
-
-            last.rerolls.push(last.tag)
-            last.hasTag = null
-            last.tag = splitTag
             last.with = withTag
             last.without = without
-            // last.colorsYes = getColorsByCluster(withTag)
-            // last.colorsNo = getColorsByCluster(without)
-
             last.examplesYes = examplesYes.map(idx => itemsToUse[idx].id)
             last.examplesNo = examplesNo.map(idx => itemsToUse[idx].id)
-            // last.examplesYesColors = examplesYes.map(idx => getClusterColor(getCluster(idx)))
-            // last.examplesNoColors = examplesNo.map(idx => getClusterColor(getCluster(idx)))
+
+            last.tag = splitTag
+            tagsLeft.delete(last.tag.id)
+        }
+    }
+    function prevTag() {
+        if (hasPrevTag.value) {
+            tagIndex.value--
+            app.addInteraction("step1")
+            goToTag()
+        }
+    }
+    function nextTag() {
+        if (hasNextTag.value) {
+            tagIndex.value++
+            app.addInteraction("step1")
 
             if (tutorial.isActive()) {
                 const sid = tutorial.getCurrentStep()
@@ -465,33 +508,12 @@
                     tutorialNeedsNext = true
                 }
             }
+
+            goToTag()
         }
     }
 
-    function itemHasTag(item, tag) {
-        return item.allTags.find(t => t.id === tag)
-    }
-    function getCluster(idx) {
-        return allClusters.findIndex(list => list.includes(idx))
-    }
-    function getClusterColor(cidx) {
-        return cidx >= 0 ?
-            (cidx < 9 ? d3.schemeObservable10[cidx] : '#e7298a') :
-            "lightgrey"
-    }
-    function getItemColor(idx) {
-        return getClusterColor(getCluster(idx))
-        // return itemHasTag(itemsToUse[idx], tag) ?
-        //     theme.current.value.colors.primary :
-        //     theme.current.value.colors.error
-    }
-    function getColorsByCluster(indices) {
-        const obj = {}
-        indices.forEach(idx => obj[itemsToUse[idx].id] = getItemColor(idx))
-        return obj
-    }
-
-    async function nextTag() {
+    async function splitItems() {
         // remove
         if (!inLastStep.value && split.value.length > 0) {
             const last = split.value.at(0)
@@ -508,7 +530,11 @@
         // we should not split again
         if (itemsLeft.size <= props.minItems) {
             const last = split.value.at(0)
-            finalItems.value = last.with.concat(last.without).map(idx => itemsToUse[idx].id)
+
+            finalItems.value = last.hasTag ?
+                last.with.map(idx => itemsToUse[idx].id) :
+                last.without.map(idx => itemsToUse[idx].id)
+
             emit("ready", true)
             return
         }
@@ -532,6 +558,8 @@
         // sort tags by difference to 50%
         tagsToUse.sort((a, b) => Math.abs(0.5 - a.freq.at(-1)) - Math.abs(0.5 - b.freq.at(-1)))
 
+        tagIndex.value = 0
+        tagList.value = tagsToUse
         // choose first tag as the one to split on
         const splitTag = tagsToUse[0]
 
@@ -615,24 +643,14 @@
         withTag.sort((a, b) => getCluster(b) - getCluster(a))
         without.sort((a, b) => getCluster(b) - getCluster(a))
 
-        // split.value.forEach(s => {
-        //     s.colorsYes = s.with.map(idx => getItemColor(idx, splitTag.id))
-        //     s.colorsNo = s.without.map(idx => getItemColor(idx, splitTag.id))
-        // })
-
         const h = getImageHeight(withTag.length, without.length)
         split.value.unshift({
             tag: splitTag,
             hasTag: null,
             with: withTag,
             without: without,
-            // colorsYes: getColorsByCluster(withTag),
-            // colorsNo: getColorsByCluster(without),
-            rerolls: [],
             examplesYes: examplesYes.map(idx => itemsToUse[idx].id),
             examplesNo: examplesNo.map(idx => itemsToUse[idx].id),
-            // examplesYesColors: examplesYes.map(idx => getClusterColor(getCluster(idx))),
-            // examplesNoColors: examplesNo.map(idx => getClusterColor(getCluster(idx))),
             size: getBubbleSize(withTag.length, without.length),
             width: h*2,
             height: h
@@ -669,7 +687,6 @@
                 const s = split.value.at(i)
                 s.with.forEach(id => itemsLeft.add(id))
                 s.without.forEach(id => itemsLeft.add(id))
-                s.rerolls.forEach(id => tagsLeft.add(id))
             }
             // remove splits
             split.value.splice(0, index)
@@ -680,7 +697,7 @@
             emit("ready", false)
         }
 
-        nextTag()
+        splitItems()
 
         sounds.play(SOUND.PLOP)
 
@@ -723,7 +740,7 @@
             }
         })
         if (update) {
-            nextTag()
+            splitItems()
         }
     }
 

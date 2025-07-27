@@ -5,6 +5,7 @@
             class="mb-8"
             @click="chooseItem"
             :title="'Available '+app.itemNameCaptial+'s'"
+            :subtitle="'pick a '+app.itemName+' you know and click on it to start'"
             :count-target="countTarget"
             :selectable="true"/>
 
@@ -18,6 +19,7 @@
         <ItemSelectionPanel v-if="app.itemsGone.size > 0"
             :subset="2"
             :title="'Blocked '+app.itemNameCaptial+'s'"
+            :subtitle="'these '+app.itemName+'s are blocked for you'"
             :count-target="countTarget"
             :selectable="false"/>
 
