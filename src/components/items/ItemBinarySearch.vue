@@ -112,10 +112,12 @@
     import { useTheme } from 'vuetify';
     import { getItemClusters } from '@/use/clustering';
     import { offset } from '@floating-ui/vue';
+    import { SOUND, useSounds } from '@/stores/sounds';
 
     const app = useApp()
     const tt = useTooltip()
     const theme = useTheme()
+    const sounds = useSounds()
 
     let tutorialNeedsNext = false
     const tutorial = useShepherd({
@@ -675,6 +677,8 @@
 
         nextTag()
 
+        sounds.play(SOUND.PLOP)
+
         if (tutorial.isActive()) {
             const sid = tutorial.getCurrentStep()
             if (sid.id === "click-yes" || sid.id === "click-no") {
@@ -738,6 +742,7 @@
         }
     })
     onBeforeUnmount(() => {
+        sounds.stopAll()
         if (tutorial.isActive()) {
             tutorial.cancel()
         }

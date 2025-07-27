@@ -164,7 +164,7 @@
     import Timer from './Timer.vue';
     import ComprehensionCheck from './ComprehensionCheck.vue';
     import AttentionCheck from './AttentionCheck.vue';
-import CrowdWorkerNotice from './CrowdWorkerNotice.vue';
+    import CrowdWorkerNotice from './CrowdWorkerNotice.vue';
 
     const emit = defineEmits(["end", "close", "cancel"])
 
@@ -252,7 +252,7 @@ import CrowdWorkerNotice from './CrowdWorkerNotice.vue';
     })
 
 
-    let tutorialDone = false, inTutorial = false
+    let tutorialDone = false
     let userGeoLoc = null
 
     // ---------------------------------------------------------------------
@@ -301,11 +301,9 @@ import CrowdWorkerNotice from './CrowdWorkerNotice.vue';
     }
 
     function onTutorialStart() {
-        inTutorial = true
         pauseTimer()
     }
     function onTutorialStop(completed) {
-        inTutorial = false
         localStorage.setItem("tutorial_"+props.method, true)
         tutorialDone = tutorialDone || completed
         unpauseTimer()
@@ -316,7 +314,6 @@ import CrowdWorkerNotice from './CrowdWorkerNotice.vue';
         }
     }
     function startTutorial() {
-        if (inTutorial) return
         // get the data from clusters/binary search
         if (clusters.value) {
             clusters.value.startTutorial()
@@ -705,7 +702,6 @@ import CrowdWorkerNotice from './CrowdWorkerNotice.vue';
             }
         )
 
-        inTutorial = false
         tutorialDone = Boolean(localStorage.getItem("tutorial_"+props.method)) === true
 
         if (!target.value) {

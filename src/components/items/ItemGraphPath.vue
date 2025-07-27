@@ -147,9 +147,11 @@
     import { useTheme } from 'vuetify';
     import { useShepherd } from 'vue-shepherd'
     import { offset } from '@floating-ui/vue';
+    import { SOUND, useSounds } from '@/stores/sounds';
 
     const app = useApp()
     const theme = useTheme()
+    const sounds = useSounds()
 
     let tutorialNeedsNext = false
     const tutorial = useShepherd({
@@ -484,8 +486,8 @@
     function tutorialClear() {
         tutorialNeedsNext = false
         tutorial.complete()
-        clearSelection()
         history.value = []
+        clearSelection()
         resetRerolls()
     }
 
@@ -645,6 +647,8 @@
             removeSelection(index, source)
             lastIndexUsed = index
         }
+
+        sounds.play(SOUND.PLOP)
     }
 
     function addToHistory(id) {
@@ -773,6 +777,7 @@
         }
     })
     onBeforeUnmount(() => {
+        sounds.stopAll()
         if (tutorial.isActive()) {
             tutorial.cancel()
         }

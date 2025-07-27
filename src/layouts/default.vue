@@ -13,6 +13,7 @@
                 @click="router.push(l.route)"
                 :class="{ 'ml-1': idx > 0 }"
                 :prepend-icon="l.icon"
+                rounded="0"
                 :variant="route.name === l.route ? 'tonal' : 'text'"
                 :color="route.name === l.route ? 'primary' : 'default'">
                 {{ l.name }}

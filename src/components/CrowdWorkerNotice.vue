@@ -1,5 +1,5 @@
 <template>
-    <v-card v-if="app.cwId" rounded="lg" class="mt-2 mb-4" density="compact" :max-width="maxWidth">
+    <v-card v-if="app.cwId" rounded="lg" class="mt-2 mb-4" density="compact" :max-width="maxWidth" color="surface-light">
         <v-card-title :class="[app.isCrowdWorkerDone ? 'text-error' : 'text-warning']">
             <div v-if="app.isCrowdWorkerDone" class="d-flex align-center">
                 <v-icon color="error" icon="mdi-alert" class="mr-2"/>
