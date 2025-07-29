@@ -1,7 +1,7 @@
 <template>
     <v-sheet
         style="font-size: x-large;"
-        class="pt-3 pb-3 pr-6 pl-6 d-flex align-center"
+        class="pt-3 pb-3 pr-6 pl-6 d-flex align-center timer"
         rounded
         :color="props.showCritical && secondsLeft < critical ? props.criticalColor : props.color">
         <v-icon class="mr-1" :class="secondsLeft < critical ? 'wobble-fast' : ''">{{ icon }}</v-icon>

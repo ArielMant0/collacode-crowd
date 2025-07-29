@@ -2,43 +2,19 @@
     <div style="width: min-content" class="pa-2">
 
         <div class="d-flex align-center">
-            <div class="d-flex flex-column align-start mr-4">
 
-                <v-sheet
-                    style="font-size: smaller; text-align: center; width: 100%;"
-                    rounded="sm"
-                    color="surface-light"
-                    class="mb-2 pt-1 pb-1 pl-3 pr-3">
-                    {{ numCls-numClsLeft }} / {{ numCls }} groups seen
-                </v-sheet>
-
-                <v-btn
-                    class="text-lowercase mb-2"
-                    id="reroll-btn"
-                    color="primary"
-                    density="comfortable"
-                    variant="outlined"
-                    prepend-icon="mdi-sync"
-                    block
-                    :disabled="numClsLeft <= 0"
-                    @click="reroll">
-                    reroll
-                </v-btn>
-                <v-btn
-                    color="error"
-                    density="comfortable"
-                    variant="outlined"
-                    prepend-icon="mdi-delete"
-                    class="text-lowercase"
-                    block
-                    @click="resetRerolls">
-                    reset rerolls
-                </v-btn>
-
-            </div>
+            <v-btn
+                class="text-lowercase mr-2"
+                id="prev-btn"
+                density="comfortable"
+                variant="outlined"
+                icon="mdi-arrow-left"
+                :disabled="!hasPrev"
+                @click="prevClusters">
+            </v-btn>
 
             <div id="cluster-options" class="d-flex align-start justify-center">
-                <ItemSimilarityRow v-for="(index, idx2) in clsOrder.list"
+                <ItemSimilarityRow v-for="(index, idx2) in clsGroups[clsOrder.list]"
                     :items="clusters.clusters[index]"
                     :show-index="clsOrder.show[idx2]"
                     :targets="target ? [target] : []"
@@ -52,6 +28,16 @@
                     @click="d => toggleItem(d.id, 'cluster')"
                     @click-item="d => toggleItem(d.id, 'cluster')"/>
             </div>
+
+            <v-btn
+                class="text-lowercase ml-2"
+                id="next-btn"
+                density="comfortable"
+                variant="outlined"
+                icon="mdi-arrow-right"
+                :disabled="!hasNext"
+                @click="nextClusters">
+            </v-btn>
         </div>
 
         <div class="d-flex justify-space-around mt-8 mb-8 pa-2">
@@ -82,7 +68,7 @@
             </div>
         </div>
 
-        <div class="d-flex align-start" style="min-width: 100%; max-width: 100%;">
+        <div id="bottom-part" class="d-flex align-start" style="min-width: 100%; max-width: 100%;">
 
             <div class="mr-2" style="max-width: 20%;" :style="{ minWidth: (miniImageWidth+25)+'px' }">
                 <div style="text-align: center;">
@@ -191,10 +177,6 @@
         target: {
             type: Number,
         },
-        fixedSelection: {
-            type: Boolean,
-            default: false
-        }
     })
 
     const emit = defineEmits(["ready", "tutorial-start", "tutorial-complete", "tutorial-cancel"])
@@ -207,6 +189,12 @@
         selected: new Set(),
         show: []
     })
+
+    const clsIndex = ref(0)
+    const clsGroups = ref([])
+    const hasPrev = computed(() => clsIndex.value > 0)
+    const hasNext = computed(() => clsIndex.value < clsGroups.value.length)
+
     const numCls = ref(0)
     const numClsLeft = ref(0)
 
@@ -345,36 +333,53 @@
             mindist * (mindist ** pow) * size
     }
 
-    function resetRerolls() {
-        logAction({ desc: "reset rerolls" })
-        for (let i = 0; i < clusters.clusters.length; ++i) {
-            // add all clusters except for the ones currently visible
-            if (!clsOrder.selected.has(i) && !clsOrder.list.includes(i)) {
-                clusterLeft.add(i)
-            }
+    function setClusterIndex(index) {
+        if (index >= 0 && index <= clsGroups.value.length) {
+            clsIndex.value = index
+            clsOrder.list = clsIndex.value
+            clsOrder.show = clsGroups.value[clsIndex.value].map(() => 0)
         }
-        numCls.value = clusterLeft.size + clsOrder.list.length
-        numClsLeft.value = clusterLeft.size
-        app.addInteraction("step1")
     }
 
-    function reroll() {
-        sounds.play(SOUND.WIN_MINI)
-        logAction({
-            desc: "reroll",
-            clusters: clsOrder.list
-        })
-        app.addInteraction("step1")
+    function prevClusters() {
+        if (hasPrev.value) {
 
-        if (tutorial.isActive()) {
-            const sid = tutorial.getCurrentStep()
-            if (sid.id === "reroll") {
-                tutorialNeedsNext = true
+            if (tutorial.isActive()) {
+                const sid = tutorial.getCurrentStep()
+                if (sid.id === "cls-prev") {
+                    tutorialNeedsNext = true
+                }
             }
-        }
 
-        nextClusters()
+            setClusterIndex(clsIndex.value-1)
+
+            logAction({
+                desc: "previous clusters",
+                clusters: clsGroups.value[clsIndex.value]
+            })
+            app.addInteraction("step1")
+        }
     }
+    function nextClusters() {
+        if (hasNext.value) {
+
+            if (tutorial.isActive()) {
+                const sid = tutorial.getCurrentStep()
+                if (sid.id === "cls-next") {
+                    tutorialNeedsNext = true
+                }
+            }
+
+            setClusterIndex(clsIndex.value+1)
+
+            logAction({
+                desc: "next clusters",
+                clusters: clsGroups.value[clsIndex.value]
+            })
+            app.addInteraction("step1")
+        }
+    }
+
 
     /**
      * Prepare the guided tour tutorial
@@ -384,18 +389,29 @@
         const plural = single + "s"
         tutorial.addSteps([
             {
+                id: "t-start",
+                buttons: [
+                    { text: "close tutorial", action: tutorial.cancel, classes: "bg-error" },
+                    { text: "next", action: tutorial.next, classes: "bg-primary" },
+                ],
+                text: `This tutorial will explain your task and how this tool works.`
+            },{
+                id: "show-timer",
+                attachTo: {
+                    element: ".timer",
+                    on: "bottom"
+                },
+                buttons: [{ text: "next", action: tutorial.next, classes: "bg-primary" }],
+                text: `This timer shows you how much time you have left for each step.
+                    If you are not done by the time it ends, we automatically go to the
+                    next step with your current results.`
+            },{
                 id: "show-target",
                 attachTo: {
                     element: "#sim-target",
                     on: "bottom"
                 },
-                scrollToHandler: function() {
-                    window.scrollTo(0, 0)
-                },
-                buttons: [
-                    { text: "close tutorial", action: tutorial.cancel, classes: "bg-error" },
-                    { text: "next", action: tutorial.next, classes: "bg-primary" },
-                ],
+                buttons: [{ text: "next", action: tutorial.next, classes: "bg-primary" }],
                 text: `This is your target ${single}. Your task is to find
                     <b>other similar ${plural}</b> from our dataset.`
             },{
@@ -428,7 +444,7 @@
             },{
                 id: "collected-update",
                 attachTo: {
-                    element: "#collected-items",
+                    element: "#bottom-part",
                     on: "top"
                 },
                 buttons: [{ text: "next", action: tutorial.next, classes: "bg-primary" }],
@@ -442,30 +458,36 @@
                 },
                 text: `Click on this ${single} again to remove it from your selection.`
             },{
-                id: "reroll",
+                id: "cls-next",
                 attachTo: {
-                    element: "#reroll-btn",
+                    element: "#next-btn",
                     on: "bottom"
                 },
-                text: `Click here to get a different set of ${single} groups.`
+                text: `Click here to get a see the next groups of ${plural}.`
             },{
-                id: "reroll-result",
+                id: "cls-prev",
                 attachTo: {
-                    element: "#cluster-options",
+                    element: "#prev-btn",
                     on: "bottom"
                 },
-                buttons: [{ text: "next", action: tutorial.next, classes: "bg-primary" }],
-                text: `You can reroll until you find a similar ${single} or you can use the bottom
-                    panel to get find ${plural} and get suggestions.`
+                text: `Click here to go back to the previous groups of ${plural}.`
             },{
                 id: "submit",
                 attachTo: {
                     element: "#submit-btn",
                     on: "bottom"
                 },
-                buttons: [{ text: "okay", action: tutorialClear, classes: "bg-primary" }],
+                buttons: [{ text: "next", action: tutorial.next, classes: "bg-primary" }],
                 text: `When you are happy with your list of similar ${plural}, click
                     here to go to the next step.`
+            },{
+                id: "show-tutorial",
+                attachTo: {
+                    element: "#start-tutorial",
+                    on: "left"
+                },
+                buttons: [{ text: "okay", action: tutorialClear, classes: "bg-primary" }],
+                text: "To see tutorial again, just click on this question mark."
             }
         ])
     }
@@ -489,8 +511,8 @@
         tutorialNeedsNext = false
         tutorial.complete()
         history.value = []
+        setClusterIndex(0)
         clearSelection()
-        resetRerolls()
     }
 
     async function init() {
@@ -517,84 +539,71 @@
             }
         }
 
-        nextClusters()
+        makeClusterGroups()
     }
 
-    async function nextClusters() {
-
-        let fixed = []
-        if (props.fixedSelection) {
-            fixed = clsOrder.list
-                .map((d, i) => ({ cluster: d, index: i }))
-                .filter(d => clsOrder.selected.has(d.cluster))
-        }
+    async function makeClusterGroups() {
 
         const k = clusters.clusters.length
-        // get indices of all clusters
-        const cf = [...Array(k).keys()].filter(i => clusterLeft.has(i))
 
-        if (cf.length === 0) {
-            console.debug("no more clusters left")
-            return
-        }
+        const allCf = [...Array(k).keys()]
+        const groups = []
 
-        // get next clusters with the highest distances to each other
-        const subset = cf.slice(0, props.numClusters*5)
-        const tmp = subset.map(i => {
-            const scores = subset.map((d, j) => {
-                if (i === j) return 0
-                return matchValue(
-                    clusters.minDistances[d][i],
-                    clusters.maxDistances[d][i],
-                    clusters.size[i],
-                    0, // should be different to the others
-                )
+        while (clusterLeft.size > 0) {
+
+            // get indices of all clusters
+            const cf = allCf.filter(i => clusterLeft.has(i))
+
+            if (cf.length === 0) {
+                console.debug("no more clusters left")
+                break
+            }
+
+            // get next clusters with the highest distances to each other
+            const subset = cf.slice(0, props.numClusters*3)
+            const tmp = subset.map(i => {
+                const scores = subset.map((d, j) => {
+                    if (i === j) return 0
+                    return matchValue(
+                        clusters.minDistances[d][i],
+                        clusters.maxDistances[d][i],
+                        clusters.size[i],
+                        0, // should be different to the others
+                    )
+                })
+
+                return {
+                    index: i,
+                    value: d3.median(scores),
+                }
             })
 
-            return {
-                index: i,
-                value: d3.median(scores),
-            }
-        })
-
-        // sort from high to low match value
-        tmp.sort((a, b) => {
-            if (b.value === a.value) {
-                return clusters.size[b.index] - clusters.size[a.index]
-            }
-            return b.value - a.value
-        })
-
-        let next
-
-        if (props.fixedSelection) {
-            next = new Array()
-            fixed.forEach(d => next[d.index] = d.cluster)
-
-            for (let i = 0, j = 0; i < props.numClusters; ++i) {
-                if (next[i] === undefined && !clsOrder.selected.has(tmp[j].index)) {
-                    next[i] = tmp[j].index
-                    j++
-                    clusterLeft.delete(next[i])
+            // sort from high to low match value
+            tmp.sort((a, b) => {
+                if (b.value === a.value) {
+                    return clusters.size[b.index] - clusters.size[a.index]
                 }
-            }
-        } else {
-            next = tmp.slice(0, props.numClusters).map(d => d.index)
+                return b.value - a.value
+            })
+
+            const next = tmp.slice(0, props.numClusters).map(d => d.index)
             next.forEach(d => clusterLeft.delete(d))
+
+            groups.push(next)
         }
+
+        clsGroups.value = groups
+        clsOrder.list = 0
+        clsOrder.show = clsGroups.value[0].map(() => 0)
 
         // log which clusters are shown to the user
         logAction({
             desc: "set cluster options",
-            clusters: next.map((ci, i) => ({
+            clusters: clsGroups.value.map(list => list.map(ci => ({
                 id: ci,
                 items: clusters.clusters[ci].map(d => d.id)
-            })),
+            }))),
         })
-
-        numClsLeft.value = clusterLeft.size
-        clsOrder.list = next
-        clsOrder.show = next.map(() => 0)
     }
 
     function updateCandidates() {
@@ -632,10 +641,10 @@
             updateCandidates()
         } else if (replace || add) {
             // get the necessary data
-            const clsIndex = clusters.clusters.findIndex(list => list.find(d => d.id === id))
+            const csi = clusters.clusters.findIndex(list => list.find(d => d.id === id))
             const selObj = {
                 id: id,
-                cluster: clsIndex,
+                cluster: csi,
                 index: itemsToUse.findIndex(d => d.id === id)
             }
             // perform replacement or adding
@@ -747,7 +756,9 @@
         numClsLeft.value = clusterLeft.size
         itemsToUse = DM.getDataBy("items", d => d.allTags.length > 0 && (!props.target || d.id !== props.target))
         clusters = null
-        clsOrder.list = []
+        clsIndex.value = 0
+        clsGroups.value = []
+        clsOrder.list = 0
         clsOrder.selected.clear()
         clsOrder.show = []
         selection.value = new Array(props.maxSelect)

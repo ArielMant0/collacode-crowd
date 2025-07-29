@@ -400,7 +400,7 @@
         return allClusters.findIndex(list => list.includes(idx))
     }
 
-    function goToTag() {
+    function goToTag(desc="go to other tag") {
         if (split.value.length > 0) {
             const last = split.value.at(0)
             const splitTag = selectedTag.value
@@ -486,6 +486,14 @@
             last.examplesYes = examplesYes.map(idx => itemsToUse[idx].id)
             last.examplesNo = examplesNo.map(idx => itemsToUse[idx].id)
 
+            logAction({
+                desc: desc,
+                step: split.value.length,
+                tag: splitTag,
+                with: withTag,
+                without: without
+            })
+
             last.tag = splitTag
             tagsLeft.delete(last.tag.id)
         }
@@ -494,7 +502,7 @@
         if (hasPrevTag.value) {
             tagIndex.value--
             app.addInteraction("step1")
-            goToTag()
+            goToTag("previous tag")
         }
     }
     function nextTag() {
@@ -509,7 +517,7 @@
                 }
             }
 
-            goToTag()
+            goToTag("next tag")
         }
     }
 

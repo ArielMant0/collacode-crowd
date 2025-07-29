@@ -21,6 +21,7 @@
             <v-tooltip text="start the tutorial" location="left" open-delay="300">
                 <template v-slot:activator="{ props }">
                     <v-btn v-bind="props"
+                        id="start-tutorial"
                         icon="mdi-help-circle"
                         @click="startTutorial"
                         class="mt-2"
