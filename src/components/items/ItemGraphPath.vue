@@ -70,7 +70,7 @@
 
         <div id="bottom-part" class="d-flex align-start" style="min-width: 100%; max-width: 100%;">
 
-            <div class="mr-2" style="max-width: 20%;" :style="{ minWidth: (miniImageWidth+25)+'px' }">
+            <div id="item-history" class="mr-2" style="max-width: 20%;" :style="{ minWidth: (miniImageWidth+25)+'px' }">
                 <div style="text-align: center;">
                     <v-icon>mdi-history</v-icon>
                     history
@@ -142,6 +142,7 @@
     let tutorialNeedsNext = false
     const tutorial = useShepherd({
         useModalOverlay: true,
+        keyboardNavigation: false,
         defaultStepOptions: {
             classes: 'shadow-md bg-surface-light arrow-primary',
             scrollTo: { behavior: 'smooth', block: 'start' },
@@ -394,22 +395,28 @@
                     { text: "close tutorial", action: tutorial.cancel, classes: "bg-error" },
                     { text: "next", action: tutorial.next, classes: "bg-primary" },
                 ],
-                text: `This tutorial will explain your task and how this tool works.`
+                text: `This tutorial will guide you through the features on this page.`
             },{
                 id: "show-timer",
                 attachTo: {
                     element: ".timer",
                     on: "bottom"
                 },
+                scrollToHandler: function() {
+                    window.scrollTo(0, 0, { behavior: 'smooth' })
+                },
                 buttons: [{ text: "next", action: tutorial.next, classes: "bg-primary" }],
                 text: `This timer shows you how much time you have left for each step.
-                    If you are not done by the time it ends, we automatically go to the
+                    If you are not done by the time it ends, the page automatically goes to the
                     next step with your current results.`
             },{
                 id: "show-target",
                 attachTo: {
                     element: "#sim-target",
                     on: "bottom"
+                },
+                scrollToHandler: function() {
+                    window.scrollTo(0, 0, { behavior: 'smooth' })
                 },
                 buttons: [{ text: "next", action: tutorial.next, classes: "bg-primary" }],
                 text: `This is your target ${single}. Your task is to find
@@ -421,35 +428,39 @@
                     on: "bottom"
                 },
                 buttons: [{ text: "next", action: tutorial.next, classes: "bg-primary" }],
-                text: `These are different groups of ${plural} from our dataset.
-                    Click or drag any ${single} to get a list of similar ${plural} shown below.
-                    You can select up to 3 ${plural} to get suggestions of similar ${plural}.`
+                text: `<p>These are different groups of ${plural} from our dataset.
+                    They help you to look through ${plural} in our dataset more quickly.
+                    <span style="min-height: 1em"></span>
+
+                    You can click on any ${single} or drag it into one of the three selection boxes
+                    below to get a list of similar ${plural} shown at the bottom. You can get a
+                    maximum of ${props.maxItems} suggestions for similar ${plural}.</p>`
             },{
                 id: "click-item",
                 attachTo: {
                     element: "#cluster-options .item-teaser",
                     on: "right-start"
                 },
-                text: `Click on this ${single} to see other similar ${plural}.`
+                text: `Select this ${single}!`
             },{
                 id: "show-collected",
                 attachTo: {
                     element: "#collected-items",
-                    on: "top"
+                    on: "top-end"
                 },
-                text: `These are now your collected similar ${plural} from which you will select
+                text: `These are now your <b>collected similar ${plural}</b> from which you will select
                     the most similar ${plural} to your target in the next step. You can add
-                    other ${plural} by clicking on a different ${single} here or in a group.
-                    Click on another ${single} from this list!`
+                    other ${plural} by selecting a different ${single} here or in a group above.
+                    Select another ${single} from this list!`
             },{
                 id: "collected-update",
                 attachTo: {
-                    element: "#bottom-part",
-                    on: "top"
+                    element: "#collected-items",
+                    on: "top-end"
                 },
                 buttons: [{ text: "next", action: tutorial.next, classes: "bg-primary" }],
-                text: `Now your collection split in two, showing a total of ${props.maxItems}
-                    similar ${plural} for your selected ${plural}.`
+                text: `Now your collection has split, showing ${props.maxItems} similar ${plural}
+                    for your selected ${plural}.`
             },{
                 id: "remove-item",
                 attachTo: {
@@ -463,31 +474,47 @@
                     element: "#next-btn",
                     on: "bottom"
                 },
-                text: `Click here to get a see the next groups of ${plural}.`
+                extraHighlights: ["#cluster-options"],
+                text: `To see the next groups of ${plural} use the right arrow button.`
             },{
                 id: "cls-prev",
                 attachTo: {
                     element: "#prev-btn",
                     on: "bottom"
                 },
-                text: `Click here to go back to the previous groups of ${plural}.`
+                extraHighlights: ["#cluster-options"],
+                text: `To go back to the previous groups of ${plural}, use the left arrow button.`
+            },{
+                id: "show-history",
+                attachTo: {
+                    element: "#item-history",
+                    on: "top-start"
+                },
+                text: `We keep track of the ${plural} you selected. Click on a ${single}
+                    here to re-select it!`
             },{
                 id: "submit",
                 attachTo: {
                     element: "#submit-btn",
                     on: "bottom"
                 },
+                scrollToHandler: function() {
+                    window.scrollTo(0, 0, { behavior: 'smooth' })
+                },
                 buttons: [{ text: "next", action: tutorial.next, classes: "bg-primary" }],
                 text: `When you are happy with your list of similar ${plural}, click
-                    here to go to the next step.`
+                    this button to go to the next step.`
             },{
                 id: "show-tutorial",
                 attachTo: {
                     element: "#start-tutorial",
                     on: "left"
                 },
+                scrollToHandler: function() {
+                    window.scrollTo(0, 0, { behavior: 'smooth' })
+                },
                 buttons: [{ text: "okay", action: tutorialClear, classes: "bg-primary" }],
-                text: "To see tutorial again, just click on this question mark."
+                text: "To start the tutorial again, click on this question mark."
             }
         ])
     }
@@ -627,7 +654,8 @@
 
         if (tutorial.isActive()) {
             const sid = tutorial.getCurrentStep()
-            if (sid.id === 'click-item' || sid.id === 'show-collected' || sid.id === 'remove-item') {
+            if (sid.id === 'click-item' || sid.id === 'show-collected' ||
+                sid.id === 'remove-item' || sid.id === 'show-history') {
                 tutorialNeedsNext = true
             }
         }
@@ -725,6 +753,7 @@
 
     function replaceSelection(index, replacement, source="") {
         if (selection.value[index]) {
+
             logAction({
                 desc: "replace item",
                 source: source,
@@ -770,8 +799,10 @@
     }
 
     function logAction(obj) {
-        obj.timestamp = Date.now()
-        log.push(obj)
+        if (!tutorial.isActive()) {
+            obj.timestamp = Date.now()
+            log.push(obj)
+        }
     }
 
     function getSubmitData() {
