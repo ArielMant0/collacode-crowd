@@ -122,25 +122,30 @@
                             :id="item.id"
                             prevent-click
                             prevent-context
+                            :width="140"
+                            :height="70"
                             class="mr-1 mb-1"/>
                         <ItemTeaser v-for="item in gameData.customItems"
                             :id="item.id"
                             prevent-click
                             prevent-context
+                            :width="140"
+                            :height="70"
                             class="mr-1 mb-1"/>
                     </div>
                 </div>
-                <div v-if="gameData.otherItems.length" class="mt-4" style="max-width: 100%; text-align: center;">
-                    <h3>Most Common Choices</h3>
-                    <div class="d-flex flex-wrap justify-center" :style="{ maxWidth: (190*5)+'px' }">
-                        <ItemTeaser v-for="item in gameData.otherItems"
-                            :id="item.id"
-                            :border-size="4"
-                            :border-color="item.same ? GR_COLOR.GREEN : 'default'"
-                            prevent-click
-                            prevent-contex
-                            class="mr-1 mb-1"/>
-                    </div>
+                <div v-if="gameData.graph" class="mt-4" style="max-width: 100%; text-align: center;">
+                    <h3>Target Similarities</h3>
+                    <NodeLink v-if="gameData.graph"
+                        :nodes="gameData.graph.nodes"
+                        :links="gameData.graph.links"
+                        :width="600"
+                        :height="400"
+                        weight-attr="value"
+                        image-attr="teaser"
+                        :radius="50"
+                        :target="gameData.target.id"/>
+
                 </div>
             </div>
         </div>
@@ -149,13 +154,13 @@
 
 <script setup>
     import { computed, onMounted, reactive, useTemplateRef, watch } from 'vue'
-    import { GAME_IDS, GR_COLOR, STATES } from '@/stores/games'
+    import { GAME_IDS, STATES } from '@/stores/games'
     import { useSounds, SOUND } from '@/stores/sounds';
     import { storeToRefs } from 'pinia'
     import LoadingScreen from './LoadingScreen.vue'
     import ItemTeaser from './items/ItemTeaser.vue'
     import ItemGraphPath from './items/ItemGraphPath.vue'
-    import { CW_MAX_SUB, PR_STEPS, useApp } from '@/stores/app'
+    import { PR_STEPS, useApp } from '@/stores/app'
     import ItemBinarySearch from './items/ItemBinarySearch.vue'
     import ItemTagRecommend from './items/ItemTagRecommend.vue'
     import ItemCustomRecommend from './items/ItemCustomRecommend.vue'
@@ -166,6 +171,8 @@
     import ComprehensionCheck from './ComprehensionCheck.vue';
     import AttentionCheck from './AttentionCheck.vue';
     import CrowdWorkerNotice from './CrowdWorkerNotice.vue';
+    import { constructSimilarityGraph } from '@/use/utility';
+    import NodeLink from './vis/NodeLink.vue';
 
     const emit = defineEmits(["end", "close", "cancel"])
 
@@ -192,7 +199,7 @@
             !attentionDone && step.value === PR_STEPS.ATTENTION
     })
 
-    let ilog = null
+    let ilog = null, compdata = null
     let attentionDone = false, attentionNext = null
     let timeStart, timeEnd
 
@@ -248,7 +255,7 @@
         steps: [],
         resultItems: [],
         customItems: [],
-        otherItems: [],
+        graph: null,
         comprehension: []
     })
 
@@ -426,9 +433,11 @@
             }
             const result = await testComprehensionData(target.value.id, answers, props.method)
             if (result.passed === true) {
+                compdata = answers
                 sounds.play(SOUND.WIN_MINI)
                 nextStep()
             } else {
+                compdata = null
                 sounds.play(SOUND.FAIL_MINI)
                 toast.error(
                     "you failed the comprehension check",
@@ -491,9 +500,10 @@
     }
     async function tryStartRound(timestamp=null) {
         ilog = null
+        compdata = null
         gameData.resultItems = []
         gameData.customItems = []
-        gameData.otherItems = []
+        gameData.graph = null
         stepIndex.value = 1
 
         if (!target.value) {
@@ -637,6 +647,7 @@
                 userAgent: window.navigator.userAgent,
                 location: userGeoLoc,
                 ip: app.ipAddress,
+                comprehension: compdata,
                 log: ilog
             }
         }
@@ -645,9 +656,8 @@
             // post the similarity data to the backend
             const response = await addSimilarity(info, allItems)
             // fetch common similar items for all players
-            const set = new Set(allItems.map(d => d.item_id))
-            const other = await getSimilarByTarget(gameData.target.id, 5)
-            gameData.otherItems = other.map(d => ({ id: d["item_id"], same: set.has(d["item_id"]) }))
+            const sims = await getSimilarByTarget(gameData.target.id)
+            gameData.graph = constructSimilarityGraph(sims)
             app.numSubmissions = response.submissions
 
             // tell the parent we're done so that items get updated
@@ -678,6 +688,7 @@
     function clear() {
         step.value = PR_STEPS.COMPREHENSION
         ilog = null
+        compdata = null
         attentionDone = false
         attentionNext = null
         allowNext.value = true
@@ -686,7 +697,7 @@
         gameData.target = null
         gameData.resultItems = []
         gameData.customItems = []
-        gameData.otherItems = []
+        gameData.graph = null
         gameData.comprehension = []
         app.resetInteraction()
     }

@@ -125,6 +125,60 @@ export function getValue(d, accessor) {
     return undefined
 }
 
+export function constructSimilarityGraph(data) {
+    // get similarity data
+    const sn = [], sl = []
+    const nodeSet = new Set()
+
+    const items = DM.getData("items", false)
+
+    // construct the graph
+    data.forEach(d => {
+        const id = Number(d.target_id)
+        const oid = Number(d.item_id)
+
+        // add the main node
+        if (!nodeSet.has(id)) {
+            const obj = { id: id, name: "unknown", teaser: null }
+            const it = items.find(d => d.id === id)
+            if (it) {
+                obj.name = it.name
+                obj.teaser = mediaPath("teaser", it.teaser)
+            }
+            sn.push(obj)
+            nodeSet.add(id)
+        }
+
+        // add the connected node if not already present
+        if (!nodeSet.has(oid)) {
+            const obj = { id: oid, name: "unknown", teaser: null }
+            const it = items.find(d => d.id === oid)
+            if (it) {
+                obj.name = it.name
+                obj.teaser = mediaPath("teaser", it.teaser)
+            }
+            sn.push(obj)
+            nodeSet.add(oid)
+        }
+
+        const ex = sl.find(d => d.source === id && d.target === oid || d.source === oid && d.target === id)
+        if (ex) {
+            // update existing link
+            ex.value += d.value
+        } else {
+            // add new link
+            sl.push({
+                id: sl.length+1,
+                source: id,
+                target: oid,
+                value: d.value
+            })
+        }
+    })
+
+    return { nodes: sn, links: sl }
+}
+
 export function getStopWords() {
     return [
         "i", "me", "my", "myself",

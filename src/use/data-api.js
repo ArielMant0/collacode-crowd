@@ -96,6 +96,18 @@ export async function addAttentionFail(itemId, game) {
     })
 }
 
+export async function addFeedback(text) {
+    const app = useApp()
+    const loader = useLoader();
+    return loader.post("feedback", {
+        client: app.activeUserId,
+        guid: app.guid,
+        ip: app.ipAddress,
+        cwId: app.cwId,
+        text: text,
+    })
+}
+
 ////////////////////////////////////////////////////////////
 // Crowd Similarity Data
 ////////////////////////////////////////////////////////////
@@ -106,9 +118,12 @@ export async function getSimilarities(dataset=null) {
     return loader.get(`similarity/dataset/${dataset ? dataset : app.ds}`)
 }
 
-export async function getSimilarByTarget(target, limit=5) {
+export async function getSimilarByTarget(target, limit=0) {
     const loader = useLoader();
-    return loader.get(`similarity/target/${target}/top/${limit}`)
+    if (limit > 0) {
+        return loader.get(`similarity/target/${target}/top/${limit}`)
+    }
+    return loader.get(`similarity/target/${target}`)
 }
 
 export async function addSimilarity(info, data) {
