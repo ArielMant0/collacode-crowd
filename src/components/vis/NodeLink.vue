@@ -13,18 +13,19 @@
         weightAttr: { type: String, required: false },
         imageAttr: { type: String, required: false },
         colorAttr: { type: String, required: false },
-        targetColor: { type: String, default: "red" },
-        highlightColor: { type: String, default: "HotPink" },
+        targetColor: { type: String, default: "#DC143C" },
+        highlightColor: { type: String, default: "#00BFFF" },
         fillColor: { type: String, default: "grey" },
         width: { type: Number, default: 600 },
         height: { type: Number, default: 400 },
         radius: { type: Number, default: 10 },
+        selectable: { type: Boolean, default: true },
         transitionDuration: { type: Number, default: 1000 },
     })
 
     const emit = defineEmits(["click", "hover", "right-click"])
 
-    let simulation
+    let simulation, once = false
     let ng, lg
     let nodes, links
 
@@ -49,9 +50,11 @@
                     zoom.transform,
                     d3.zoomIdentity
                         .translate(props.width / 2, props.height / 2)
-                        .scale(8)
+                        .scale(5)
                         .translate(-node.x, -node.y)
                 )
+        } else {
+            resetZoom()
         }
     }
 
@@ -69,7 +72,7 @@
             zoomTransform = transform
         }
 
-        ng.attr("transform", d => `translate(${zx(d.x)},${zy(d.y)}) scale(${Math.max(0.66, zoomTransform.k / 5)})`)
+        ng.attr("transform", d => `translate(${zx(d.x)},${zy(d.y)}) scale(${Math.max(0.4, zoomTransform.k / 3)})`)
 
         lg
             .attr("x1", d => zx(d.source.x))
@@ -91,8 +94,21 @@
             })
         }
 
-        ng.selectAll(".outline").attr("stroke", d => match.has(d.id) ? props.highlightColor : (d.id === props.target ? props.targetColor : "currentColor"))
-        lg.attr("stroke", d => matchLink.has(d.id) ? props.highlightColor : "currentColor")
+        ng
+            .selectAll(".outline")
+            .attr("stroke", d => d.id === props.target ? props.targetColor : "currentColor")
+        ng
+            .filter(d => match.has(d.id))
+            .raise()
+            .selectAll(".outline")
+            .attr("stroke", props.highlightColor)
+        lg
+            .attr("stroke", d => d.source.id === props.target || d.target.id === props.target ? props.targetColor : "currentColor")
+
+        lg
+            .filter(d => matchLink.has(d.id))
+            .attr("stroke", props.highlightColor)
+            .raise()
     }
 
     function draw() {
@@ -101,15 +117,23 @@
             simulation = null
         }
 
+        once = false
         nodes = props.nodes.map(d => ({ ...d }))
         links = props.links.map(d => ({ ...d }))
 
         zoom = d3.zoom()
-            .scaleExtent([0.5, 32])
+            .scaleExtent([0.1, 32])
             .on("zoom", ({transform}) => updateNodesAndLinks(transform))
 
         const svg = d3.select(el.value)
         svg.selectAll('*').remove()
+
+        let wscale;
+        if (props.weightAttr){
+            wscale = d3.scaleQuantile(links.map(d => d[props.weightAttr]), [2, 4, 6, 8])
+        } else {
+            wscale = () => 2
+        }
 
         lg = svg.append("g")
             .selectAll("line")
@@ -119,19 +143,27 @@
             .attr("x2", d => d.target.x)
             .attr("y1", d => d.source.y)
             .attr("y2", d => d.target.y)
-            .attr("stroke", "currentColor")
-            .attr("stroke-width", 3)
+            .attr("stroke", d => d.source.id === props.target || d.target.id === props.target ? props.targetColor : "currentColor")
+            .attr("stroke-width", d => wscale(d.value))
+            .attr("opacity", 0.5)
 
         ng = svg.append("g")
             .selectAll("g")
             .data(nodes)
             .join("g")
             .attr("transform", `translate(${props.width/2}, ${props.height/2})`)
+            .style("cursor", props.selectable ? "pointer" : "default")
+            .classed("fixed", d => d.fx !== undefined)
             .on("click", function(event, d) {
                 emit("click", d, event)
             })
             .on("contextmenu", function(event, d) {
                 event.preventDefault()
+                delete d.fx
+                delete d.fy
+                d3.select(this).classed("fixed", false)
+                simulation.alpha(1).restart()
+                if (!props.selectable) return
                 emit("right-click", d, event)
             })
             .on("pointerenter", function(_event, d) {
@@ -193,14 +225,44 @@
         }
 
         simulation = d3.forceSimulation(nodes)
-            .alphaMin(0.01)
+            .alphaDecay(nodes.length < 100 ? 0.025 : 0.015)
             .force('link', d3.forceLink(links).id(d => d.id).distance(distanceFunction))
             .force('charge', d3.forceManyBody())
+            .force('collide', d3.forceCollide(props.radius / 2))
             .force('center', d3.forceCenter(props.width / 2, props.height / 2))
             .on('tick', () => updateNodesAndLinks())
-            .on("end", () => focus(props.target))
+            .on('end', () => {
+                if (!once) {
+                    focus(props.target)
+                    once = true
+                }
+            })
+
+        const drag = d3
+            .drag()
+            .on("start", onDragStart)
+            .on("drag", onDragged)
+
+        ng.call(drag)
 
         svg.call(zoom)
+
+        if (props.target) {
+            setTimeout(() => focus(props.target), 2000)
+        }
+    }
+
+    function onDragStart() {
+        d3.select(this).classed("fixed", true);
+    }
+
+    function onDragged(event, d) {
+        const [mx, my] = d3.pointer(event, el.value)
+        const zx = zoomTransform.rescaleX(x).interpolate(d3.interpolateRound)
+        const zy = zoomTransform.rescaleY(y).interpolate(d3.interpolateRound)
+        d.fx = zx.invert(mx)
+        d.fy = zy.invert(my)
+        simulation.alpha(1).restart()
     }
 
     defineExpose({ resetZoom, focus })
@@ -213,7 +275,10 @@
         }
     })
 
-    watch(() => props.target, focus)
+    watch(() => props.target, function() {
+        highlight()
+        focus()
+    })
     watch(() => ([
         props.nodes,
         props.links,

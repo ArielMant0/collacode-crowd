@@ -37,6 +37,7 @@
     const links = [
         { name: "home", icon: "mdi-home", route: "/" },
         { name: "about", icon: "mdi-information",  route: "/about" },
+        { name: "graph", icon: "mdi-graph-outline",  route: "/graph" },
         { name: "feedback", icon: "mdi-comment",  route: "/feedback" },
     ]
 

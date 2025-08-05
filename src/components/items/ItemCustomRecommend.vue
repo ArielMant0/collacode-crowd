@@ -1,8 +1,11 @@
 <template>
     <div style="text-align: center; min-width: 100%;">
 
-        <div class="text-h5 mb-2">
+        <div class="text-h5 mb-1">
             click or drag <b class="text-decoration-underline">only</b> similar {{ app.itemName }}s into a fitting category
+        </div>
+        <div class="mb-2 text-caption">
+            it's also okay to select none if there is no good fit
         </div>
 
         <div class="d-flex align-start justify-center" style="width: 100%;">
@@ -281,7 +284,7 @@
         app.addInteraction("step3")
         if (search.value && search.value.length > 2) {
             const name = new RegExp(search.value, "gi")
-            bySearch.value = DM.getDataBy("items", d => d.allTags.length > 0 && !isChosenItem(d.id) && name.test(d.name))
+            bySearch.value = DM.getDataBy("items", d => !isChosenItem(d.id) && name.test(d.name))
                 .map(d => ({ id: d.id, value: 0 }))
         } else {
             bySearch.value = []
@@ -294,18 +297,21 @@
     }
     async function getSuggestions() {
         const rRep = new RegExp("[_\-]", "gi")
-        const rDel = new RegExp("[®©™:\(\)0-9]", "gi")
+        const rDel = new RegExp("[®©™\(\)0-9]", "gi")
         const stopWords = getStopWords()
         const process = name => {
             const str = name.toLowerCase().replaceAll(rRep, " ").replaceAll(rDel, "")
-            return str.split(" ").filter(w => !stopWords.includes(w)).join(" ")
+            return str.split(" ").filter(w => !stopWords.includes(w)).join(" ").split(":")
         }
-        const names = DM.getDataBy("items", d => isFixedItem(d.id)).map(d => process(d.name))
+        const names = DM.getDataBy("items", d => isFixedItem(d.id)).map(d => process(d.name)).flat()
         const other = DM.getDataBy("items", d => {
             const dn = process(d.name)
             return d.allTags.length > 0 &&
                 !isFixedItem(d.id) &&
-                names.some(n => sc.default.jaroWinkler.similarity(n, dn) >= 0.85)
+                names.some(n => dn.some(n2 => {
+                    return sc.default.lcs.similarity(n, n2) >= 0.75 ||
+                        sc.default.jaroWinkler.similarity(n, n2) >= 0.85
+                }))
         })
         suggs.byName = other.map(d => ({ id: d.id }))
         const crowd = await getSimilarByTarget(props.target, 20)

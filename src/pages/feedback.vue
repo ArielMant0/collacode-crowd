@@ -1,9 +1,14 @@
 <template>
-    <div class="d-flex justify-center mt-8">
-        <div style="min-width: 300px; width: 75%; max-width: 1000px">
+    <div class="d-flex justify-center">
+        <div style="min-width: 300px; width: 75%; max-width: 900px">
+            <div style="font-size: 30px; text-align: center; margin-top: 2em; font-style: italic;">
+                Here you can send us feedback about your experience with this application
+                or about the project in general.
+            </div>
             <v-textarea v-model="text"
                 density="compact"
                 variant="outlined"
+                style="margin-top: 4em;"
                 label="Feedback (max. 1000 characters)"
                 hide-spin-buttons
                 :rows="10"

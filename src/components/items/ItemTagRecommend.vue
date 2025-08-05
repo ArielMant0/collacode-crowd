@@ -1,8 +1,11 @@
 <template>
     <div style="text-align: center; width: 100%;">
 
-        <div class="text-h5 mb-2">
+        <div class="text-h5 mb-1">
             click or drag <b class="text-decoration-underline">only</b> similar {{ app.itemName }}s into their fitting category
+        </div>
+        <div class="mb-2 text-caption">
+            it's also okay to select none if there is no good fit
         </div>
 
         <div class="d-flex align-start justify-center" style="width: 100%;">

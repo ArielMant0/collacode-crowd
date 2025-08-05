@@ -426,6 +426,9 @@
 </script>
 
 <style>
+html {
+    scroll-behavior: smooth;
+}
 body {
     width: 100%;
 }

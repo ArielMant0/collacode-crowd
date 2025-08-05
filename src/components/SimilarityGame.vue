@@ -112,11 +112,11 @@
 
                 <CrowdWorkerNotice v-if="showRedirect" max-width="1000"/>
                 <div v-else class="d-flex align-center justify-center mb-4">
-                    <v-btn class="mr-1" size="large" color="error" @click="close">back to home</v-btn>
+                    <v-btn color="error" @click="close">back to home</v-btn>
                 </div>
 
                 <div style="max-width: 100%; text-align: center;">
-                    <h3>Your Choices</h3>
+                    <div class="bitcount-prop-double" style="font-size: 30px;">Your Choices</div>
                     <div class="d-flex flex-wrap justify-center" :style="{ maxWidth: (190*5)+'px' }">
                         <ItemTeaser v-for="item in gameData.resultItems"
                             :id="item.id"
@@ -135,7 +135,7 @@
                     </div>
                 </div>
                 <div v-if="gameData.graph" class="mt-4" style="max-width: 100%; text-align: center;">
-                    <h3>Target Similarities</h3>
+                    <div class="bitcount-prop-double" style="font-size: 30px;">Similarity Graph</div>
                     <NodeLink v-if="gameData.graph"
                         :nodes="gameData.graph.nodes"
                         :links="gameData.graph.links"
@@ -143,6 +143,8 @@
                         :height="400"
                         weight-attr="value"
                         image-attr="teaser"
+                        @hover="onHover"
+                        :selectable="false"
                         :radius="50"
                         :target="gameData.target.id"/>
 
@@ -173,11 +175,13 @@
     import CrowdWorkerNotice from './CrowdWorkerNotice.vue';
     import { constructSimilarityGraph } from '@/use/utility';
     import NodeLink from './vis/NodeLink.vue';
+    import { useTooltip } from '@/stores/tooltip';
 
     const emit = defineEmits(["end", "close", "cancel"])
 
     // stores
     const app = useApp()
+    const tt = useTooltip()
     const sounds = useSounds()
     const toast = useToast()
 
@@ -330,6 +334,14 @@
         }
     }
 
+    function onHover(item, event) {
+        if (item) {
+            tt.showItem(event, item)
+        } else {
+            tt.hide()
+        }
+    }
+
     function setFirstStep() {
         if (gameData.comprehension.length > 0) {
             allowNext.value = true
@@ -443,7 +455,7 @@
                     "you failed the comprehension check",
                     { timeout: 1500, position: POSITION.TOP_CENTER }
                 )
-                setTimeout(() => router.push("/"), 2000)
+                setTimeout(() => router.replace("/"), 2000)
             }
         } catch(e) {
             console.error(e.toString())
@@ -464,7 +476,7 @@
                     "you failed the attention check",
                     { timeout: 1500, position: POSITION.TOP_CENTER }
                 )
-                setTimeout(() => router.push("/"), 2000)
+                setTimeout(() => router.replace("/"), 2000)
             } catch(e) {
                 console.error(e.toString())
                 toast.error("error adding attention fail")
@@ -512,7 +524,7 @@
                 "select an item in the main page first",
                 { timeout: 1500, position: POSITION.TOP_CENTER }
             )
-            return setTimeout(() => router.push("/"), 2000)
+            return setTimeout(() => router.replace("/"), 2000)
         }
 
         gameData.target = target.value
@@ -717,7 +729,7 @@
             function(loc) { userGeoLoc = loc.toJSON() },
             function() { userGeoLoc = null },
             {
-                enableHighAccuracy: true,
+                enableHighAccuracy: false,
                 timeout: 2000,
                 maximumAge: 0
             }

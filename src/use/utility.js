@@ -165,13 +165,15 @@ export function constructSimilarityGraph(data) {
         if (ex) {
             // update existing link
             ex.value += d.value
+            ex.count += d.count
         } else {
             // add new link
             sl.push({
                 id: sl.length+1,
                 source: id,
                 target: oid,
-                value: d.value
+                value: d.value,
+                count: d.count
             })
         }
     })

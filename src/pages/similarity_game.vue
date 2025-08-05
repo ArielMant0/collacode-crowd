@@ -30,9 +30,9 @@
 
     function onCancel(delay=0) {
         if (delay > 0) {
-            setTimeout(() => router.push("/"), delay)
+            setTimeout(() => router.replace("/"), delay)
         } else {
-            router.push("/")
+            router.replace("/")
         }
     }
     function onEnd() {
@@ -40,7 +40,8 @@
         times.needsReload("crowd")
     }
     function onClose() {
-        onCancel(100)
+        onEnd()
+        onCancel()
     }
     function read() {
         switch (app.method) {

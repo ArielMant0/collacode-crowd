@@ -204,19 +204,7 @@
         if (d === null) {
             tt.hide()
         } else {
-            const [mx, my] = pointer(event, document.body)
-            const extra = app.itemColumns.reduce((acc, c) => acc + `<div><b>${capitalize(c.name)}:</b> ${d[c.name]}</div>`, "")
-            tt.show(
-                `<div>
-                    <img src="${mediaPath('teaser', d.teaser)}" style="max-height: 150px; object-fit: contain;"/>
-                    <div class="mt-1 text-caption">
-                        <div>${d.name}</div>
-                        ${d.description ? '<div><b>Description:</b> '+d.description+'</div>' : ''}
-                        ${extra}
-                    </div>
-                </div>`,
-                mx, my
-            )
+            tt.showItem(event, d)
         }
     }
 

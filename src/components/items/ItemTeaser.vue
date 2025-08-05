@@ -40,13 +40,12 @@
 </template>
 
 <script setup>
-    import { pointer } from 'd3';
     import imgUrlS from '@/assets/__placeholder__s.png'
     import { useApp } from '@/stores/app';
     import { useTooltip } from '@/stores/tooltip';
     import { computed, onBeforeUnmount, onMounted } from 'vue';
     import DM from '@/use/data-manager';
-    import { capitalize, mediaPath } from '@/use/utility';
+    import { mediaPath } from '@/use/utility';
 
     const app = useApp()
     const tt = useTooltip()
@@ -174,19 +173,7 @@
     }
     function onHover(event) {
         if (!itemObj.teaser || !props.zoomOnHover) return
-        const [mx, my] = pointer(event, document.body)
-        const extra = app.itemColumns.reduce((acc, c) => acc + `<div><b>${capitalize(c.name)}:</b> ${itemObj[c.name]}</div>`, "")
-        tt.show(
-            `<div>
-                <img src="${mediaPath('teaser', itemObj.teaser)}" style="max-height: 250px; object-fit: contain;"/>
-                <div class="mt-1 text-caption">
-                    <div>${itemObj.name}</div>
-                    ${itemObj.description ? '<div><b>Description:</b> '+itemObj.description+'</div>' : ''}
-                    ${extra}
-                </div>
-            </div>`,
-            mx, my
-        )
+        tt.showItem(event, itemObj)
         emit("hover")
     }
 
