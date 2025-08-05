@@ -394,12 +394,12 @@
     }
     function setItem(id, origin, index, where=0) {
         app.addInteraction("step3")
+        sounds.play(SOUND.PLOP)
         if (where === 2) {
             if (props.itemLimit > 0 && (itemHigh.size+highFixed.value.length) >= props.itemLimit) {
                 return toast.warning(`maximum number of ${app.itemName}s reached`)
             }
 
-            sounds.play(SOUND.PLOP)
             const inFixed = props.items.find(d => d.id === id)
             if (inFixed) {
                 inFixed.value = 2
@@ -418,7 +418,6 @@
                 return toast.warning(`maximum number of ${app.itemName}s reached`)
             }
 
-            sounds.play(SOUND.PLOP)
             const inFixed = props.items.find(d => d.id === id)
             if (inFixed) {
                 inFixed.value = 1

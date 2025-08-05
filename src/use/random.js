@@ -77,6 +77,7 @@ export function randomItemsDissimilar(targets, size=1, ignore=[], weights=[], mu
 }
 
 export function randomChoice(array, size=1) {
+    if (array.length === 0) return []
     return size < 2 ? chance.pickone(array) : chance.pickset(array, size)
 }
 

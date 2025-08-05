@@ -126,17 +126,17 @@
             .join("g")
             .attr("transform", (_d, i) => `translate(${(i % cols) * w},${(Math.floor(i / cols)) * h})`)
             .style("cursor", props.selectable ? "pointer" : "default")
-            .on("pointerenter", function(event, d) {
+            .on("mouseenter pointerenter", function(event, d) {
                 emit("hover", d, event)
                 d3.select(this)
                     .select("rect")
                     .transition(50)
                     .attr("fill-opacity", 0.5)
             })
-            .on("pointermove", function(event, d) {
+            .on("mousemove pointermove", function(event, d) {
                 emit("hover", d, event)
             })
-            .on("pointerleave", function(_event, d) {
+            .on("mouseleave pointerleave", function(_event, d) {
                 emit("hover", null, null)
                 d3.select(this)
                     .select("rect")
@@ -242,16 +242,16 @@
             .attr("stroke", d => d3.color(getColor(d, set, high)).darker(1))
             .attr("r", animate ? 0 : pointRadius)
             .style("cursor", props.selectable ? "pointer" : "default")
-            .on("pointerenter", function(event, d) {
+            .on("mouseenter pointerenter", function(event, d) {
                 emit("hover", d.data, event)
                 d3.select(this)
                     .transition(50)
                     .attr("r", pointRadius+1)
             })
-            .on("pointermove", function(event, d) {
+            .on("mousemove pointermove", function(event, d) {
                 emit("hover", d.data, event)
             })
-            .on("pointerleave", function(d) {
+            .on("mouseleave pointerleave", function(d) {
                 emit("hover", null, null)
                 d3.select(this)
                     .transition(50)

@@ -715,7 +715,7 @@
 
     function choose(hasTag, index) {
         if (split.value.length === 0) return
-        sounds.play(SOUND.WIN_MINI)
+        sounds.play(SOUND.PLOP)
 
         const it = split.value.at(index)
         it.hasTag = hasTag === true
@@ -746,8 +746,6 @@
         }
 
         splitItems()
-
-        sounds.play(SOUND.PLOP)
 
         if (tutorial.isActive()) {
             const sid = tutorial.getCurrentStep()
@@ -814,7 +812,6 @@
         }
     })
     onBeforeUnmount(() => {
-        sounds.stopAll()
         if (tutorial.isActive()) {
             tutorial.cancel()
         }

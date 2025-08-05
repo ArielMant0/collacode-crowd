@@ -65,7 +65,7 @@
                     <v-divider class="mt-3 mb-3" color="#b56251" opacity="1"></v-divider>
                     <div>
                         <p>
-                            Here's a detailed explanation of how the different steps work. Each step has a time limit show at the top of the screen; keep that in mind. First, you have to answer 3 questions to test if you are familiar with the {{ app.itemName }} you chose. You have to answer at least 2 questions correctly, otherwise this {{ app.itemName }} will be blocked for you.
+                            Here's a detailed explanation of how the different steps work. Each step has a time limit shown at the top of the page; keep that in mind. First, you have to answer 3 questions to test if you are familiar with the {{ app.itemName }} you chose. You have to answer at least 2 questions correctly, otherwise this {{ app.itemName }} will be blocked for you.
                         </p>
                         <div style="text-align: center;" class="text-caption">
                             <img :src="w1" class="mt-1" style="max-width: 30%;"/>

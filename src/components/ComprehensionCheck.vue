@@ -58,19 +58,25 @@
 
     const choices = ref({})
 
-    const answers = computed(() => Object.values(choices.value).filter(d => Number.isInteger(d)))
+    const answers = computed(() => Object.values(choices.value).filter(d => d >= 0))
     const numAnswered = computed(() => answers.value.length)
 
     function submit() {
         if (numAnswered.value === props.questions.length) {
-            emit("submit", props.questions.map(q => choices.value[q.id]))
+            emit("submit", getAnswers())
         }
     }
     function read() {
         const obj = {}
-        props.questions.forEach(q => obj[q.id] = null)
+        props.questions.forEach(q => obj[q.id] = -1)
         choices.value = obj
     }
+
+    function getAnswers() {
+        return props.questions.map(q => choices.value[q.id])
+    }
+
+    defineExpose({ getAnswers })
 
     onMounted(read)
 </script>

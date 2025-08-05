@@ -10,7 +10,7 @@ const SOUNDFILES = [
     },{
         name: "PLOP",
         file: "happy-pop-2-185287.mp3",
-        volume: 1.5
+        volume: 0.75
     },{
         name: "WIN",
         file: "success-1-6297.mp3",
@@ -18,7 +18,7 @@ const SOUNDFILES = [
     },{
         name: "WIN_MINI",
         file: "beep-6-96243.mp3",
-        volume: 1
+        volume: 0.75
     },{
         name: "FAIL",
         file: "failfare-86009.mp3",
@@ -26,7 +26,7 @@ const SOUNDFILES = [
     },{
         name: "FAIL_MINI",
         file: "error-8-206492.mp3",
-        volume: 1
+        volume: 0.75
     },{
         name: "MEH",
         file: "weak-clapping-103333.mp3",
@@ -80,11 +80,14 @@ const SOUNDFILES = [
         name: "OBACHT",
         file: "obacht.mp3",
         volume: 1
-    },
-    ,{
+    },{
         name: "START_SHORT",
         file: "intro-sound-1-269293.mp3",
         volume: 1
+    },{
+        name: "ATTENTION",
+        file: "wrong-answer-129254.mp3",
+        volume: 0.5
     }
 ]
 
@@ -107,6 +110,7 @@ export const SOUND = {
     CLICK_REVERB: [],
     MENU_MUSIC: [],
     OBACHT: [],
+    ATTENTION: [],
 }
 
 SOUNDFILES.forEach((s, idx) => SOUND[s.name].push(idx))
@@ -118,7 +122,7 @@ export const useSounds = defineStore('sounds', {
     state: () => ({
         sounds: new Map(),
         playing: new Map(),
-        volume: 0.75,
+        volume: 0.5,
         muted: false,
     }),
 
@@ -170,7 +174,7 @@ export const useSounds = defineStore('sounds', {
             return name.some(n => this.playing.has(n))
         },
 
-        play(name, fade=true) {
+        play(name, fade=false) {
             if (this.sounds.size === 0) this.loadSounds()
             if (this.muted) return
             const n = Array.isArray(name) ? randomChoice(name) : name[0];
@@ -183,7 +187,7 @@ export const useSounds = defineStore('sounds', {
             this.playing.set(n, id)
         },
 
-        stop(name, fade=true) {
+        stop(name, fade=false) {
             if (this.sounds.size === 0) this.loadSounds()
             if (this.muted) return
             name.forEach(n => {

@@ -215,18 +215,17 @@
     }
     function setItem(id, where=0) {
         app.addInteraction("step2")
+        sounds.play(SOUND.PLOP)
         if (where === 2) {
             if (props.itemLimit > 0 && itemHigh.size >= props.itemLimit) {
                 return toast.warning(`maximum number of ${app.itemName}s reached`)
             }
-            sounds.play(SOUND.PLOP)
             itemMed.delete(id)
             itemHigh.add(id)
         } else if (where === 1) {
             if (props.itemLimit > 0 && itemMed.size >= props.itemLimit) {
                 return toast.warning(`maximum number of ${app.itemName}s reached`)
             }
-            sounds.play(SOUND.PLOP)
             itemHigh.delete(id)
             itemMed.add(id)
         } else {

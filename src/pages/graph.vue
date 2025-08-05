@@ -1,13 +1,14 @@
 <template>
     <div class="d-flex align-center flex-column">
 
-        <v-btn icon="mdi-information"
+        <v-btn v-if="showGraph"
+            icon="mdi-information"
             variant="flat"
             density="compact"
             @click="infoDialog = true"
             style="position: absolute; top: 45px; right: 5px"/>
 
-        <div v-if="app.numSubmissions >= 5"
+        <div v-if="showGraph"
             :style="{ maxWidth: (graphWidth+320)+'px' }"
             style="min-width: 300px; width: 75%;">
             <v-text-field v-model="search"
@@ -212,6 +213,7 @@
         links: [],
         connected: []
     })
+    const showGraph = computed(() => app.numSubmissions >= 1)
 
     function setSearchTarget(item) {
         search.value = ""
@@ -244,8 +246,8 @@
             ""
     }
 
-    function onHover(item, event) {
-        if (item) {
+    function onHover(item=null, event=null) {
+        if (item !== null) {
             tt.showItem(event, item)
         } else {
             tt.hide()

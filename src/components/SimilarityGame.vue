@@ -52,7 +52,7 @@
                         id="submit-btn"
                         :color="allowNext ? 'primary' : 'default'"
                         :disabled="!allowNext"
-                        @click="nextStepButton"
+                        @click="nextStep(false)"
                         block>
                         {{ isLastStep ? 'submit' : 'next step' }}
                     </v-btn>
@@ -64,6 +64,7 @@
 
             <div v-if="step === PR_STEPS.COMPREHENSION" class="mt-8">
                 <ComprehensionCheck
+                    ref="cc"
                     :title="target.name"
                     :questions="gameData.comprehension"
                     @submit="testComp"/>
@@ -190,6 +191,7 @@
     const timer = useTemplateRef("timer")
     const clusters = useTemplateRef("clusters")
     const binsearch = useTemplateRef("binsearch")
+    const cc = useTemplateRef("cc")
 
     const allowNext = ref(true)
     const step = ref(PR_STEPS.COMPREHENSION)
@@ -271,10 +273,14 @@
     // Functions
     // ---------------------------------------------------------------------
 
-    function startTimer() {
+    function startTimer(delay=0) {
         if (props.useTimer) {
             if (timer.value) {
-                timer.value.start()
+                if (delay > 0) {
+                    setTimeout(() => timer.value.start(), delay)
+                } else {
+                    timer.value.start()
+                }
             } else {
                 setTimeout(startTimer, 100)
             }
@@ -334,8 +340,8 @@
         }
     }
 
-    function onHover(item, event) {
-        if (item) {
+    function onHover(item=null, event=null) {
+        if (item !== null) {
             tt.showItem(event, item)
         } else {
             tt.hide()
@@ -354,21 +360,18 @@
         setTimeout(checkTutorial, 200)
     }
 
-    function nextStepButton() {
-        sounds.play(SOUND.WIN_MINI)
-        nextStep(false)
-    }
-
     function nextStep(onTimerEnd=false) {
+        stopTimer()
         switch(step.value) {
             case PR_STEPS.COMPREHENSION:
                 if (onTimerEnd) {
                     // the user did not answer the questions in time
-                    testComp()
+                    testComp(cc.value ? cc.value.getAnswers() : null)
                 } else {
+                    sounds.play(SOUND.WIN_MINI)
                     allowNext.value = false
                     step.value = PR_STEPS.GAME
-                    resetTimer()
+                    startTimer(150)
                     setTimeout(checkTutorial, 200)
                 }
                 break
@@ -389,31 +392,36 @@
                 if (!attentionDone && props.attentionChecks) { // && Math.random() > 0.75) {
                     step.value = PR_STEPS.ATTENTION
                     attentionNext = PR_STEPS.SELECT
+                    sounds.play(SOUND.ATTENTION)
                 } else {
                     step.value = PR_STEPS.SELECT
                     stepIndex.value++
+                    sounds.play(SOUND.WIN_MINI)
                 }
                 allowNext.value = true
-                resetTimer()
+                startTimer(150)
                 break
             }
             case PR_STEPS.SELECT:
                 if (!attentionDone && props.attentionChecks && Math.random() > 0.5) {
                     step.value = PR_STEPS.ATTENTION
                     attentionNext = PR_STEPS.REFINE
+                    sounds.play(SOUND.ATTENTION)
                 } else {
                     stepIndex.value++
                     step.value = PR_STEPS.REFINE
+                    sounds.play(SOUND.WIN_MINI)
                 }
                 allowNext.value = true
-                resetTimer()
+                startTimer(150)
                 break
             case PR_STEPS.REFINE:
                 if (!attentionDone && props.attentionChecks) {
                     step.value = PR_STEPS.ATTENTION
                     attentionNext = null
                     allowNext.value = true
-                    resetTimer()
+                    sounds.play(SOUND.ATTENTION)
+                    startTimer(150)
                 } else {
                     stopGame()
                 }
@@ -429,7 +437,8 @@
                         attentionNext = null
                         stepIndex.value++
                         allowNext.value = true
-                        resetTimer()
+                        sounds.play(SOUND.WIN_MINI)
+                        startTimer(150)
                     } else {
                         stopGame()
                     }
@@ -446,7 +455,6 @@
             const result = await testComprehensionData(target.value.id, answers, props.method)
             if (result.passed === true) {
                 compdata = answers
-                sounds.play(SOUND.WIN_MINI)
                 nextStep()
             } else {
                 compdata = null
@@ -466,7 +474,6 @@
 
     async function testAttention(passed) {
         if (passed) {
-            sounds.play(SOUND.WIN_MINI)
             nextStep()
         } else {
             try {
@@ -565,7 +572,6 @@
         startRound(timestamp)
     }
     function startGame() {
-        sounds.stopAll()
         state.value = STATES.START
         // clear previous data
         clear()

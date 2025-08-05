@@ -45,19 +45,8 @@
 
     const countTarget = 10
 
-    const { smAndDown, mdAndDown, lgAndDown, xlAndDown } = useDisplay()
-    const maxWidth = computed(() => {
-        if (smAndDown.value) {
-            return "95%"
-        } else if (mdAndDown.value) {
-            return "90%"
-        } else if (lgAndDown.value) {
-            return "80%"
-        } else if (xlAndDown.value) {
-            return "1600px"
-        }
-        return "95%"
-    })
+    const { smAndDown } = useDisplay()
+    const maxWidth = computed(() => smAndDown.value ? "95%" : "90%")
 
     function chooseItem(item) {
         if (item._done) return

@@ -155,25 +155,23 @@
             .style("cursor", props.selectable ? "pointer" : "default")
             .classed("fixed", d => d.fx !== undefined)
             .on("click", function(event, d) {
+                console.log("click", event)
+                if (!props.selectable) return
+                event.preventDefault()
                 emit("click", d, event)
             })
             .on("contextmenu", function(event, d) {
                 event.preventDefault()
-                delete d.fx
-                delete d.fy
-                d3.select(this).classed("fixed", false)
-                simulation.alpha(1).restart()
-                if (!props.selectable) return
                 emit("right-click", d, event)
             })
-            .on("pointerenter", function(_event, d) {
+            .on("mouseenter pointerenter", function(_event, d) {
                 d3.select(this).raise()
                 highlight(d.id)
             })
-            .on("pointermove", function(event, d) {
+            .on("mousemove pointermove", function(event, d) {
                 emit("hover", d, event)
             })
-            .on("pointerleave", function(event, d) {
+            .on("pointerleave mouseleave", function(event, d) {
                 emit("hover", null)
                 highlight(null)
             })
@@ -227,7 +225,7 @@
         simulation = d3.forceSimulation(nodes)
             .alphaDecay(nodes.length < 100 ? 0.025 : 0.015)
             .force('link', d3.forceLink(links).id(d => d.id).distance(distanceFunction))
-            .force('charge', d3.forceManyBody())
+            .force('charge', d3.forceManyBody().strength(0.5))
             .force('collide', d3.forceCollide(props.radius / 2))
             .force('center', d3.forceCenter(props.width / 2, props.height / 2))
             .on('tick', () => updateNodesAndLinks())
@@ -242,6 +240,7 @@
             .drag()
             .on("start", onDragStart)
             .on("drag", onDragged)
+            .on("end", onDragEnd)
 
         ng.call(drag)
 
@@ -252,8 +251,15 @@
         }
     }
 
-    function onDragStart() {
+    function onDragStart(event) {
         d3.select(this).classed("fixed", true);
+    }
+
+    function onDragEnd(event, d) {
+        delete d.fx
+        delete d.fy
+        d3.select(this).classed("fixed", false)
+        simulation.alpha(1).restart()
     }
 
     function onDragged(event, d) {

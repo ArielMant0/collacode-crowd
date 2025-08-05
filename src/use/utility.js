@@ -183,6 +183,8 @@ export function constructSimilarityGraph(data) {
 
 export function getStopWords() {
     return [
+        "definitive", "edition",
+        "remake", "remaster", "remastered",
         "i", "me", "my", "myself",
         "we", "our", "ours", "ourselves",
         "you", "your", "yours", "yourself", "yourselves",

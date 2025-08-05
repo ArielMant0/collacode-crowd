@@ -662,6 +662,7 @@
 
         // move the item to another position
         if (move) {
+            sounds.play(SOUND.PLOP)
             selection.value[newIdx] = selection.value[index]
             selection.value[index] = null
             lastIndexUsed = newIdx
@@ -687,7 +688,6 @@
             lastIndexUsed = index
         }
 
-        sounds.play(SOUND.PLOP)
     }
 
     function addToHistory(id) {
@@ -700,6 +700,7 @@
     }
 
     function addSelection(index, object, source="") {
+        sounds.play(SOUND.PLOP)
         logAction({
             desc: "add item",
             source: source,
@@ -717,6 +718,7 @@
 
     function removeSelection(index, source="") {
         if (selection.value[index]) {
+            sounds.play(SOUND.PLOP)
             logAction({
                 desc: "remove item",
                 source: source,
@@ -754,6 +756,7 @@
     function replaceSelection(index, replacement, source="") {
         if (selection.value[index]) {
 
+            sounds.play(SOUND.PLOP)
             logAction({
                 desc: "replace item",
                 source: source,
@@ -821,7 +824,6 @@
         }
     })
     onBeforeUnmount(() => {
-        sounds.stopAll()
         if (tutorial.isActive()) {
             tutorial.cancel()
         }
