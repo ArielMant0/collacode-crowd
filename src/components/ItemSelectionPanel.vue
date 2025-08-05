@@ -14,8 +14,8 @@
             <div
                 class="d-flex align-center ml-4 mr-4"
                 :class="{
-                    'justify-space-between': sortable && numPages > 1,
-                    'justify-end': !sortable && numPages > 1
+                    'justify-space-between': sortable && showPagination,
+                    'justify-end': !sortable && showPagination
                 }">
                 <v-btn-toggle v-if="sortable"
                     v-model="sortBy"
@@ -28,7 +28,7 @@
                     <v-btn icon="mdi-sort-reverse-variant" :value="2"></v-btn>
                 </v-btn-toggle>
 
-                <v-pagination v-if="numPages > 1"
+                <v-pagination v-if="showPagination"
                     v-model="page"
                     :length="numPages"
                     show-first-last-page
@@ -96,6 +96,10 @@
             type: Boolean,
             default: true
         },
+        pagination: {
+            type: Boolean,
+            default: true
+        },
         countTarget: {
             type: Number,
             default: 100
@@ -105,8 +109,9 @@
     const emit = defineEmits(["click"])
 
     const items = ref([])
+    const showPagination = computed(() => props.pagination && numPages.value > 1)
     const visibleItems = computed(() => {
-        if (numPages.value === 1) {
+        if (!showPagination.value) {
             return items.value
         }
         const start = (page.value-1) * props.numPerPage
@@ -151,7 +156,7 @@
             switch(sortBy.value) {
                 // sort by id (ascending)
                 default:
-                case 0: return a.id - b.id
+                case 0: return a.index - b.index
                 // sort by count (descending)
                 case 1: return itemCounts.value[b.id] - itemCounts.value[a.id]
                 // sort by count (ascending)

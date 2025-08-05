@@ -7,6 +7,7 @@
             :title="'Available '+app.itemNameCaptial+'s'"
             :subtitle="'pick a '+app.itemName+' you know and click on it to start'"
             :count-target="countTarget"
+            :pagination="false"
             :selectable="true"/>
 
         <ItemSelectionPanel v-if="app.itemsDone.size > 0"

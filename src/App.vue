@@ -29,6 +29,7 @@
     import { toTreePath } from '@/use/utility';
     import { useRoute } from 'vue-router';
     import router from './router';
+    import { randomShuffle } from './use/random';
 
     const toast = useToast();
     const settings = useSettings();
@@ -317,8 +318,10 @@
         DM.setData("tags_user_counts", userTagCounts)
 
         if (passed !== null) {
+            const shuffled = randomShuffle(data)
+            shuffled.forEach((d,i) => d.index = i)
+            DM.setData("items", shuffled)
             DM.setData("items_name", new Map(data.map(d => ([d.id, d.name]))))
-            DM.setData("items", data)
             DM.setData("items_id", new Map(data.map(d => ([d.id, d]))))
         }
     }
