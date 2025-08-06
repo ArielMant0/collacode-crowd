@@ -14,7 +14,9 @@
             class="mb-8"
             :subset="1"
             :title="'Completed '+app.itemNameCaptial+'s'"
+            :subtitle="'these are the '+app.itemName+'s you already completed'"
             :count-target="countTarget"
+            :sortable="false"
             :selectable="false"/>
 
         <ItemSelectionPanel v-if="app.itemsGone.size > 0"
@@ -22,6 +24,7 @@
             :title="'Blocked '+app.itemNameCaptial+'s'"
             :subtitle="'these '+app.itemName+'s are blocked for you'"
             :count-target="countTarget"
+            :sortable="false"
             :selectable="false"/>
 
     </div>
