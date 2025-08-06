@@ -110,16 +110,16 @@
                 if (!props.draggable) return
                 emit("drag", d, event)
             })
-            .on("mouseenter pointerenter", function(_event, d) {
+            .on("mouseenter", function(_event, d) {
                 emit("hover", null, null)
                 d3.select(this)
                     .transition(50)
                     .attr("fill", getColor(d.id).brighter(0.5))
             })
-            .on("mousemove pointermove", function(event, d) {
+            .on("mousemove", function(event, d) {
                 emit("hover", d, event)
             })
-            .on("mouseleave pointerleave", function(_event, d) {
+            .on("mouseleave", function(_event, d) {
                 emit("hover", null, null)
                 d3.select(this)
                     .transition(50)

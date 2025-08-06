@@ -699,6 +699,7 @@
     }
 
     function close() {
+        sounds.play(SOUND.CLICK)
         emit("close")
         reset()
     }

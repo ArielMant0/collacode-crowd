@@ -21,6 +21,7 @@ This file lists sources for any sound effects or music used in this application
 - [https://pixabay.com/sound-effects/intro-sound-1-269293/](https://pixabay.com/sound-effects/intro-sound-1-269293/)
 - [https://pixabay.com/sound-effects/bubble-pop-6395/](https://pixabay.com/sound-effects/bubble-pop-6395/)
 - [https://pixabay.com/sound-effects/wrong-answer-129254/](https://pixabay.com/sound-effects/wrong-answer-129254/)
+- [https://pixabay.com/sound-effects/computer-mouse-click-02-383961/](https://pixabay.com/sound-effects/computer-mouse-click-02-383961/)
 
 Objection sound effects
 - [https://www.myinstants.com/en/instant/objection-phoenix-wright-12497/?utm_source=copy&utm_medium=share](https://www.myinstants.com/en/instant/objection-phoenix-wright-12497/?utm_source=copy&utm_medium=share)

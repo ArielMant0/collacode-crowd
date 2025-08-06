@@ -345,6 +345,7 @@
     function prevClusters() {
         if (hasPrev.value) {
 
+            sounds.play(SOUND.CLICK)
             if (tutorial.isActive()) {
                 const sid = tutorial.getCurrentStep()
                 if (sid.id === "cls-prev") {
@@ -364,6 +365,7 @@
     function nextClusters() {
         if (hasNext.value) {
 
+            sounds.play(SOUND.CLICK)
             if (tutorial.isActive()) {
                 const sid = tutorial.getCurrentStep()
                 if (sid.id === "cls-next") {

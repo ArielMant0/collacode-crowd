@@ -45,7 +45,7 @@
                     :radius="50"/>
 
                 <div class="ml-2"
-                    style="min-width: 150px; max-width: 300px; overflow-y: auto; overflow-x: hidden;"
+                    style="min-width: 250px; max-width: 300px; overflow-y: auto; overflow-x: hidden;"
                     :style="{ maxHeight: graphHeight+'px' }">
 
                     <div v-if="target && target > 0">

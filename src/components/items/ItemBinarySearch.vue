@@ -438,6 +438,11 @@
             const last = split.value.at(0)
             const splitTag = selectedTag.value
             tagsLeft.add(last.tag.id)
+            // if we already decided once, add items back in again
+            if (last.hasTag !== null) {
+                last.with.forEach(i => itemsLeft.add(i))
+                last.without.forEach(i => itemsLeft.add(i))
+            }
             // split items by with out without again
             const withTag = [], without = []
             itemsLeft.forEach(idx => {
@@ -516,8 +521,14 @@
 
             last.with = withTag
             last.without = without
+            last.hasTag = null
             last.examplesYes = examplesYes.map(idx => itemsToUse[idx].id)
             last.examplesNo = examplesNo.map(idx => itemsToUse[idx].id)
+
+            if (inLastStep.value) {
+                finalItems.value = []
+                emit("ready", false)
+            }
 
             logAction({
                 desc: desc,
@@ -536,6 +547,7 @@
             tagIndex.value--
             app.addInteraction("step1")
 
+            sounds.play(SOUND.CLICK)
             if (tutorial.isActive()) {
                 const sid = tutorial.getCurrentStep()
                 if (sid.id === "prev-tag") {
@@ -551,6 +563,7 @@
             tagIndex.value++
             app.addInteraction("step1")
 
+            sounds.play(SOUND.CLICK)
             if (tutorial.isActive()) {
                 const sid = tutorial.getCurrentStep()
                 if (sid.id === "next-tag") {

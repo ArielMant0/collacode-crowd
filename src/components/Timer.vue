@@ -3,7 +3,7 @@
         style="font-size: x-large;"
         class="pt-3 pb-3 pr-6 pl-6 d-flex align-center timer"
         rounded
-        :color="props.showCritical && secondsLeft < critical ? props.criticalColor : props.color">
+        :color="bgColor">
         <v-icon class="mr-1" :class="secondsLeft < critical ? 'wobble-fast' : ''">{{ icon }}</v-icon>
         {{ secondsLeft > 0 ? timer.toFormat("mm:ss") : "--:--" }}
     </v-sheet>
@@ -25,6 +25,10 @@
             type: String,
             default: "error"
         },
+        warningColor: {
+            type: String,
+            default: "warning"
+        },
         color: {
             type: String,
             default: "surface-light"
@@ -41,7 +45,15 @@
             type: Number,
             default: 5
         },
+        showWarning: {
+            type: Boolean,
+            default: true
+        },
         warning: {
+            type: Number,
+            default: 30
+        },
+        notice: {
             type: Number,
             default: 10
         },
@@ -52,6 +64,15 @@
     const timer = ref(DateTime.local())
 
     const secondsLeft = computed(() => timer.value.minutes*60 + timer.value.seconds)
+    const bgColor = computed(() => {
+        if (props.showCritical && secondsLeft < props.critical) {
+            return props.criticalColor
+        }
+        if (props.showWarning && secondsLeft < props.warning) {
+            return props.warningColor
+        }
+        return props.color
+    })
 
     let int = null, lastSecond = props.timeInSec
 
@@ -65,7 +86,9 @@
             sounds.stop(SOUND.TICK, false)
             stop("end")
             return
-        } else if (s === props.warning && s < lastSecond) {
+        }
+
+        if (s === props.notice && s < lastSecond) {
             // play a tick sound for critical seconds
             sounds.play(SOUND.OBACHT, false)
         } else if (secondsLeft.value <= props.critical && s < lastSecond) {

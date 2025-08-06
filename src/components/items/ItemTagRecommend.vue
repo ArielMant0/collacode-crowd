@@ -236,10 +236,7 @@
     }
 
     function resetItem(id) {
-        app.addInteraction("step2")
-        itemHigh.delete(id)
-        itemMed.delete(id)
-        update()
+        setItem(id, 0)
     }
 
     function update() {

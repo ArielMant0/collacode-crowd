@@ -309,7 +309,7 @@
             return d.allTags.length > 0 &&
                 !isFixedItem(d.id) &&
                 names.some(n => dn.some(n2 => {
-                    return sc.default.lcs.similarity(n, n2) >= 0.75 ||
+                    return sc.default.lcs.similarity(n, n2) >= 0.8 ||
                         sc.default.jaroWinkler.similarity(n, n2) >= 0.85
                 }))
         })

@@ -87,8 +87,13 @@ const SOUNDFILES = [
     },{
         name: "ATTENTION",
         file: "wrong-answer-129254.mp3",
+        volume: 0.65
+    },{
+        name: "CLICK",
+        file: "computer-mouse-click-02-383961.mp3",
         volume: 0.5
-    }
+    },
+
 ]
 
 export const SOUND = {
@@ -107,6 +112,7 @@ export const SOUND = {
     SOUND_ON: [],
     SOUND_OFF: [],
     DRAMATIC: [],
+    CLICK: [],
     CLICK_REVERB: [],
     MENU_MUSIC: [],
     OBACHT: [],
