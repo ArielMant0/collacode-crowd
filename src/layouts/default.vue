@@ -15,7 +15,7 @@
                 :prepend-icon="l.icon"
                 rounded="0"
                 :variant="route.name === l.route ? 'tonal' : 'text'"
-                :color="route.name === l.route ? 'primary' : 'default'">
+                :color="route.name === l.route ? 'primary' : (l.color ? l.color : 'default')">
                 {{ l.name }}
             </v-btn>
         </v-app-bar-title>
@@ -30,16 +30,26 @@
 
 <script setup>
     import router from '@/router';
+    import { useApp } from '@/stores/app';
     import { useWindowSize } from '@vueuse/core';
     import { useRoute } from 'vue-router';
+
+    const app = useApp()
     const route = useRoute()
 
-    const links = [
-        { name: "home", icon: "mdi-home", route: "/" },
-        { name: "about", icon: "mdi-information",  route: "/about" },
-        { name: "graph", icon: "mdi-graph-outline",  route: "/graph" },
-        { name: "feedback", icon: "mdi-comment",  route: "/feedback" },
-    ]
+    const links = computed(() => {
+        return [
+            { name: "home", icon: "mdi-home", route: "/" },
+            { name: "about", icon: "mdi-information",  route: "/about" },
+            {
+                name: "graph",
+                icon: "mdi-graph-outline",
+                route: "/graph",
+                color: app.numSubmissions < 5 ? 'error' : 'default'
+            },
+            { name: "feedback", icon: "mdi-comment",  route: "/feedback" },
+        ]
+    })
 
     const { height } = useWindowSize()
     const maxHeight = computed(() => Math.max(300, height.value-50))

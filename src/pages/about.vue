@@ -12,10 +12,9 @@
                 <v-btn href="#sec3" :variant="inSection === 3 ? 'flat' : 'outlined'" block color="#b56251">how it works</v-btn>
             </div>
         </div>
-        <section class="pa-4 mt-4" style="min-width: 300px; width: 75%; max-width: 1000px">
-
+        <section class="pa-4" style="min-width: 300px; width: 75%; max-width: 1000px">
             <div :style="{ maxWidth: maxWidth }">
-                <v-sheet id="sec1" ref="sec1" rounded="lg" elevation="4" class="pa-2 art-panel" style="border: 2px solid #428775" color="#42877522">
+                <v-sheet id="sec1" ref="sec1" rounded="lg" elevation="4" class="pa-2 mt-2 art-panel" style="border: 2px solid #428775" color="#42877522">
                     <div style="color: #428775; font-size: 40px; text-align: center;" class="bitcount-prop-double">Background</div>
                 </v-sheet>
                 <article>

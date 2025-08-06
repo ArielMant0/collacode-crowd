@@ -5,9 +5,11 @@ export const useTimes = defineStore('times', {
     state: () => ({
         n_all: 0,
         n_crowd: 0,
+        n_similarity: 0,
 
         all: 0,
         crowd: 0,
+        similarity: 0,
 
         actions: {}
     }),

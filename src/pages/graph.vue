@@ -17,12 +17,13 @@
                 density="compact"
                 class="mb-2 mt-4"
                 style="width: 100%;"
+                @keyup.prevent="onSearchKey"
                 hide-details
                 hide-spin-buttons
                 clearable>
             </v-text-field>
             <div v-if="search" class="text-caption d-flex">
-                <div style="min-width: 70px;"><b>{{ searchHits.length }} hits</b></div>
+                <div style="min-width: 70px;"><b>{{ searchHits.length }} {{ searchHits.length === 1 ? 'hit' : 'hits' }}</b></div>
                 <div style="width: 100%; max-height: 100px; overflow-y: auto;">
                     <div v-for="item in searchHits"
                         class="cursor-pointer hover-it"
@@ -39,6 +40,8 @@
                     :height="graphHeight"
                     weight-attr="value"
                     image-attr="teaser"
+                    use-data-manager
+                    use-key-navigation
                     @click="d => setTarget(d.id)"
                     @hover="onHover"
                     :target="target"
@@ -132,8 +135,12 @@
                         <img :src="imgUrl1" class="mt-1" style="max-width: 70%;"/>
                     </div>
                     <v-divider class="mt-3 mb-3"></v-divider>
+                    <div>
+                        You can use either the mouse or WASD keys to move around in the graph.
+                    </div>
+                    <v-divider class="mt-3 mb-3"></v-divider>
                     <div class="d-flex flex-column align-center">
-                        There are different ways to select an {{ app.itemName }}:
+                        There are different ways to select an {{ app.itemName }} in this view:
                         <ul class="pl-8" style="max-width: fit-content; text-align: left;">
                             <li>click on an image in the graph</li>
                             <li>click on an image in the side bar</li>
@@ -153,12 +160,6 @@
                         When you select a {{ app.itemName }}, the side bar will show all its connected similar {{ app.itemName }}s.
                         <img :src="imgUrl3" class="mt-1" style="max-width: 70%;"/>
                     </div>
-                    <v-divider class="mt-3 mb-3"></v-divider>
-                    <div>
-                        You can drag the {{ app.itemName }} images in the graph to untangle it further, if you like.
-                        This will fix the position of the {{ app.itemName }} you dragged.
-                        To unfix the position again, right-click the {{ app.itemName }} image.
-                    </div>
                 </div>
             </template>
         </MiniDialog>
@@ -168,8 +169,6 @@
 <script setup>
     import DM from '@/use/data-manager';
     import { useTimes } from '@/stores/times';
-    import { getSimilarities } from '@/use/data-api';
-    import { constructSimilarityGraph } from '@/use/utility';
     import { useWindowSize } from '@vueuse/core';
     import { computed, onMounted, reactive, watch } from 'vue';
     import NodeLink from '@/components/vis/NodeLink.vue';
@@ -182,6 +181,7 @@
     import imgUrl1 from '@/assets/graph-tutorial-links.jpg'
     import imgUrl2 from '@/assets/graph-tutorial-search.jpg'
     import imgUrl3 from '@/assets/graph-tutorial-sidebar.jpg'
+    import { loadLastUpdate } from '@/use/data-api';
 
     const app = useApp()
     const tt = useTooltip()
@@ -197,7 +197,7 @@
     const searchHits = computed(() => {
         if (search.value && search.value.length > 2) {
             const reg = new RegExp(search.value, "gi")
-            return DM.getDataBy("items", d => reg.test(d.name))
+            return graphData.nodes.filter(d => reg.test(DM.getDataItem("items_name", d.id)))
         }
         return []
     })
@@ -213,7 +213,7 @@
         links: [],
         connected: []
     })
-    const showGraph = computed(() => app.numSubmissions >= 1)
+    const showGraph = computed(() => app.numSubmissions >= 5)
 
     function setSearchTarget(item) {
         search.value = ""
@@ -244,6 +244,18 @@
         nextItemName.value = historyIndex.value < history.value.length-1 ?
             DM.getDataItem("items_name", history.value[historyIndex.value+1]) :
             ""
+    }
+
+    function onSearchKey(event) {
+        if (search.value && search.value.length > 0) {
+            if (event.code === "Escape") {
+                search.value = []
+            } else if (event.code === "Enter") {
+                if (searchHits.value.length > 0) {
+                    setSearchTarget(searchHits.value[0])
+                }
+            }
+        }
     }
 
     function onHover(item=null, event=null) {
@@ -282,14 +294,30 @@
         }
     }
 
-    async function read() {
-        const sims = await getSimilarities()
-        const graph = constructSimilarityGraph(sims)
-        graphData.nodes = graph.nodes
-        graphData.links = graph.links
+    async function checkUpdate() {
+        try {
+            const updates = await loadLastUpdate()
+            const cut = updates.find(d => d.name === "similarity")
+            if (cut && cut.timestamp > times.similarity) {
+                times.needsReload("similarity")
+            }
+        } catch(e) {
+            console.error(e)
+        }
     }
 
-    onMounted(read)
+    function read() {
+        if (DM.hasGraph()) {
+            const graph = DM.getGraph()
+            graphData.nodes = graph.nodes
+            graphData.links = graph.links
+        }
+    }
 
-    watch(() => Math.max(times.all, times.crowd), read)
+    onMounted(async function() {
+        await checkUpdate()
+        read()
+    })
+
+    watch(() => Math.max(times.all, times.similarity), read)
 </script>

@@ -1,7 +1,5 @@
 import * as d3 from 'd3'
 
-
-
 onmessage = function(event) {
     const weightAttr = event.data.weightAttr,
         maxWeight = event.data.maxWeight,
@@ -21,9 +19,9 @@ onmessage = function(event) {
     const simulation = d3.forceSimulation(nodes)
             .alphaDecay(nodes.length < 100 ? 0.025 : 0.001)
             .force('link', d3.forceLink(links).id(d => d.id).distance(distanceFunction))
-            .force('charge', d3.forceManyBody().strength(0.5))
+            .force('charge', d3.forceManyBody().strength(-10))
             .force('collide', d3.forceCollide(radius / 2))
-            .force('center', d3.forceCenter(width / 2, height / 2))
+            .force('center', d3.forceCenter(width / 2, height / 2).strength(0.5))
             .stop()
 
     for (let i = 0, n = Math.ceil(Math.log(simulation.alphaMin()) / Math.log(1 - simulation.alphaDecay())); i < n; ++i) {

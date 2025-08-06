@@ -4,19 +4,33 @@ class DataManager {
         this.data = new Map();
         this.times = {}
         this.ids = new Map()
+        this.graph = null
         this.update();
     }
 
     get empty() {
-        return this.data.size === 0;
+        return this.data.size === 0
     }
 
     update() {
-        this.time = Date.now();
+        this.time = Date.now()
     }
 
     clear() {
-        this.data.clear();
+        this.graph = null
+        this.data.clear()
+    }
+
+    hasGraph() {
+        return this.graph !== null
+    }
+
+    getGraph(graph) {
+        return this.graph
+    }
+
+    setGraph(graph) {
+        this.graph = graph
     }
 
     hasData(key) {

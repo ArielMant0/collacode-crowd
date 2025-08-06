@@ -1,6 +1,17 @@
 <template>
     <div>
-        <v-progress-linear v-if="workerActive" :model-value="workerProgress"></v-progress-linear>
+        <div v-if="workerActive" class="text-caption" style="text-align: center;">
+            <div>
+                <i v-if="workerProgress < 75">calculating a nice layout..</i>
+                <i v-else>almost there..</i>
+            </div>
+            <v-progress-linear
+                max="100"
+                height="6"
+                color="primary"
+                :model-value="workerProgress">
+            </v-progress-linear>
+        </div>
         <svg ref="el" :width="width" :height="height"></svg>
     </div>
 </template>
@@ -10,6 +21,7 @@
     import { watch, onMounted, onBeforeUnmount, useTemplateRef } from 'vue'
     import MyWorker from '@/worker/force-worker?worker'
     import DM from '@/use/data-manager'
+    import { useElementVisibility } from '@vueuse/core'
 
     const props = defineProps({
         nodes: { type: Array, required: true },
@@ -25,18 +37,30 @@
         height: { type: Number, default: 400 },
         radius: { type: Number, default: 10 },
         selectable: { type: Boolean, default: true },
+        useDataManager: { type: Boolean, default: false },
+        useKeyNavigation: { type: Boolean, default: false },
         transitionDuration: { type: Number, default: 1000 },
     })
 
     const emit = defineEmits(["click", "hover", "right-click"])
 
-    let simulation, dragStarted = false, once = false
+    let simulation, once = false
     let ng, lg
     let nodes, links
+
+    const nav = {
+        left: false,
+        right: false,
+        up: false,
+        down: false
+    }
 
     let x, y, zoom, zoomTransform = d3.zoomIdentity
     const el = useTemplateRef("el")
 
+    const elVisible = useElementVisibility(el)
+
+    let worker
     const workerProgress = ref(0)
     const workerActive = ref(false)
 
@@ -247,18 +271,20 @@
         }
 
         simulation = d3.forceSimulation(nodes)
-            .alphaDecay(nodes.length < 100 ? 0.025 : 0.015)
+            .alphaDecay(nodes.length < 100 ? 0.025 : 0.001)
             .force('link', d3.forceLink(links).id(d => d.id).distance(distanceFunction))
-            .force('charge', d3.forceManyBody().strength(0.5))
+            .force('charge', d3.forceManyBody().strength(-10))
             .force('collide', d3.forceCollide(props.radius / 2))
-            .force('center', d3.forceCenter(props.width / 2, props.height / 2))
+            .force('center', d3.forceCenter(props.width / 2, props.height / 2).strength(0.5))
             .on('tick', () => updateNodesAndLinks())
             .on('end', () => {
-                DM.setData("graph_layout", nodes.map(d => ({
-                    id: d.id,
-                    x: d.x / props.width,
-                    y: d.y / props.height
-                })))
+                if (props.useDataManager) {
+                    DM.setData("graph_layout", nodes.map(d => ({
+                        id: d.id,
+                        x: d.x / props.width,
+                        y: d.y / props.height
+                    })))
+                }
                 if (!once) {
                     focus(props.target)
                     once = true
@@ -269,6 +295,7 @@
         const graph = DM.getData("graph_layout", false)
         if (graph && graph.length > 0) {
             workerActive.value = false
+            worker = null
             graph.forEach(d => {
                 const n = nodes.find(dd => dd.id === d.id)
                 if (n) {
@@ -281,9 +308,10 @@
             focus(props.target)
         } else {
             if (window.Worker) {
-                const worker = new MyWorker()
+                worker = new MyWorker()
                 workerProgress.value = 0
                 workerActive.value = true
+                console.log("started layout worker")
                 worker.postMessage({
                     nodes: nodes,
                     links: links,
@@ -295,6 +323,7 @@
                 })
                 worker.onmessage = function(event) {
                     if (event.data.type === "tick") {
+                        workerActive.value = true
                         workerProgress.value = event.data.progress
                     } else {
                         workerActive.value = false
@@ -302,69 +331,113 @@
                             nodes[i].x = d.x
                             nodes[i].y = d.y
                         })
-                        DM.setData("graph_layout", nodes.map(d => ({
-                            id: d.id,
-                            x: d.x / props.width,
-                            y: d.y / props.height
-                        })))
+                        if (props.useDataManager) {
+                            DM.setData("graph_layout", nodes.map(d => ({
+                                id: d.id,
+                                x: d.x / props.width,
+                                y: d.y / props.height
+                            })))
+                        }
                         updateNodesAndLinks()
                         once = true
                         focus(props.target)
                     }
                 }
             } else {
+                worker = null
                 workerActive.value = false
                 simulation.restart()
             }
         }
-
-        // buggy and does not work on firefox
-        // const drag = d3
-        //     .drag()
-        //     .on("start", onDragStart)
-        //     .on("drag", onDragged)
-        //     .on("end", onDragEnd)
-
-        // ng.call(drag)
 
         svg.call(zoom)
 
         if (props.target) {
             setTimeout(() => focus(props.target), 2000)
         }
+
     }
 
-    function onDragStart(event) {
-        d3.select(this).classed("fixed", true);
-        dragStarted = true
+    function onKeyDown(event) {
+        if (!props.useKeyNavigation) return
+        const tn = document.activeElement.tagName.toLowerCase()
+        if (elVisible.value && tn !== "input" && tn !== "button") {
+
+            switch(event.code) {
+                case "KeyW":
+                    nav.up = true
+                    break
+                case "KeyA":
+                    nav.left = true
+                    break
+                case "KeyD":
+                    nav.right = true
+                    break
+                case "KeyS":
+                    nav.down = true
+                    break
+            }
+            updateTransform()
+        }
+    }
+    function onKeyUp(event) {
+        if (!props.useKeyNavigation) return
+        const tn = document.activeElement.tagName.toLowerCase()
+        if (elVisible.value && tn !== "input" && tn !== "button") {
+            switch(event.code) {
+                case "KeyW":
+                    nav.up = false
+                    break
+                case "KeyA":
+                    nav.left = false
+                    break
+                case "KeyD":
+                    nav.right = false
+                    break
+                case "KeyS":
+                    nav.down = false
+                    break
+            }
+            updateTransform()
+        }
     }
 
-    function onDragEnd(event, d) {
-        if (!dragStarted) return
-        dragStarted = false
-        delete d.fx
-        delete d.fy
-        d3.select(this).classed("fixed", false)
-        simulation.alpha(1).restart()
-    }
+    function updateTransform() {
+        const transform = new d3.ZoomTransform(
+            zoomTransform.k,
+            zoomTransform.x,
+            zoomTransform.y
+        )
 
-    function onDragged(event, d) {
-        if (!dragStarted) return
-        const [mx, my] = d3.pointer(event, el.value)
-        const zx = zoomTransform.rescaleX(x).interpolate(d3.interpolateRound)
-        const zy = zoomTransform.rescaleY(y).interpolate(d3.interpolateRound)
-        d.fx = zx.invert(mx)
-        d.fy = zy.invert(my)
-        simulation.alpha(1).restart()
+        if (nav.left && !nav.right) {
+            transform.x += 15
+        } else if (nav.right && !nav.left) {
+            transform.x -= 15
+        }
+
+        if (nav.up && !nav.down) {
+            transform.y += 15
+        } else if (nav.down && !nav.up) {
+            transform.y -= 15
+        }
+
+        d3.select(el.value).call(zoom.transform, transform)
     }
 
     defineExpose({ resetZoom, focus })
 
-    onMounted(draw)
+    onMounted(function() {
+        window.addEventListener("keydown", onKeyDown)
+        window.addEventListener("keyup", onKeyUp)
+        draw()
+    })
     onBeforeUnmount(() => {
         if (simulation) {
             simulation.stop()
             simulation = null
+        }
+        if (workerActive.value && worker) {
+            worker.terminate()
         }
     })
 

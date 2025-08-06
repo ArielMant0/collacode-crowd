@@ -26,7 +26,7 @@
     import { sortObjByString } from '@/use/sorting';
     import GlobalTooltip from '@/components/GlobalTooltip.vue';
     import { useSounds } from '@/stores/sounds';
-    import { toTreePath } from '@/use/utility';
+    import { constructSimilarityGraph, toTreePath } from '@/use/utility';
     import { useRoute } from 'vue-router';
     import router from './router';
     import { randomShuffle } from './use/random';
@@ -225,23 +225,12 @@
         times.reloaded("datatags")
     }
 
-    async function loadSimilarities(update=true) {
+    async function loadSimilarities() {
         try {
             const result = await api.getSimilarities()
-            const byItem = group(result, d => d.target_id)
-            if (update && DM.hasData("items")) {
-                const data = DM.getData("items", false)
-                data.forEach(d => {
-                    if (byItem.has(d.id)) {
-                        const warnings = getTagWarnings(d, byItem.get(d.id))
-                        d.warnings = warnings
-                    } else {
-                        d.warnings = []
-                    }
-                })
-            }
+            const graph = constructSimilarityGraph(result)
             DM.setData("similarity", result)
-            DM.setData("similarity_item", new Map(byItem.entries()))
+            DM.setGraph(graph)
         } catch {
             toast.error("error loading similarities")
         }
@@ -378,6 +367,7 @@
         // load actual game data
         if (app.ds) {
             await loadData()
+            await loadSimilarities()
         }
 
         initialized.value = true
@@ -388,20 +378,13 @@
         if (showToast) toast.info("reloading all data..")
         allowOverlay.value = true
         await Promise.all([loadData(), loadCrowdItems()])
+        await loadSimilarities()
         allowOverlay.value = false
         if (showToast) toast.success("reloaded data")
         times.reloaded("all")
     });
 
-    watch(() => times.n_transitioning, async function() {
-        await Promise.all([loadCodes(), loadCodeTransitions()])
-        times.reloaded("transitioning")
-    });
-
     watch(() => times.n_crowd, loadCrowdItems);
-    watch(() => times.n_items, loadItems);
-    watch(() => times.n_tags, loadTags);
-    watch(() => times.n_datatags, loadDataTags);
     watch(() => times.n_similarity, loadSimilarities);
 
     watch(updateItemsTime, () => updateAllItems())
