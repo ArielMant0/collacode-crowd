@@ -663,6 +663,10 @@
                 duration: Math.floor((timeEnd-timeStart) / 1000),
                 language: window.navigator.language,
                 userAgent: window.navigator.userAgent,
+                window: {
+                    width: window.innerWidth,
+                    height: window.innerHeight
+                },
                 location: userGeoLoc,
                 ip: app.ipAddress,
                 comprehension: compdata,

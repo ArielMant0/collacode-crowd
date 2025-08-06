@@ -99,7 +99,7 @@ export async function addAttentionFail(itemId, game) {
 export async function addFeedback(text) {
     const app = useApp()
     const loader = useLoader();
-    return loader.post("feedback", {
+    return loader.post("crowd/feedback/add", {
         client: app.activeUserId,
         guid: app.guid,
         ip: app.ipAddress,
@@ -107,6 +107,36 @@ export async function addFeedback(text) {
         text: text,
     })
 }
+
+export async function getClientRatings() {
+    const app = useApp()
+    if (!app.activeUserId) return []
+    const loader = useLoader();
+    return loader.get("crowd/ratings", {
+        client: app.activeUserId,
+        guid: app.guid,
+        ip: app.ipAddress,
+        cwId: app.cwId,
+    })
+}
+
+export async function getRatingStats() {
+    const loader = useLoader();
+    return loader.get("crowd/ratings/stats")
+}
+
+export async function addRatings(ratings) {
+    const app = useApp()
+    const loader = useLoader();
+    return loader.post("crowd/ratings/add", {
+        client: app.activeUserId,
+        guid: app.guid,
+        ip: app.ipAddress,
+        cwId: app.cwId,
+        ratings: ratings,
+    })
+}
+
 
 ////////////////////////////////////////////////////////////
 // Crowd Similarity Data
