@@ -63,6 +63,18 @@ export async function getClientStatus() {
     })
 }
 
+export async function setCrowdWorkerSubmitted() {
+    const app = useApp()
+    const loader = useLoader()
+    return loader.post("crowd/prolific/submitted", {
+        client: app.activeUserId,
+        guid: app.guid,
+        ip: app.ipAddress,
+        cwId: app.cwId,
+    })
+}
+
+
 // Comprehension Checks
 export async function loadComprehensionData(itemId) {
     const loader = useLoader();

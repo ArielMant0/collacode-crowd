@@ -377,7 +377,7 @@
         const showToast = initialized.value
         if (showToast) toast.info("reloading all data..")
         allowOverlay.value = true
-        await Promise.all([loadData(), loadCrowdItems()])
+        await Promise.all([loadCrowd(), loadData(), loadCrowdItems()])
         await loadSimilarities()
         allowOverlay.value = false
         if (showToast) toast.success("reloaded data")
@@ -385,6 +385,7 @@
     });
 
     watch(() => times.n_crowd, loadCrowdItems);
+    watch(() => times.n_crowd_meta, loadCrowdMeta);
     watch(() => times.n_similarity, loadSimilarities);
 
     watch(updateItemsTime, () => updateAllItems())

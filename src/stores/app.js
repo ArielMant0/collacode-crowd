@@ -39,6 +39,9 @@ export const useApp = defineStore('app', {
         ipAddress: null,
         cwSource: null,
         cwId: null,
+        cwSubmitted: false,
+
+        cwLink: "/",
 
         numSubmissions: 0,
 
@@ -70,9 +73,8 @@ export const useApp = defineStore('app', {
         itemName: state => state.dataset ? state.dataset.item_name : "Item",
         itemNameCaptial: state => capitalize(state.itemName),
         hasNextItem: state => state.itemsLeft.size > 0,
-        isCrowdWorker: state => state.cwId !== null,
-        isCrowdWorkerDone: state => state.cwId !== null && state.numSubmissions >= CW_MAX_SUB,
-        cwLink: state => state.isCrowdWorker ? PROLIFIC_LINK : "/"
+        isCrowdWorker: state => state.cwId !== null && state.cwSubmitted === false,
+        isCrowdWorkerDone: state => state.isCrowdWorker && state.numSubmissions >= CW_MAX_SUB,
     },
 
     actions: {
@@ -114,11 +116,13 @@ export const useApp = defineStore('app', {
             this.dataset = meta.dataset
             this.ds = meta.dataset.id
             this.excludedTags = new Set(meta.excludedTags)
+            this.cwLink = meta.cwLink
             this.setActiveUser(
                 meta.client,
                 meta.guid,
                 meta.cwId,
-                meta.cwSource
+                meta.cwSource,
+                meta.cwSubmitted
             )
             this.numSubmissions = meta.submissions
         },
@@ -160,12 +164,13 @@ export const useApp = defineStore('app', {
             }
         },
 
-        setActiveUser(id, guid, cwId=null, cwSource="prolific") {
+        setActiveUser(id, guid, cwId=null, cwSource="prolific", cwSubmitted=false) {
             this.methodCounts.clear()
             this.activeUserId = id
             this.guid = guid
             this.cwId = cwId ? cwId : null
             this.cwSource = cwId ? cwSource : null
+            this.cwSubmitted = cwId ? cwSubmitted : false
             this.numSubmissions = 0
         },
 
