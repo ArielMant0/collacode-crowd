@@ -16,9 +16,10 @@
 
                     <h3 class="sectitle">{{ app.itemNameCaptial }}s with similar names</h3>
                     <div class="d-flex flex-wrap justify-center align-start"
+                        style="width: 100%; max-width: 100%;"
                         @drop.prevent="dropItem(0)"
                         @dragover.prevent
-                        :style="{ width: minW+'px', maxWidth: '100%', minHeight: ((imageHeight+10)*2)+'px' }">
+                        :style="{ minHeight: ((imageHeight+10)*2)+'px' }">
                         <ItemTeaser v-for="(item, idx) in suggs.byName"
                             :id="item.id"
                             :width="imageWidth"
@@ -36,9 +37,10 @@
                 <div class="rounded-lg pa-2 mt-2" style="width: 100%; border: 2px dashed black;">
                     <h3 class="sectitle">{{ app.itemNameCaptial }}s picked by others</h3>
                     <div class="d-flex flex-wrap justify-center align-start"
+                        style="width: 100%; max-width: 100%;"
                         @drop.prevent="dropItem(0)"
                         @dragover.prevent
-                        :style="{ width: minW+'px', maxWidth: '100%', minHeight: ((imageHeight+10)*2)+'px' }">
+                        :style="{ minHeight: ((imageHeight+10)*2)+'px' }">
                         <ItemTeaser v-for="(item, idx) in suggs.byCrowd"
                             :id="item.id"
                             :width="imageWidth"
@@ -71,7 +73,8 @@
                         @dragover.prevent
                         @dragenter="onDragEnter"
                         @dragleave="onDragLeave"
-                        :style="{ width: minW+'px', maxWidth: '100%', minHeight: ((imageHeight+10)*1)+'px' }">
+                        style="width: 100%; max-width: 100%;"
+                        :style="{ minHeight: ((imageHeight+10)*1)+'px' }">
                         <ItemTeaser v-for="(item, idx) in bySearch"
                             :id="item.id"
                             :width="imageWidth"
@@ -95,7 +98,7 @@
                     @dragenter="e => onDragEnter(e, 'bg-primary-light')"
                     @dragleave="e => onDragLeave(e, 'bg-primary-light')"
                     :style="{ border: '2px dashed '+theme.current.value.colors.primary }"
-                    style="min-width: 100%">
+                    style="width: 100%; max-width: 100%;">
                     <h3 class="d-flex align-center">
                         <v-tooltip location="top center">
                             <template v-slot:activator="{ props }">
@@ -115,8 +118,8 @@
                         <span v-if="itemLimit > 0" class="ml-1 text-caption">(max. {{ itemLimit }})</span>
                     </h3>
                     <div class="d-flex flex-wrap justify-center align-start pa-2"
-                        style="pointer-events: none; max-width: 100%;"
-                        :style="{ width: minW+'px', minHeight: ((imageHeight+10)*3)+'px' }">
+                        style="pointer-events: none; width: 100%; max-width: 100%;"
+                        :style="{ minHeight: ((imageHeight+10)*3)+'px' }">
                         <ItemTeaser v-for="item in highFixed"
                             :id="item.id"
                             :width="imageWidth"
@@ -149,7 +152,7 @@
                     @dragleave="e => onDragLeave(e, 'bg-tertiary-light')"
                     class="d-flex flex-column align-center rounded-lg pa-2 mt-4 drop-area"
                     :style="{ border: '2px dashed '+theme.current.value.colors.tertiary }"
-                    style="width: 100%;">
+                    style="width: 100%; max-width: 100%;">
                     <h3 class="d-flex align-center">
                         <v-tooltip location="top center">
                             <template v-slot:activator="{ props }">
@@ -169,8 +172,8 @@
                         <span v-if="itemLimit > 0" class="ml-1 text-caption">(max. {{ itemLimit }})</span>
                     </h3>
                     <div class="d-flex flex-wrap justify-center align-start pa-2"
-                        style="pointer-events: none; max-width: 100%;"
-                        :style="{ width: minW+'px', minHeight: ((imageHeight+10)*3)+'px' }">
+                        style="pointer-events: none; width: 100%; max-width: 100%;"
+                        :style="{ minHeight: ((imageHeight+10)*3)+'px' }">
                         <ItemTeaser v-for="item in medFixed"
                             :id="item.id"
                             :width="imageWidth"
@@ -208,7 +211,7 @@
     import DM from '@/use/data-manager'
     import { getSimilarByTarget } from '@/use/data-api'
     import { useToast } from 'vue-toastification'
-    import { getStopWords } from '@/use/utility'
+    import { getGameWords, getStopWords } from '@/use/utility'
     import { SOUND, useSounds } from '@/stores/sounds'
 
     const app = useApp()
@@ -259,22 +262,6 @@
     const medItems = computed(() => chosen.value.filter(d => itemMed.has(d.id)))
     const highFixed = computed(() => props.items.filter(d => d.value === 2))
     const highItems = computed(() => chosen.value.filter(d => itemHigh.has(d.id)))
-
-    const minW = computed(() => {
-        let mul = 1
-        if (xxl.value) {
-            mul = 6
-        } else if (xl.value) {
-            mul = 5
-        } else if (lg.value) {
-            mul = 4
-        } else if (md.value) {
-            mul = 3
-        } else {
-            mul = 1
-        }
-        return mul * (props.imageWidth+10)
-    })
 
     let dragId = null, dragOrigin, dragIndex
     let dragElem = null, dragClassName = ""

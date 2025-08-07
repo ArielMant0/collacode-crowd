@@ -42,7 +42,7 @@
     }
     function onClose() {
         onEnd()
-        onCancel()
+        onCancel(250)
     }
     function read() {
         if (app.isCrowdWorker) {

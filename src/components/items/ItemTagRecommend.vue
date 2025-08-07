@@ -17,7 +17,8 @@
                 <div class="d-flex flex-wrap justify-center align-start"
                     @drop.prevent="dropItem(0)"
                     @dragover.prevent
-                    :style="{ Width: '100%', maxWidth: '100%', minHeight: ((imageHeight+10)*4)+'px' }">
+                    style="width: 100%; max-width: 100%;"
+                    :style="{ minHeight: ((imageHeight+10)*4)+'px' }">
                     <ItemTeaser v-for="item in restItems"
                         :item="item"
                         :width="imageWidth"
@@ -39,8 +40,8 @@
                     @dragover.prevent
                     @dragenter="e => onDragEnter(e, 'bg-primary-light')"
                     @dragleave="e => onDragLeave(e, 'bg-primary-light')"
-                    :style="{ border: '2px dashed '+theme.current.value.colors.primary }"
-                    style="width: 100%;">
+                    style="width: 100%; max-width: 100%;"
+                    :style="{ border: '2px dashed '+theme.current.value.colors.primary }">
                     <h3 class="d-flex align-center">
                         <v-tooltip location="top center">
                             <template v-slot:activator="{ props }">
@@ -60,8 +61,8 @@
                         <span v-if="itemLimit > 0" class="ml-1 text-caption">(max. {{ itemLimit }})</span>
                     </h3>
                     <div class="d-flex flex-wrap justify-center align-start pa-2"
-                        style="pointer-events: none;"
-                        :style="{ minWidth: '100%', maxWidth: '100%', minHeight: ((imageHeight+10)*3)+'px' }">
+                        style="pointer-events: none; width: 100%; max-width: 100%;"
+                        :style="{ minHeight: ((imageHeight+10)*3)+'px' }">
                         <ItemTeaser v-for="item in highItems"
                             :item="item"
                             :width="imageWidth"
@@ -82,7 +83,7 @@
                     @dragover.prevent
                     @dragenter="e => onDragEnter(e, 'bg-tertiary-light')"
                     @dragleave="e => onDragLeave(e, 'bg-tertiary-light')"
-                    style="width: 100%">
+                    style="width: 100%; max-width: 100%;">
                     <h3 class="d-flex align-center">
                         <v-tooltip location="top center">
                             <template v-slot:activator="{ props }">
@@ -102,8 +103,8 @@
                         <span v-if="itemLimit > 0" class="ml-1 text-caption">(max. {{ itemLimit }})</span>
                     </h3>
                     <div class="d-flex flex-wrap justify-center align-start pa-2"
-                        style="pointer-events: none;"
-                        :style="{ width: minW+'px', maxWidth: '100%', minHeight: ((imageHeight+10)*3)+'px' }">
+                        style="pointer-events: none; width: 100%; max-width: 100%;"
+                        :style="{ minHeight: ((imageHeight+10)*3)+'px' }">
                         <ItemTeaser v-for="item in medItems"
                             :item="item"
                             :width="imageWidth"
@@ -164,22 +165,6 @@
     const restItems = computed(() => props.items.filter(d => !itemHigh.has(d.id) && !itemMed.has(d.id)))
     const highItems = computed(() => props.items.filter(d => itemHigh.has(d.id)))
     const medItems = computed(() => props.items.filter(d => itemMed.has(d.id)))
-
-    const minW = computed(() => {
-        let mul = 1
-        if (xxl.value) {
-            mul = 5
-        } else if (xl.value) {
-            mul = 4
-        } else if (lg.value) {
-            mul = 3
-        } else if (md.value) {
-            mul = 2
-        } else {
-            mul = 1
-        }
-        return Math.min(mul, Math.floor(props.items.length / 4)) * (props.imageWidth+10)
-    })
 
     let dragId = null, dragClassName = "", dragElem = null
 

@@ -113,7 +113,7 @@
 
                 <div class="d-flex align-center justify-center mb-4">
                     <v-btn v-if="app.isCrowdWorkerReady" color="primary" @click="goToFeedback">go to feedback page</v-btn>
-                    <v-btn v-else color="error" @click="close">back to {{ app.itemName }}s</v-btn>
+                    <v-btn v-else color="error" @click="close">back to home</v-btn>
                 </div>
 
                 <div style="max-width: 100%; text-align: center;">

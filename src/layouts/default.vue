@@ -41,13 +41,13 @@
         return [
             { name: "home", icon: "mdi-home", route: "/" },
             { name: "about", icon: "mdi-information",  route: "/about" },
+            { name: "feedback", icon: "mdi-comment",  route: "/feedback" },
             {
                 name: "graph",
                 icon: "mdi-graph-outline",
                 route: "/graph",
                 color: app.numSubmissions < 5 ? 'error' : 'default'
             },
-            { name: "feedback", icon: "mdi-comment",  route: "/feedback" },
         ]
     })
 

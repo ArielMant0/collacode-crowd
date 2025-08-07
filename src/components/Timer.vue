@@ -43,7 +43,7 @@
         },
         critical: {
             type: Number,
-            default: 5
+            default: 10
         },
         showWarning: {
             type: Boolean,
@@ -65,10 +65,10 @@
 
     const secondsLeft = computed(() => timer.value.minutes*60 + timer.value.seconds)
     const bgColor = computed(() => {
-        if (props.showCritical && secondsLeft < props.critical) {
+        if (props.showCritical && secondsLeft.value < props.critical) {
             return props.criticalColor
         }
-        if (props.showWarning && secondsLeft < props.warning) {
+        if (props.showWarning && secondsLeft.value < props.warning) {
             return props.warningColor
         }
         return props.color

@@ -4,14 +4,21 @@
     <div class="d-flex justify-center">
 
         <div v-if="app.numSubmissions >= CW_MAX_SUB" style="min-width: 300px; width: 75%; max-width: 900px">
-            <div>
+            <div style="margin-top: 2em;">
                 <div v-for="(q, idx) in questions" class="mb-8">
                     <div class="mb-1"><b>{{ idx+1 }}.</b><span class="text-red">*</span> {{ q.text }}</div>
 
                     <div class="d-flex align-center flex-column">
 
                         <div class="d-flex align-start justify-space-between" style="width: 100%;">
-                            <div v-for="o in answerOptions" class="d-flex flex-column align-center" :style="{ width: optWidth+'px', maxWidth: optWidth+'px' }">
+
+                            <div v-for="o in answerOptions"
+                                class="d-flex flex-column align-center pa-2"
+                                :style="{
+                                    width: optWidth+'px',
+                                    maxWidth: optWidth+'px',
+                                    border: '1px solid ' + (done && data.ratings[q.id] === o.value ? theme.current.value.colors.primary : 'white')
+                                }">
                                 <svg v-if="data.stats[q.id] && done && data.sumCount >=3" :width="optWidth" height="30">
                                     <rect
                                         :x="10"
@@ -50,7 +57,8 @@
                 </div>
             </div>
 
-            <v-textarea v-model="text"
+            <v-textarea v-if="!done"
+                v-model="text"
                 density="compact"
                 variant="outlined"
                 style="margin-top: 2em;"
@@ -60,7 +68,7 @@
                 :rules="[v => v.length <= 1000 || 'feedback can only be up to 1000 characters']"
                 placeholder="Write down your feedback here.."/>
 
-            <div style="text-align: center;">
+            <div v-if="!done" style="text-align: center;">
                 <v-btn
                     size="large"
                     density="comfortable"
@@ -73,7 +81,7 @@
             </div>
         </div>
         <div v-else style="margin-top: 2em; font-size: 30px; text-align: center;">
-            You must complete at least 3 {{ app.itemName }}s before you can give feedback.
+            You must complete at least {{ CW_MAX_SUB }} {{ app.itemName }}s before you can give feedback.
         </div>
     </div>
 
@@ -234,7 +242,7 @@
     }
 
     function onDialogClose() {
-        window.scroll(0, 0)
+        setTimeout(() => window.scroll(0, 0), 350)
     }
 
 
