@@ -111,7 +111,7 @@
 
             <div class="mt-4 d-flex flex-column align-center">
 
-                <CrowdWorkerNotice v-if="showRedirect" max-width="1000"/>
+                <CrowdWorkerNotice max-width="1000"/>
                 <div v-else class="d-flex align-center justify-center mb-4">
                     <v-btn color="error" @click="close">back to home</v-btn>
                 </div>
@@ -226,7 +226,6 @@
     })
 
     const state = ref(STATES.START)
-    const showRedirect = ref(false)
 
     const notInCheck = computed(() => step.value !== PR_STEPS.ATTENTION && step.value !== PR_STEPS.COMPREHENSION)
     const showTimer = computed(() => props.useTimer && state.value === STATES.INGAME)
@@ -686,9 +685,7 @@
             emit("end")
 
             // redirect crowd workers
-            showRedirect.value = app.isCrowdWorker && app.isCrowdWorkerDone
-
-            if (showRedirect.value) {
+            if (app.isCrowdWorker && app.isCrowdWorkerDone) {
                 setTimeout(function() { window.location.replace(app.cwLink) }, 3000)
             }
 

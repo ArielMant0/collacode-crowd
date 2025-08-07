@@ -14,7 +14,8 @@
             <div v-if="app.isCrowdWorkerDone">
                 Maximum number of {{ app.itemName }}s reached. Use this link to complete the study and go back to Prolific:
                 <a :href="app.cwLink">{{ app.cwLink }}</a>
-                <div class="mt-2">
+                You can also use this completion code to submit your participation: <b>{{ app.cwCode }}</b>
+                <div class="mt-4">
                     If you want to continue with other {{ app.itemName }}s and have turned in the study on Prolific,
                     you can click this button to confirm that. This will hide the return link to Prolific.
                     <b>This action cannot be reversed.</b>

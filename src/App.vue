@@ -317,9 +317,9 @@
 
     function readQuery() {
         // check if we were passed a crowd worker id
-        if (route.query.prolific_id) {
+        if (route.query.prolific_pid) {
             const before = app.cwId
-            app.cwId = ""+route.query.prolific_id
+            app.cwId = ""+route.query.prolific_pid
             app.cwSource = "prolific"
             return before !== app.cwId
         }

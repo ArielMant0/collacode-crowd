@@ -42,6 +42,7 @@ export const useApp = defineStore('app', {
         cwSubmitted: false,
 
         cwLink: "/",
+        cwCode: "",
 
         numSubmissions: 0,
 
@@ -117,6 +118,7 @@ export const useApp = defineStore('app', {
             this.ds = meta.dataset.id
             this.excludedTags = new Set(meta.excludedTags)
             this.cwLink = meta.cwLink
+            this.cwCode = meta.cwCode
             this.setActiveUser(
                 meta.client,
                 meta.guid,
