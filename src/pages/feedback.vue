@@ -8,30 +8,46 @@
 
             <div>
                 <div v-for="(q, idx) in questions" class="mb-8">
-                    <div><b>{{ idx+1 }}.</b> {{ q.text }}</div>
-                    <v-radio-group v-model="data.ratings[q.id]"
-                        style="width: 100%;"
-                        class="ml-4"
-                        inline
-                        @update:model-value="submitRatings"
-                        hide-details
-                        hide-spin-buttons>
+                    <div class="mb-1"><b>{{ idx+1 }}.</b> {{ q.text }}</div>
 
-                        <v-radio v-for="o in answerOptions"
-                            :label="o.name"
-                            :value="o.value"
-                            color="primary">
+                    <div class="d-flex align-center flex-column">
 
-                            <template #label>
-                                <div class="mr-6">
-                                    <div>
-                                        {{ o.name }}
-                                        <v-icon v-if="o.icon">{{ o.icon }}</v-icon>
-                                    </div>
+                        <div class="d-flex align-start justify-space-between" style="width: 100%;">
+                            <div v-for="(o, j) in answerOptions" class="d-flex flex-column align-center" :style="{ width: optWidth+'px', maxWidth: optWidth+'px' }">
+                                <svg v-if="data.stats[q.id] && data.ratings[q.id] !== null" :width="optWidth" height="30">
+                                    <rect
+                                        :x="10"
+                                        :y="30 - (data.stats[q.id][o.value]/data.maxCount)*30"
+                                        :width="optWidth-20"
+                                        :height="(data.stats[q.id][o.value]/data.maxCount)*30"
+                                        :fill="theme.current.value.colors.primary">
+                                    </rect>
+                                    <text v-if="data.stats[q.id][o.value]"
+                                        :x="0.5*optWidth"
+                                        :y="25"
+                                        font-size="10"
+                                        font-weight="bold"
+                                        text-anchor="middle"
+                                        stroke="white"
+                                        stroke-width="2"
+                                        paint-order="stroke"
+                                        fill="black">
+                                        {{ data.stats[q.id][o.value] }}
+                                    </text>
+                                </svg>
+                                <v-btn
+                                    :icon="data.ratings[q.id] === o.value ? 'mdi-radiobox-marked' : 'mdi-radiobox-blank'"
+                                    :color="data.ratings[q.id] === o.value ? 'primary' : 'default'"
+                                    density="compact"
+                                    variant="text"
+                                    @click="setRating(q.id, o.value)"/>
+                                <div style="text-align: center">
+                                    <div class="text-dots">{{ o.name }}</div>
+                                    <v-icon v-if="o.icon">{{ o.icon }}</v-icon>
                                 </div>
-                            </template>
-                        </v-radio>
-                    </v-radio-group>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -73,15 +89,18 @@
     import { storeToRefs } from 'pinia';
     import { onMounted, reactive, watch } from 'vue';
     import { POSITION, useToast } from 'vue-toastification';
+    import { useTheme } from 'vuetify';
 
     const app = useApp()
     const toast = useToast()
     const sounds = useSounds()
+    const theme = useTheme()
 
     const { activeUserId } = storeToRefs(app)
 
     const text = ref("")
 
+    const optWidth = 120
     const data = reactive({
         ratings: {},
         stats: {},
@@ -160,12 +179,16 @@
         }
     }
 
+    function setRating(id, value) {
+        data.ratings[id] = value
+        submitRatings()
+    }
+
     async function submitRatings() {
         const values = Object.values(data.ratings)
         if (values.some(v => v !== null)) {
             try {
                 // submit ratings
-                console.log(data.ratings)
                 await addRatings(data.ratings)
                 sounds.play(SOUND.CLICK)
                 getGlobalRatings()
