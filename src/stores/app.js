@@ -20,8 +20,6 @@ export const PR_STEPS = Object.freeze({
 })
 
 export const CW_MAX_SUB = 3
-// TODO: replace
-const PROLIFIC_LINK = "https://arielmant0.github.io/collacode-crowd/"
 
 export const useApp = defineStore('app', {
     state: () => ({
@@ -40,6 +38,8 @@ export const useApp = defineStore('app', {
         cwSource: null,
         cwId: null,
         cwSubmitted: false,
+
+        numFeedback: 0,
 
         cwLink: "/",
         cwCode: "",
@@ -75,7 +75,8 @@ export const useApp = defineStore('app', {
         itemNameCaptial: state => capitalize(state.itemName),
         hasNextItem: state => state.itemsLeft.size > 0,
         isCrowdWorker: state => state.cwId !== null && state.cwSubmitted === false,
-        isCrowdWorkerDone: state => state.isCrowdWorker && state.numSubmissions >= CW_MAX_SUB,
+        isCrowdWorkerReady: state => state.isCrowdWorker && state.numSubmissions >= CW_MAX_SUB,
+        isCrowdWorkerDone: state => state.isCrowdWorkerReady && state.numFeedback >= 4,
     },
 
     actions: {

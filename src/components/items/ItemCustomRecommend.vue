@@ -10,7 +10,7 @@
 
         <div class="d-flex align-start justify-center" style="width: 100%;">
 
-            <div class="d-flex flex-column mr-4" style="max-width: 49%; width: 35%;">
+            <div class="d-flex flex-column mr-4" style="max-width: 49%; width: 49%;">
 
                 <div class="pa-2 mt-1 rounded-lg" style="width: 100%; border: 2px dashed black;">
 
@@ -207,7 +207,6 @@
     import { useDisplay, useTheme } from 'vuetify'
     import DM from '@/use/data-manager'
     import { getSimilarByTarget } from '@/use/data-api'
-    import * as sc from "string-comparison"
     import { useToast } from 'vue-toastification'
     import { getStopWords } from '@/use/utility'
     import { SOUND, useSounds } from '@/stores/sounds'
@@ -296,22 +295,32 @@
         }
     }
     async function getSuggestions() {
-        const rRep = new RegExp("[_\-]", "gi")
-        const rDel = new RegExp("[®©™\(\)0-9]", "gi")
-        const stopWords = getStopWords()
+        const stopWords = new Set(getStopWords())
+        const gameWords = getGameWords()
+        const rSp = new RegExp("\\s{2,}", "gi")
+        const rDel = new RegExp("[&®©™'\(\)0-9\.,’;_]", "gi")
         const process = name => {
-            const str = name.toLowerCase().replaceAll(rRep, " ").replaceAll(rDel, "")
-            return str.split(" ").filter(w => !stopWords.includes(w)).join(" ").split(":")
+            let lower = name.toLowerCase()
+            gameWords.forEach(w => {
+                if (lower.includes(w)) {
+                    lower = lower.replace(w, "")
+                }
+            })
+            const str = lower.replaceAll(rDel, "").replaceAll(rSp, " ")
+            return str.split(/[:\-]/gi)
+                .map(s => s
+                    .split(" ")
+                    .map(w => w.trim())
+                    .filter(w => !stopWords.has(w))
+                    .join(" ")
+                    .trim()
+                )
+                .filter(s => s && s.length > 0)
         }
         const names = DM.getDataBy("items", d => isFixedItem(d.id)).map(d => process(d.name)).flat()
         const other = DM.getDataBy("items", d => {
             const dn = process(d.name)
-            return d.allTags.length > 0 &&
-                !isFixedItem(d.id) &&
-                names.some(n => dn.some(n2 => {
-                    return sc.default.lcs.similarity(n, n2) >= 0.8 ||
-                        sc.default.jaroWinkler.similarity(n, n2) >= 0.85
-                }))
+            return !isFixedItem(d.id) && names.some(n1 => dn.some(n2 => n1 === n2))
         })
         suggs.byName = other.map(d => ({ id: d.id }))
         const crowd = await getSimilarByTarget(props.target, 20)

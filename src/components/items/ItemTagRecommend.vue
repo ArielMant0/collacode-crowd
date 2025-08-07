@@ -12,7 +12,7 @@
 
             <div
                 class="d-flex flex-column align-center bordered-grey-light-thin pa-2 mr-4 rounded-lg"
-                style="max-width: 49%; width: 35%; border: 2px dashed black;">
+                style="max-width: 49%; width: 49%; border: 2px dashed black;">
                 <h3 class="sectitle">Candidates</h3>
                 <div class="d-flex flex-wrap justify-center align-start"
                     @drop.prevent="dropItem(0)"

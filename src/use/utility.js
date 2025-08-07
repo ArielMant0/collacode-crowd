@@ -181,10 +181,28 @@ export function constructSimilarityGraph(data) {
     return { nodes: sn, links: sl }
 }
 
+export function getGameWords() {
+    return [
+        "remaster edition",
+        "remastered edition",
+        "definitive edition",
+        "complete edition",
+        "extended edition",
+        "extended cut",
+        "game of the year",
+        "game of the year edition",
+        "goty",
+        "goty edition",
+        "history edition",
+        "remaster",
+        "remastered",
+        "edition"
+    ]
+}
+
 export function getStopWords() {
     return [
-        "definitive", "edition",
-        "remake", "remaster", "remastered",
+        "game", "edition",
         "i", "me", "my", "myself",
         "we", "our", "ours", "ourselves",
         "you", "your", "yours", "yourself", "yourselves",
@@ -199,8 +217,8 @@ export function getStopWords() {
         "have", "has", "had", "having",
         "do", "does", "did", "doing",
         "a", "an", "the", "and", "but", "if", "or",
+        "ii", "iii", "iv", "v", "vi", "vii", "viii", "viiii", "x",
         "because",
-        "as",
         "until",
         "while",
         "of",
@@ -258,12 +276,9 @@ export function getStopWords() {
         "than",
         "too",
         "very",
-        "s",
-        "t",
         "can",
         "will",
         "just",
-        "don",
         "should",
         "now",
     ]

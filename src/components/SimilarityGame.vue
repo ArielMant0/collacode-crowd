@@ -111,9 +111,9 @@
 
             <div class="mt-4 d-flex flex-column align-center">
 
-                <CrowdWorkerNotice max-width="1000"/>
-                <div v-else class="d-flex align-center justify-center mb-4">
-                    <v-btn color="error" @click="close">back to home</v-btn>
+                <div class="d-flex align-center justify-center mb-4">
+                    <v-btn v-if="app.isCrowdWorkerReady" color="primary" @click="goToFeedback">go to feedback page</v-btn>
+                    <v-btn v-else color="error" @click="close">back to {{ app.itemName }}s</v-btn>
                 </div>
 
                 <div style="max-width: 100%; text-align: center;">
@@ -238,16 +238,15 @@
 
             // game phase
             case PR_STEPS.GAME:
-                return props.method === GAME_IDS.CLUSTERS ? 300 : 180
-
-            // comprehension check
-            case PR_STEPS.COMPREHENSION:
-                return 60
+                return 240
 
             // selection phases
             case PR_STEPS.SELECT:
                 return 120
 
+            // comprehension check
+            case PR_STEPS.COMPREHENSION:
+            // last refinement of games
             case PR_STEPS.REFINE:
             default:
                 return 60
@@ -685,8 +684,12 @@
             emit("end")
 
             // redirect crowd workers
-            if (app.isCrowdWorker && app.isCrowdWorkerDone) {
-                setTimeout(function() { window.location.replace(app.cwLink) }, 3000)
+            if (app.isCrowdWorkerReady) {
+                toast.info(
+                    "In 3 seconds, you will be redirected to the questionnaire.",
+                    { position: POSITION.TOP_CENTER, timeout: 1500 }
+                )
+                setTimeout(function() { router.replace("/feedback") }, 3000)
             }
 
             state.value = STATES.END
@@ -697,6 +700,10 @@
             console.error(e.toString())
             toast.error("error adding similarity")
         }
+    }
+
+    function goToFeedback() {
+        router.replace("/feedback")
     }
 
     function close() {

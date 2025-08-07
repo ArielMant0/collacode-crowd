@@ -26,7 +26,7 @@
     import { sortObjByString } from '@/use/sorting';
     import GlobalTooltip from '@/components/GlobalTooltip.vue';
     import { useSounds } from '@/stores/sounds';
-    import { constructSimilarityGraph, toTreePath } from '@/use/utility';
+    import { constructSimilarityGraph, getGameWords, getStopWords, toTreePath } from '@/use/utility';
     import { useRoute } from 'vue-router';
     import router from './router';
     import { randomShuffle } from './use/random';
@@ -49,6 +49,7 @@
     const allowOverlay = ref(false)
     const showOverlay = computed(() => allowOverlay.value && isLoading.value)
 
+    let readRouteOnce = false
 
     async function loadData() {
         isLoading.value = true;
@@ -318,41 +319,45 @@
     function readQuery() {
         // check if we were passed a crowd worker id
         if (route.query.prolific_pid) {
-            const before = app.cwId
-            app.cwId = ""+route.query.prolific_pid
-            app.cwSource = "prolific"
-            return before !== app.cwId
+            const before = app.cwId ? app.cwId : localStorage.getItem("cw-id")
+            const pid = ""+route.query.prolific_pid
+            if (before !== pid) {
+                localStorage.setItem("cw-id", pid)
+                localStorage.setItem("cw-source", "prolific")
+                localStorage.removeItem("crowd-client")
+                localStorage.removeItem("crowd-guid")
+                return true
+            }
         }
         return false
     }
 
     async function readClient() {
-        if (readQuery()) {
-            app.activeUserId = null
-            app.guid = null
-            loadCrowd()
-        } else {
-            // try to get the user's ip address
-            try {
-                const ipres = await fetch("https://api.ipify.org?format=json")
-                const ipaddr = await ipres.json()
-                app.ipAddress = ipaddr.ip
-            } catch (e) {
-                console.error(e.toString())
-                console.error("could not get ip address")
-            }
+        readQuery()
 
-            // try to read the users id
-            const clientId = localStorage.getItem("crowd-client")
-            const guid = localStorage.getItem("crowd-guid")
-            // crowd sourcing data
-            const cwid = localStorage.getItem("cw-id")
-            const cwsrc = localStorage.getItem("cw-source")
-            app.setActiveUser(clientId, guid, cwid, cwsrc)
+        // try to read the users id from local storage
+        const clientId = localStorage.getItem("crowd-client")
+        const guid = localStorage.getItem("crowd-guid")
+        // crowd sourcing data
+        const cwid = localStorage.getItem("cw-id")
+        const cwsrc = localStorage.getItem("cw-source")
+        app.setActiveUser(clientId, guid, cwid, cwsrc)
+
+        // try to get the user's ip address
+        try {
+            const ipres = await fetch("https://api.ipify.org?format=json")
+            const ipaddr = await ipres.json()
+            app.ipAddress = ipaddr.ip
+        } catch (e) {
+            console.error(e.toString())
+            console.error("could not get ip address")
         }
     }
+    async function init() {
+        if (!readRouteOnce) {
+            return setTimeout(init, 250)
+        }
 
-    onMounted(async () => {
         allowOverlay.value = true
 
         window.addEventListener("click", () => sounds.loadSounds(), { once: true })
@@ -370,8 +375,45 @@
             await loadSimilarities()
         }
 
+        // const stopWords = new Set(getStopWords())
+        // const gameWords = getGameWords()
+        // const rSp = new RegExp("\\s{2,}", "gi")
+        // const rDel = new RegExp("[&®©™'\(\)0-9\.,’;_]", "gi")
+        // const process = name => {
+        //     let lower = name.toLowerCase()
+        //     gameWords.forEach(w => {
+        //         if (lower.includes(w)) {
+        //             lower = lower.replace(w, "")
+        //         }
+        //     })
+        //     const str = lower.replaceAll(rDel, "").replaceAll(rSp, " ")
+        //     return str.split(/[:\-]/gi)
+        //         .map(s => s
+        //             .split(" ")
+        //             .map(w => w.trim())
+        //             .filter(w => !stopWords.has(w))
+        //             .join(" ")
+        //             .trim()
+        //         )
+        //         .filter(s => s && s.length > 0)
+        // }
+        // const items = DM.getData("items", false)
+        // const names = items.map(d => process(d.name))
+        // for (let i = 0; i < items.length; ++i) {
+        //     console.log(`target: ${items[i].name} (${names[i]})`)
+        //     for (let j = 0; j < items.length; ++j) {
+        //         if (i === j) continue
+        //         if (names[i].some(n1 => names[j].some(n2 => n1 === n2))) {
+        //             console.log(`\t${items[j].name} (${names[j]})`)
+        //         }
+        //     }
+        //     console.log("  ")
+        // }
+
         initialized.value = true
-    });
+    }
+
+    onMounted(init);
 
     watch(() => times.n_all, async function() {
         const showToast = initialized.value
@@ -402,9 +444,10 @@
     })
 
     router.afterEach(function() {
-        if (readQuery()) {
+        if (initialized.value && readQuery()) {
             loadCrowd()
         }
+        readRouteOnce = true
     })
 
 </script>
