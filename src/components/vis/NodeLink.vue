@@ -64,18 +64,41 @@
     const workerProgress = ref(0)
     const workerActive = ref(false)
 
-    function resetZoom() {
+    function zoomToBoundingBox(node=null) {
         let transform = d3.zoomIdentity
-        const [x0, x1] = d3.extent(nodes, d => d.x)
-        const [y0, y1] = d3.extent(nodes, d => d.y)
+        const [x0, x1] = x.domain()
+        const [y0, y1] = y.domain()
 
         if (x0 !== undefined && x1 !== undefined &&
             y0 !== undefined && y1 !== undefined
         ) {
+            let tx0, tx1, ty0, ty1
+            if (node === null) {
+                tx0 = x0
+                tx1 = x1
+                ty0 = y0
+                ty1 = y1
+            } else {
+                const ids = new Set()
+                links.forEach(l => {
+                    if (l.source.id === node || l.target.id === node) {
+                        ids.add(l.source.id)
+                        ids.add(l.target.id)
+                    }
+                })
+                const subset = nodes.filter(d => ids.has(d.id))
+                const [ex0, ex1] = d3.extent(subset, d => d.x)
+                const [ey0, ey1] = d3.extent(subset, d => d.y)
+                tx0 = ex0 - props.radius / 2
+                tx1 = ex1 + props.radius / 2
+                ty0 = ey0 - props.radius / 4
+                ty1 = ey1 + props.radius / 4
+            }
+
             transform = d3.zoomIdentity
                 .translate(props.width / 2, props.height / 2)
-                .scale(Math.min(8, 0.9 / Math.max((x1 - x0) / props.width, (y1 - y0) / props.height)))
-                .translate(-(x0 + x1) / 2, -(y0 + y1) / 2)
+                .scale(Math.min(8, 0.9 / Math.max((tx1 - tx0) / props.width, (ty1 - ty0) / props.height)))
+                .translate(-(tx0 + tx1) / 2, -(ty0 + ty1) / 2)
         }
 
         d3.select(el.value)
@@ -84,23 +107,14 @@
             .call(zoom.transform, transform)
     }
 
+    function resetZoom() {
+        zoomToBoundingBox()
+    }
+
     function focus(target=props.target) {
         if (!target) return
         const node = nodes.find(d => d.id === target)
-        if (node) {
-            d3.select(el.value)
-                .transition()
-                .duration(props.transitionDuration)
-                .call(
-                    zoom.transform,
-                    d3.zoomIdentity
-                        .translate(props.width / 2, props.height / 2)
-                        .scale(5)
-                        .translate(-node.x, -node.y)
-                )
-        } else {
-            resetZoom()
-        }
+        zoomToBoundingBox(node ? node.id : null)
     }
 
     function updateNodesAndLinks(transform=null) {

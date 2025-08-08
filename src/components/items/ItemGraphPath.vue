@@ -504,6 +504,7 @@
                     element: "#submit-btn",
                     on: "bottom"
                 },
+                canClickTarget: false,
                 scrollToHandler: function() {
                     window.scrollTo(0, 0, { behavior: 'smooth' })
                 },

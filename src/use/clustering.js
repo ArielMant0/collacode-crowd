@@ -87,7 +87,7 @@ export function getMinMaxMeanDistBetweenClusters(ca, cb, pwd) {
     return [mind, maxd, meand / (ca.length*cb.length)]
 }
 
-export function getItemClusters(data, metric="euclidean", minStd=5, maxStd=1.5, minSize=5, allTags=true, useWeights=true) {
+export function getItemClusters(data, metric="euclidean", minStd=4.5, maxStd=1.33, minSize=5, maxSize=20, allTags=true, useWeights=true) {
     const n = data.length
     if (n <= minSize) return null
 
@@ -117,7 +117,6 @@ export function getItemClusters(data, metric="euclidean", minStd=5, maxStd=1.5, 
     const mc = max(tagCounts.values())
     const freq = tags.map(tid => useWeights ? (tagCounts.get(tid) / mc) * weight(tagCounts.get(tid) / mc) : 1)
     const asvec = data.map(d => makeVectorFromItem(d, tags, freq, allTags))
-    // const asvec = data.map(d => makeVectorFromItem(d, tags))
 
     const dists = []
     // compute pairwise similarity
@@ -137,8 +136,9 @@ export function getItemClusters(data, metric="euclidean", minStd=5, maxStd=1.5, 
     let mergeMinBase = meanD - minStd*stdD
     let mergeMaxBase = meanD - maxStd*stdD
 
-    let changes = true, single = 0
+    let changes = true
     const minIter = 15, maxIter = 30
+
 
     for (let iter = 0; iter < maxIter && (changes || iter < minIter); ++iter) {
 
@@ -153,6 +153,7 @@ export function getItemClusters(data, metric="euclidean", minStd=5, maxStd=1.5, 
         for (let i = 0; i < k; ++i) {
             // find closest cluster
             for (let j = i+1; j < k; ++j) {
+                if (indices[i].length + indices[j].length > maxSize) continue
                 const [mind, maxd, _] = getMinMaxMeanDistBetweenClusters(indices[i], indices[j], pwd)
                 if (mind <= mergeMinBase && maxd <= mergeMaxBase) { // && (maxd < mad || maxd === mad && mind < mid)) {
                     cand.push({ from: i, to: j, minDistance: mind, maxDistance: maxd })
@@ -182,15 +183,42 @@ export function getItemClusters(data, metric="euclidean", minStd=5, maxStd=1.5, 
 
         changes = numMerges > 0
 
-        single = 0
+        const singles = []
         // leftover clusters
         indices.forEach((list, i) => {
-            single += list.length > 1 ? 0 : 1
-            if (!taken.has(i)) {
+            if (!taken.has(i) && list.length > 1) {
                 taken.add(i)
                 merged.push(list)
+            } else if (!taken.has(i) && list.length === 1) {
+                singles.push(i)
             }
         })
+
+        const staken = new Set(taken)
+        for (let i = 0; i < singles.length; ++i) {
+            const idx = singles[i]
+            if (staken.has(idx)) continue
+            // find closest cluster
+            let bestmin = Number.MAX_VALUE, best = -1
+            for (let j = i+1; j < singles.length; ++j) {
+                const jdx = singles[j]
+                const [mind, _maxd, _] = getMinMaxMeanDistBetweenClusters(indices[idx], indices[jdx], pwd)
+                if (mind <= bestmin && !staken.has(jdx)) {
+                    bestmin = mind
+                    best = jdx
+                }
+            }
+
+            if (best >= 0) {
+                // merge this cluster into another
+                staken.add(idx)
+                staken.add(best)
+                merged.push([indices[idx][0], indices[best][0]])
+                // console.log("merged", data[indices[idx][0]].name, "and", data[indices[best][0]].name)
+            } else {
+                merged.push(indices[idx])
+            }
+        }
 
         indices = merged
         if (mergeMinBase < meanD - stdD) {
@@ -211,7 +239,7 @@ export function getItemClusters(data, metric="euclidean", minStd=5, maxStd=1.5, 
                 let bestmin = Number.MAX_VALUE, best = -1
                 // find the cluster with the best min distance
                 for (let j = 0; j < indices.length; ++j) {
-                    if (i === j) continue
+                    if (i === j || indices[i].length+indices[j].length > maxSize) continue
                     const [mind, _max, meand] = getMinMaxMeanDistBetweenClusters(indices[i], indices[j], pwd)
                     if (mind < bestmin && !takenFinal.has(j)) {
                         bestmin = mind
