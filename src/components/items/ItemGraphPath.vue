@@ -195,7 +195,7 @@
     const clsIndex = ref(0)
     const clsGroups = ref([])
     const hasPrev = computed(() => clsIndex.value > 0)
-    const hasNext = computed(() => clsIndex.value < clsGroups.value.length)
+    const hasNext = computed(() => clsIndex.value < clsGroups.value.length-1)
 
     const numCls = ref(0)
     const numClsLeft = ref(0)
@@ -269,7 +269,7 @@
         const cf = [...Array(k).keys()]
 
         selectionItems.value.forEach((sel, i) => {
-            const s1 = Math.ceil(counts[i] * 0.5)
+            const s1 = Math.ceil(counts[i] * 0.66)
             // for half the items, select the most similar items
             const cands1 = clusters.pwd[sel.index].map((v, j) => ({ index: j, value: v }))
             cands1.sort((a, b) => a.value - b.value)
@@ -311,15 +311,18 @@
                 return b.value - a.value
             })
 
+            const s2 = Math.max(1, Math.floor((counts[i] - s1) / Math.min(cands2.length, 2)))
             // add items from similar clusters
             for (let j = 0; j < cands2.length && added.length < counts[i]; ++j) {
                 const list = clusters.clusters[cands2[j].index]
-                list.forEach(item => {
-                    if (added.length < counts[i] && !idSet.has(item.id)) {
-                        added.push(item)
-                        idSet.add(item.id)
+                let added2 = 0
+                for (let l = 0; l < list.length && added2 < s2; ++l) {
+                    if (added.length < counts[i] && !idSet.has(list[l].id)) {
+                        added.push(list[l])
+                        idSet.add(list[l].id)
+                        added2++
                     }
-                })
+                }
             }
 
             final.push(added)
@@ -551,8 +554,7 @@
                 return console.debug("no items")
             }
 
-            const metric = "euclidean"
-            clusters = getItemClusters(itemsToUse, metric)
+            clusters = getItemClusters(itemsToUse)
             clusterLeft.clear()
             maxClsSize = 0
 
@@ -578,6 +580,7 @@
 
         const allCf = [...Array(k).keys()]
         const groups = []
+        const lookAhead = Math.max(props.numClusters*4, Math.round(k*0.2))
 
         while (clusterLeft.size > 0) {
 
@@ -590,7 +593,7 @@
             }
 
             // get next clusters with the highest distances to each other
-            const subset = cf.slice(0, props.numClusters*3)
+            const subset = cf.slice(0, lookAhead)
             const tmp = subset.map(i => {
                 const scores = subset.map((d, j) => {
                     if (i === j) return 0
