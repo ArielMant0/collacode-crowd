@@ -22,7 +22,7 @@
 
     </v-app-bar>
 
-    <v-main :max-height="maxHeight">
+    <v-main>
         <router-view />
     </v-main>
   </v-app>
@@ -31,7 +31,6 @@
 <script setup>
     import router from '@/router';
     import { useApp } from '@/stores/app';
-    import { useWindowSize } from '@vueuse/core';
     import { useRoute } from 'vue-router';
 
     const app = useApp()
@@ -50,9 +49,6 @@
             },
         ]
     })
-
-    const { height } = useWindowSize()
-    const maxHeight = computed(() => Math.max(300, height.value-50))
 </script>
 
 <style scoped>

@@ -1,5 +1,11 @@
 <template>
     <div class="pa-2" :style="{ maxWidth: maxWidth }">
+        <div v-if="app.inDevMode" style="text-align: center;" class="mb-6">
+            <v-btn-toggle v-model="fixedMethod" divided density="comfortable" color="primary" variant="outlined">
+                <v-btn icon="mdi-cards-variant" :value="1"></v-btn>
+                <v-btn icon="mdi-graph-outline" :value="2"></v-btn>
+            </v-btn-toggle>
+        </div>
         <ItemSelectionPanel v-if="app.itemsLeft.size > 0"
             :subset="0"
             class="mb-8"
@@ -36,8 +42,10 @@
     import ItemSelectionPanel from './ItemSelectionPanel.vue';
     import { computed } from 'vue';
     import { useDisplay } from 'vuetify';
+    import { storeToRefs } from 'pinia';
 
     const app = useApp()
+    const { fixedMethod } = storeToRefs(app)
 
     const props = defineProps({
         numPerPage: {

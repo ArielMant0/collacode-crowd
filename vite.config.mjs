@@ -70,6 +70,7 @@ export default defineConfig(({ mode }) => {
     },
     define: {
       "process.env": {},
+      "__DEV_MODE__": config.DEV_MODE,
       "__APP_BASE_PATH__": JSON.stringify(config.APP_BASE_PATH),
       "__URL_TEASER__": JSON.stringify(config.URL_TEASER),
       "__URL_STATIC_DATA__": JSON.stringify(config.URL_STATIC_DATA),

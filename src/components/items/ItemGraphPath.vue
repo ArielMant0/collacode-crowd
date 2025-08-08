@@ -143,6 +143,7 @@
     const tutorial = useShepherd({
         useModalOverlay: true,
         keyboardNavigation: false,
+        exitOnEsc: false,
         defaultStepOptions: {
             classes: 'shadow-md bg-surface-light arrow-primary',
             scrollTo: { behavior: 'smooth', block: 'start' },

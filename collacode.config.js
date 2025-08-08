@@ -6,6 +6,7 @@ export const URL_EVIDENCE = "media/evidence/"
 export const URL_SOUND = "sounds/"
 export const URL_IMAGES = "images/"
 export const ALLOWED_HOSTS = false
+export const DEV_MODE = true
 
 export function getApiUrl(port=8000) {
     return `http://localhost:${port && !Number.isNaN(port) ? port : 8000}/colladata/api/v1`

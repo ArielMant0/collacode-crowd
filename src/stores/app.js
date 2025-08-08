@@ -27,6 +27,8 @@ export const useApp = defineStore('app', {
         fetchUpdateTime: 0,
         updateItemsTime: 0,
 
+        inDevMode: __DEV_MODE__,
+
         code: null,
         ds: null,
         dataset: null,
@@ -48,6 +50,7 @@ export const useApp = defineStore('app', {
 
         // which method (clusters = 1 or binary search = 2) to prefer
         // by default, we randomly pick one
+        fixedMethod: null,
         method: 0,
         methodCounts: new Map(),
         lastMethod: 0,

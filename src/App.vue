@@ -6,7 +6,7 @@
         <GlobalTooltip/>
 
         <div v-if="initialized" :style="{ maxWidth: '100vw' }">
-            <router-view style="max-height: none"/>
+            <router-view/>
         </div>
     </div>
 </template>

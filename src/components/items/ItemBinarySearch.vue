@@ -1,5 +1,5 @@
 <template>
-    <div style="width: min-content;" class="pa-2">
+    <div id="act-binsearch" style="width: min-content;" class="pa-2">
         <div id="question-container">
             <div v-if="inLastStep">
                 <div style="text-align: center;">this would be your final set of {{ app.itemName }}s</div>
@@ -163,6 +163,7 @@
     const tutorial = useShepherd({
         useModalOverlay: true,
         keyboardNavigation: false,
+        exitOnEsc: false,
         defaultStepOptions: {
             classes: 'shadow-md bg-surface-light arrow-primary',
             scrollTo: { behavior: 'smooth', block: 'start' },
@@ -356,6 +357,7 @@
                     element: "#submit-btn",
                     on: "bottom"
                 },
+                canClickTarget: false,
                 scrollToHandler: function() {
                     window.scrollTo(0, 0, { behavior: 'smooth' })
                 },
