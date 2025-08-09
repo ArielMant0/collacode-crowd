@@ -87,7 +87,7 @@ export function getMinMaxMeanDistBetweenClusters(ca, cb, pwd) {
     return [mind, maxd, meand / (ca.length*cb.length)]
 }
 
-export function getItemClusters(data, metric="euclidean", minStd=4.5, maxStd=1.33, minSize=5, maxSize=20, allTags=true, useWeights=true) {
+export function getItemClusters(data, metric="euclidean", minStd=4.5, maxStd=1.2, minSize=5, maxSize=13, allTags=true, useWeights=true) {
     const n = data.length
     if (n <= minSize) return null
 

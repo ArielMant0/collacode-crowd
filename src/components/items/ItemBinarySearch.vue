@@ -21,7 +21,8 @@
                         Find the most similar {{ app.itemName }}s to your target!
                     </div>
 
-                    <div class="mt-4 mb-2 d-flex align-center justify-space-around">
+                    <div class="mt-4 mb-2 d-flex align-center justify-space-between" style="min-width: 70%;">
+
                         <div id="prev-btn" v-if="idx === 0 && hasPrevTag" class="d-flex">
 
                             <v-tooltip :text="tagList[tagIndex-1].longName" open-delay="300" location="top">
@@ -29,7 +30,7 @@
                                     <div v-bind="props"
                                         @click="prevTag"
                                         class="text-dots mr-2 cursor-pointer"
-                                        style="opacity: 0.5; max-width: 150px;">
+                                        style="opacity: 0.5; min-width: 150px; max-width: 150px; text-align: right;">
                                         {{ tagList[tagIndex-1].longName }}
                                     </div>
                                 </template>
@@ -42,7 +43,7 @@
                                 density="comfortable"
                                 @click="prevTag"/>
                         </div>
-                        <div v-else style="min-width: 100px;"></div>
+                        <div v-else style="min-width: 186px;"></div>
 
                         <h4 class="tag-name">{{ obj.tag.longName }}</h4>
 
@@ -59,17 +60,17 @@
                                     <div v-bind="props"
                                         @click="nextTag"
                                         class="text-dots ml-2 cursor-pointer"
-                                        style="opacity: 0.5; max-width: 150px;">
+                                        style="opacity: 0.5; min-width: 150px; max-width: 150px; text-align: left;">
                                         {{ tagList[tagIndex+1].longName }}
                                     </div>
                                 </template>
                             </v-tooltip>
                         </div>
-                        <div v-else style="min-width: 100px;"></div>
+                        <div v-else style="min-width: 186px;"></div>
 
                     </div>
 
-                    <p>{{ obj.tag.description }}</p>
+                    <p style="max-width: 100%;">{{ obj.tag.description }}</p>
                 </div>
 
                 <div class="d-flex mt-8 item-groups">
@@ -391,16 +392,19 @@
         // emit event so that things like timers can be cancelled
         emit("tutorial-start")
         tutorial.start()
+        logAction({ desc: "start tutorial" }, true)
     }
 
     function onEndTutorial() {
         // emit event so that things like timers can be started again
         emit("tutorial-complete")
+        logAction({ desc: "complete tutorial" }, true)
     }
 
     function onCancelTutorial() {
         // emit event so that things like timers can be started again
         emit("tutorial-cancel")
+        logAction({ desc: "cancel tutorial" }, true)
     }
 
     function tutorialClear() {
@@ -535,7 +539,7 @@
             logAction({
                 desc: desc,
                 step: split.value.length,
-                tag: splitTag,
+                tag: { id: splitTag.id, name: splitTag.name },
                 with: withTag,
                 without: without
             })
@@ -722,7 +726,7 @@
         logAction({
             desc: "split step",
             step: split.value.length,
-            tag: splitTag.id,
+            tag: { id: splitTag.id, name: splitTag.name },
             with: withTag.map(i => itemsToUse[i].id),
             without: without.map(i => itemsToUse[i].id),
         })
@@ -738,7 +742,7 @@
             desc: "choose answer",
             step: split.value.length-index-1,
             answer: it.hasTag ? "yes" : "no",
-            tag: it.tag.id,
+            tag: { id: it.tag.id, name: it.tag.name },
             removeCount: index
         })
         app.addInteraction("step1")
@@ -770,8 +774,8 @@
         }
     }
 
-    function logAction(obj) {
-        if (!tutorial.isActive()) {
+    function logAction(obj, force=false) {
+        if (!tutorial.isActive() || force) {
             obj.timestamp = Date.now()
             log.push(obj)
         }

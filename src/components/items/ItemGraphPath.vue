@@ -1,7 +1,7 @@
 <template>
     <div style="width: min-content" class="pa-2">
 
-        <div class="d-flex align-center">
+        <div class="d-flex align-center justify-space-between" :style="{ minWidth: (numClusters*200)+'px' }">
 
             <v-btn
                 class="text-lowercase mr-2"
@@ -13,7 +13,7 @@
                 @click="prevClusters">
             </v-btn>
 
-            <div id="cluster-options" class="d-flex align-start justify-center">
+            <div id="cluster-options" class="d-flex align-start justify-center" style="min-height: 295px;">
                 <ItemSimilarityRow v-for="(index, idx2) in clsGroups[clsOrder.list]"
                     :items="clusters.clusters[index]"
                     :show-index="clsOrder.show[idx2]"
@@ -333,9 +333,8 @@
 
     function matchValue(mindist, maxdist, size, similar, pow=4) {
         // const v = similar > 0.5 ? 1-mindist : mindist
-        return similar > 0.5 ?
-            1-maxdist :
-            mindist * (mindist ** pow) * size
+        return similar > 0.5 ? 1-maxdist : mindist
+            // mindist * (mindist ** pow) * size
     }
 
     function setClusterIndex(index) {
@@ -529,16 +528,19 @@
         // emit event so that things like timers can be cancelled
         emit("tutorial-start")
         tutorial.start()
+        logAction({ desc: "start tutorial" }, true)
     }
 
    function onEndTutorial() {
         // emit event so that things like timers can be started again
         emit("tutorial-complete")
+        logAction({ desc: "complete tutorial" }, true)
     }
 
     function onCancelTutorial() {
         // emit event so that things like timers can be started again
         emit("tutorial-cancel")
+        logAction({ desc: "cancel tutorial" }, true)
     }
 
     function tutorialClear() {
@@ -581,7 +583,7 @@
 
         const allCf = [...Array(k).keys()]
         const groups = []
-        const lookAhead = Math.max(props.numClusters*4, Math.round(k*0.2))
+        const lookAhead = Math.max(props.numClusters*2, Math.floor(k*0.25))
 
         while (clusterLeft.size > 0) {
 
@@ -596,19 +598,10 @@
             // get next clusters with the highest distances to each other
             const subset = cf.slice(0, lookAhead)
             const tmp = subset.map(i => {
-                const scores = subset.map((d, j) => {
-                    if (i === j) return 0
-                    return matchValue(
-                        clusters.minDistances[d][i],
-                        clusters.maxDistances[d][i],
-                        clusters.size[i],
-                        0, // should be different to the others
-                    )
-                })
-
+                const scores = subset.map((d, j) => i === j ? 0 : clusters.minDistances[d][i])
                 return {
                     index: i,
-                    value: d3.median(scores),
+                    value: d3.mean(scores),
                 }
             })
 
@@ -808,8 +801,8 @@
         }
     }
 
-    function logAction(obj) {
-        if (!tutorial.isActive()) {
+    function logAction(obj, force=false) {
+        if (!tutorial.isActive() || force) {
             obj.timestamp = Date.now()
             log.push(obj)
         }

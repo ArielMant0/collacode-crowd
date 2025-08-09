@@ -173,7 +173,6 @@
     import Timer from './Timer.vue';
     import ComprehensionCheck from './ComprehensionCheck.vue';
     import AttentionCheck from './AttentionCheck.vue';
-    import CrowdWorkerNotice from './CrowdWorkerNotice.vue';
     import { constructSimilarityGraph } from '@/use/utility';
     import NodeLink from './vis/NodeLink.vue';
     import { useTooltip } from '@/stores/tooltip';
@@ -208,6 +207,7 @@
     let ilog = null, compdata = null
     let attentionDone = false, attentionNext = null
     let timeStart, timeEnd
+    let timeStartTutorial, timeEndTutorial
 
     const props = defineProps({
         method: {
@@ -260,7 +260,10 @@
         resultItems: [],
         customItems: [],
         graph: null,
-        comprehension: []
+        comprehension: [],
+        timePerStep: {},
+        durPerStep: {},
+        lastStep: null
     })
 
 
@@ -311,10 +314,6 @@
             }
         }
     }
-    function resetTimer() {
-        stopTimer()
-        setTimeout(startTimer, 150)
-    }
 
     function onTutorialStart() {
         pauseTimer()
@@ -322,6 +321,9 @@
     function onTutorialStop(completed) {
         localStorage.setItem("tutorial_"+props.method, true)
         tutorialDone = tutorialDone || completed
+        timeEndTutorial = Date.now()
+        gameData.timePerStep.tutorial = timeEndTutorial
+        gameData.durPerStep.tutorial = Math.round((timeEndTutorial-timeStartTutorial) / 1000)
         unpauseTimer()
     }
     function checkTutorial() {
@@ -333,8 +335,10 @@
         // get the data from clusters/binary search
         if (clusters.value) {
             clusters.value.startTutorial()
+            timeStartTutorial = Date.now()
         } else if (binsearch.value) {
             binsearch.value.startTutorial()
+            timeStartTutorial = Date.now()
         }
     }
 
@@ -358,10 +362,18 @@
         setTimeout(checkTutorial, 200)
     }
 
+    function logStepTime(name) {
+        const prevTime = gameData.lastStep ? gameData.timePerStep[gameData.lastStep] : timeStart
+        gameData.timePerStep[name] = Date.now()
+        gameData.durPerStep[name] = Math.round((gameData.timePerStep[name] - prevTime) / 1000)
+        gameData.lastStep = name
+    }
+
     function nextStep(onTimerEnd=false) {
         stopTimer()
         switch(step.value) {
             case PR_STEPS.COMPREHENSION:
+                logStepTime("comprehension")
                 if (onTimerEnd) {
                     // the user did not answer the questions in time
                     testComp(cc.value ? cc.value.getAnswers() : null)
@@ -375,6 +387,7 @@
                 break
             case PR_STEPS.GAME: {
                 let data
+                logStepTime("game")
                 // get the data from clusters/binary search
                 if (clusters.value) {
                     data = clusters.value.getSubmitData()
@@ -401,6 +414,7 @@
                 break
             }
             case PR_STEPS.SELECT:
+                logStepTime("select (1)")
                 if (!attentionDone && props.attentionChecks && Math.random() > 0.5) {
                     step.value = PR_STEPS.ATTENTION
                     attentionNext = PR_STEPS.REFINE
@@ -414,6 +428,7 @@
                 startTimer(150)
                 break
             case PR_STEPS.REFINE:
+                logStepTime("refine (2)")
                 if (!attentionDone && props.attentionChecks) {
                     step.value = PR_STEPS.ATTENTION
                     attentionNext = null
@@ -425,6 +440,7 @@
                 }
                 break
             case PR_STEPS.ATTENTION:
+                logStepTime("attention")
                 attentionDone = true
                 if (onTimerEnd) {
                     // user did not complete attention check in time
@@ -659,6 +675,8 @@
                 start: timeStart,
                 end: timeEnd,
                 duration: Math.floor((timeEnd-timeStart) / 1000),
+                timePerStep: gameData.timePerStep,
+                durationPerStep: gameData.durPerStep,
                 language: window.navigator.language,
                 userAgent: window.navigator.userAgent,
                 window: {
@@ -726,6 +744,9 @@
         gameData.customItems = []
         gameData.graph = null
         gameData.comprehension = []
+        gameData.timePerStep = {}
+        gameData.durPerStep = {}
+        gameData.lastStep = null
         app.resetInteraction()
     }
     function reset() {
