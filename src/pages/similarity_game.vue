@@ -42,7 +42,7 @@
     }
     function onClose() {
         onEnd()
-        onCancel(250)
+        onCancel(350)
     }
     function read() {
         if (app.inDevMode && (app.fixedMethod === 1 || app.fixedMethod === 2)) {
@@ -96,7 +96,10 @@
     }
 
     onMounted(read)
-    onBeforeUnmount(hideSizeAlert)
+    onBeforeUnmount(function() {
+        hideSizeAlert()
+        app.setTarget(null)
+    })
 
     watch(width, function() {
         if (!validSize.value) {

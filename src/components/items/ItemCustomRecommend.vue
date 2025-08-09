@@ -106,10 +106,10 @@
                             </template>
                             <template #default>
                                 <div>
-                                    <div>select {{ app.itemName }}s <b>similar</b> to the target</div>
+                                    <div>select {{ app.itemName }}s <b>very similar</b> to your target</div>
                                     <p class="mt-1">
-                                        there should only be small differences, but the majority
-                                        of the core game loop should be the same
+                                        there can be small differences regarding the setting, artstyle,
+                                        or minor {{ app.itemName }} mechanics, but the core <b>gameplay</b> should be very similar
                                     </p>
                                 </div>
                             </template>
@@ -162,8 +162,8 @@
                                 <div>
                                     <div>select {{ app.itemName }}s <b>similar</b> to the target</div>
                                     <p class="mt-1">
-                                        there can be some differences (e.g. regarding the setting)
-                                        but there should be large overlap regarding the core game loop
+                                        there can be some differences regarding the setting, artstyle,
+                                        or {{ app.itemName }} mechanics, but the core <b>gameplay</b> should be similar
                                     </p>
                                 </div>
                             </template>

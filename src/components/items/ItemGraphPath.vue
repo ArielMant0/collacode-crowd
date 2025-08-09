@@ -288,7 +288,7 @@
             const cands2 = cf.map(d => {
                 let score
                 if (sel.cluster === d) {
-                    score = 1
+                    score = Number.MAX_VALUE
                 } else {
                     score = matchValue(
                         clusters.minDistances[d][sel.cluster],
@@ -311,12 +311,16 @@
                 return b.value - a.value
             })
 
-            const s2 = Math.max(1, Math.floor((counts[i] - s1) / Math.min(cands2.length, 2)))
+            const rest = counts[i] - s1
+            const self = Math.floor(rest * 0.5)
+            const s2 = Math.max(1, Math.floor((rest - self) / 2))
             // add items from similar clusters
             for (let j = 0; j < cands2.length && added.length < counts[i]; ++j) {
-                const list = clusters.clusters[cands2[j].index]
-                let added2 = 0
-                for (let l = 0; l < list.length && added2 < s2; ++l) {
+                const list = clusters.clusters[cands2[j].index].slice()
+                list.sort((a, b) => clusters.pwd[sel.index][a._cidx] - clusters.pwd[sel.index][b._cidx])
+
+                let added2 = 0, limit = cands2[j].index === sel.cluster ? self : s2
+                for (let l = 0; l < list.length && added2 < limit; ++l) {
                     if (added.length < counts[i] && !idSet.has(list[l].id)) {
                         added.push(list[l])
                         idSet.add(list[l].id)
@@ -520,11 +524,14 @@
                     window.scrollTo(0, 0, { behavior: 'smooth' })
                 },
                 buttons: [{ text: "okay", action: tutorialClear, classes: "bg-primary" }],
-                text: "To start the tutorial again, click on this question mark."
+                text: `To start the tutorial again, click on this question mark.
+                    This will <b>reset</b> your selection, so keep that in mind!`
             }
         ])
     }
     function startTutorial() {
+        setClusterIndex(0)
+        clearSelection()
         // emit event so that things like timers can be cancelled
         emit("tutorial-start")
         tutorial.start()
@@ -787,6 +794,7 @@
         numCls.value = clusterLeft.size
         numClsLeft.value = clusterLeft.size
         itemsToUse = DM.getDataBy("items", d => d.allTags.length > 0 && (!props.target || d.id !== props.target))
+        itemsToUse.forEach((d, i) => d._cidx = i)
         clusters = null
         clsIndex.value = 0
         clsGroups.value = []

@@ -242,7 +242,7 @@
     }
 
     function onDialogClose() {
-        setTimeout(() => window.scroll(0, 0), 350)
+        setTimeout(() => window.scrollTo(0, 0, { behavior: "smooth" }), 350)
     }
 
 

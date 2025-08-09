@@ -158,9 +158,9 @@
                 default:
                 case 0: return a.index - b.index
                 // sort by count (descending)
-                case 1: return itemCounts.value[b.id] - itemCounts.value[a.id]
+                case 1: return app.getItemCount(b.id) - app.getItemCount(a.id)
                 // sort by count (ascending)
-                case 2: return itemCounts.value[a.id] - itemCounts.value[b.id]
+                case 2: return app.getItemCount(a.id) - app.getItemCount(b.id)
             }
         })
     }

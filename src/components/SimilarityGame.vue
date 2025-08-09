@@ -18,7 +18,7 @@
         </div>
 
         <div v-if="state === STATES.INGAME && step === PR_STEPS.GAME" style="position: absolute; top: 560x; right: 10px;">
-            <v-tooltip text="start the tutorial" location="left" open-delay="300">
+            <v-tooltip text="start the tutorial" location="left" open-delay="100">
                 <template v-slot:activator="{ props }">
                     <v-btn v-bind="props"
                         id="start-tutorial"
@@ -157,7 +157,7 @@
 </template>
 
 <script setup>
-    import { computed, onMounted, reactive, useTemplateRef, watch } from 'vue'
+    import { computed, onBeforeUnmount, onMounted, reactive, useTemplateRef, watch } from 'vue'
     import { GAME_IDS, STATES } from '@/stores/games'
     import { useSounds, SOUND } from '@/stores/sounds';
     import { storeToRefs } from 'pinia'
@@ -211,6 +211,8 @@
     let timeStartTutorial, timeEndTutorial
     let tabChangeWarning = false, numTabChanged = 0
     let searchHistory = []
+
+    let homeRedirect = null
 
     const props = defineProps({
         method: {
@@ -718,7 +720,10 @@
                 setTimeout(function() { router.replace("/feedback") }, 3000)
             } else if (app.isCrowdWorker) {
                 // redirect to home after 30 seconds
-                setTimeout(function() { router.replace("/") }, 30000)
+                homeRedirect = setTimeout(function() {
+                    router.replace("/")
+                    homeRedirect = null
+                }, 30000)
             }
 
             state.value = STATES.END
@@ -770,6 +775,22 @@
         emit("cancel", delay)
     }
 
+    function onTabChange() {
+        if (document.hidden) {
+            tabChangeWarning = app.isCrowdWorker
+            numTabChanged++
+        } else if (tabChangeWarning) {
+            tabChangeWarning = false
+            toast.warning(
+                "please do not leave the page during the study",
+                {
+                    position: POSITION.TOP_CENTER,
+                    timeout: 5000
+                }
+            )
+        }
+    }
+
     async function init () {
         reset()
 
@@ -783,21 +804,7 @@
         )
 
         numTabChanged = 0
-        document.addEventListener("visibilitychange", function() {
-            if (document.hidden) {
-                tabChangeWarning = app.isCrowdWorker
-                numTabChanged++
-            } else if (tabChangeWarning) {
-                tabChangeWarning = false
-                toast.warning(
-                    "please do not leave the page during the study",
-                    {
-                        position: POSITION.TOP_CENTER,
-                        timeout: 5000
-                    }
-                )
-            }
-        })
+        document.addEventListener("visibilitychange", onTabChange)
 
         tutorialDone = Boolean(localStorage.getItem("tutorial_"+props.method)) === true
 
@@ -810,6 +817,13 @@
     }
 
     onMounted(init)
+    onBeforeUnmount(function() {
+        if (homeRedirect) {
+            clearTimeout(homeRedirect)
+            homeRedirect = null
+        }
+        document.removeEventListener("visibilitychange", onTabChange)
+    })
 
     watch(target, init)
     watch(() => props.method, init)

@@ -77,7 +77,7 @@
                             Each activity includes a tutorial if you do it the first time.
                             The goal is always the same: helping you find {{ app.itemName }}s from our database that are similar to the target {{ app.itemName }} you chose.
                             In the first activity (left), you can browse through different groups of {{ app.itemName }}s to find similarity candidates.
-                            In the second activity (right), you answer different questions about the {{ app.itemName }} to narrow you pool of candidates down to a reasonable number.
+                            In the second activity (right), you answer different questions about the {{ app.itemName }} to narrow your pool of candidates down to a reasonable number.
                         </p>
                         <div class="mt-1 d-flex justify-center text-caption" style="text-align: center;">
                                 <figure class="mr-1" style="max-width: 49%;">

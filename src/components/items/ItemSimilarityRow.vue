@@ -103,21 +103,17 @@
 </template>
 
 <script setup>
-    import { pointer, range } from 'd3';
+    import { range } from 'd3';
     import { computed, onMounted, watch } from 'vue';
     import ItemTeaser from './ItemTeaser.vue';
     import { useTooltip } from '@/stores/tooltip';
-    import { useApp } from '@/stores/app';
-    import { capitalize, mediaPath } from '@/use/utility';
     import { useTheme } from 'vuetify';
-    import { randomChoice } from '@/use/random';
     import DM from '@/use/data-manager';
     import TagText from '../tags/TagText.vue';
     import { sortObjByValue } from '@/use/sorting';
     import RectBubble from '../vis/RectBubble.vue';
     import { useSettings } from '@/stores/settings';
 
-    const app = useApp()
     const tt = useTooltip()
     const theme = useTheme()
     const settings = useSettings()
@@ -210,9 +206,7 @@
 
     function readExamples() {
         const cands = range(props.items.length).filter(i => i !== props.showIndex)
-        examples.value =  cands.length > props.numExamples ?
-            randomChoice(cands, props.numExamples).map(i => props.items[i]) :
-            cands.map(i => props.items[i])
+        examples.value =  cands.slice(0, props.numExamples).map(i => props.items[i])
     }
 
     function read() {

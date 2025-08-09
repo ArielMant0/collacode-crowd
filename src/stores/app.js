@@ -143,8 +143,13 @@ export const useApp = defineStore('app', {
             this.itemTime = Date.now()
         },
 
+        getItemCount(id) {
+            return this.itemCounts[id] ? this.itemCounts[id] : 0
+        },
+
         setTarget(item) {
             if (
+                 item &&
                  this.itemsLeft.has(item.id) &&
                 !this.itemsDone.has(item.id) &&
                 !this.itemsGone.has(item.id)

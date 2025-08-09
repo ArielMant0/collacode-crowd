@@ -1,5 +1,4 @@
 export const APP_BASE_PATH = "/collacode-crowd"
-export const APP_START_PAGE = "coding"
 export const URL_TEASER = "media/teaser/"
 export const URL_EVIDENCE = "media/evidence/"
 export const URL_STATIC_DATA = "data/"

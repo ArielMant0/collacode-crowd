@@ -18,7 +18,7 @@
                     You can also use this completion code to submit your participation: <b>{{ app.cwCode }}</b>
                     <div class="mt-4">
                         If you want to continue with other {{ app.itemName }}s and have turned in the study on Prolific,
-                        you can click this button to confirm that. <b>This will hide the return link to Prolific.
+                        you can click the button below to confirm that. <b>This will hide the return link to Prolific.
                         This action cannot be reversed.</b>
                         <v-btn class="mt-1" block variant="flat" color="error" @click="confirm">
                             i confirm that i submitted the study on Prolific
@@ -26,10 +26,11 @@
                     </div>
                 </div>
                 <div v-else-if="app.isCrowdWorkerReady">
-                    Please answer the four feedback questions on the feedback page to complete the study.
+                    Please answer the four feedback questions on the <router-link to="/feedback">feedback page</router-link> to complete the study.
                 </div>
                 <div v-else>
-                    Complete {{ CW_MAX_SUB }} {{ app.itemName }}s and the feedback questionnaire to complete this study. Click on a game you know well to start the process.
+                    Complete {{ CW_MAX_SUB }} {{ app.itemName }}s and the feedback questionnaire to complete this study.
+                    <b>Please do not refresh the page during the study.</b> Click on a game you know well to start the process.
                     <div class="mt-4" style="text-align: center;">
                         You have completed <b>{{ app.numSubmissions }} out of {{ CW_MAX_SUB }}</b> {{ app.itemName }}s
                     </div>

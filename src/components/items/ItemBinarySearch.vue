@@ -25,7 +25,7 @@
 
                         <div id="prev-btn" v-if="idx === 0 && hasPrevTag" class="d-flex">
 
-                            <v-tooltip :text="tagList[tagIndex-1].longName" open-delay="300" location="top">
+                            <v-tooltip :text="tagList[tagIndex-1].longName" open-delay="100" location="top">
                                 <template v-slot:activator="{ props }">
                                     <div v-bind="props"
                                         @click="prevTag"
@@ -55,7 +55,7 @@
                                 density="comfortable"
                                 @click="nextTag"/>
 
-                            <v-tooltip :text="tagList[tagIndex+1].longName" open-delay="300" location="top">
+                            <v-tooltip :text="tagList[tagIndex+1].longName" open-delay="100" location="top">
                                 <template v-slot:activator="{ props }">
                                     <div v-bind="props"
                                         @click="nextTag"
@@ -376,7 +376,8 @@
                     window.scrollTo(0, 0, { behavior: 'smooth' })
                 },
                 buttons: [{ text: "okay", action: tutorialClear, classes: "bg-primary" }],
-                text: "To start the tutorial again, click on this question mark."
+                text: `To start the tutorial again, click on this question mark.
+                    This will <b>reset</b> your selection, so keep that in mind!`
             }
         ])
     }
@@ -387,6 +388,7 @@
     }
 
     function startTutorial() {
+        clearAnswers()
         // emit event so that things like timers can be cancelled
         emit("tutorial-start")
         tutorial.start()

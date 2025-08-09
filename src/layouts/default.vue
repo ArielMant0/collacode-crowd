@@ -14,6 +14,7 @@
                 :class="{ 'ml-1': idx > 0 }"
                 :prepend-icon="l.icon"
                 rounded="0"
+                :disabled="l.disabled"
                 :variant="route.name === l.route ? 'tonal' : 'text'"
                 :color="route.name === l.route ? 'primary' : (l.color ? l.color : 'default')">
                 {{ l.name }}
@@ -30,7 +31,7 @@
 
 <script setup>
     import router from '@/router';
-    import { useApp } from '@/stores/app';
+    import { CW_MAX_SUB, useApp } from '@/stores/app';
     import { useRoute } from 'vue-router';
 
     const app = useApp()
@@ -38,13 +39,26 @@
 
     const links = computed(() => {
         return [
-            { name: "home", icon: "mdi-home", route: "/" },
-            { name: "about", icon: "mdi-information",  route: "/about" },
-            { name: "feedback", icon: "mdi-comment",  route: "/feedback" },
             {
+                name: "home",
+                icon: "mdi-home",
+                route: "/",
+                disabled: app.target !== null
+            },{
+                name: "about",
+                icon: "mdi-information",
+                route: "/about",
+                disabled: app.target !== null || (app.isCrowdWorker && app.numSubmissions < CW_MAX_SUB)
+            },{
+                name: "feedback",
+                icon: "mdi-comment",
+                route: "/feedback",
+                disabled: (app.target !== null && !app.isCrowdWorkerReady) || (app.isCrowdWorker && app.numSubmissions < CW_MAX_SUB)
+            },{
                 name: "graph",
                 icon: "mdi-graph-outline",
                 route: "/graph",
+                disabled: app.target !== null || (app.isCrowdWorker && app.numSubmissions < CW_MAX_SUB),
                 color: app.numSubmissions < 5 ? 'error' : 'default'
             },
         ]

@@ -86,6 +86,7 @@
         try {
             await loadCrowdMeta()
             await loadCrowdItems()
+            await loadFeedback()
         } catch (e) {
             console.error(e.toString())
             toast.error("error loading crowd data")
@@ -316,11 +317,22 @@
         }
     }
 
+    async function loadFeedback() {
+        if (!app.activeUserId) return
+        try {
+            const res = await api.getClientRatings()
+            app.numFeedback = Object.values(res).reduce((acc, d) => acc + (d !== null ? 1 : 0), 0)
+        } catch (e) {
+            console.error(e.toString())
+        }
+    }
+
     function readQuery() {
         // check if we were passed a crowd worker id
         if (route.query.prolific_pid) {
             const before = app.cwId ? app.cwId : localStorage.getItem("cw-id")
             const pid = ""+route.query.prolific_pid
+            console.log(before, pid)
             if (before !== pid) {
                 localStorage.setItem("cw-id", pid)
                 localStorage.setItem("cw-source", "prolific")
