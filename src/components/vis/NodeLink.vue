@@ -60,14 +60,14 @@
 
     const elVisible = useElementVisibility(el)
 
-    let worker
+    let worker, wscale
     const workerProgress = ref(0)
     const workerActive = ref(false)
 
     function zoomToBoundingBox(node=null) {
         let transform = d3.zoomIdentity
-        const [x0, x1] = x.domain()
-        const [y0, y1] = y.domain()
+        const [x0, x1] = d3.extent(nodes, d => d.x)
+        const [y0, y1] = d3.extent(nodes, d => d.y)
 
         if (x0 !== undefined && x1 !== undefined &&
             y0 !== undefined && y1 !== undefined
@@ -135,6 +135,7 @@
             .attr("transform", d => `translate(${zx(d.x)},${zy(d.y)}) scale(${Math.max(0.4, zoomTransform.k / 3)})`)
 
         lg
+            .attr("stroke-width", d => wscale(d.value) * Math.max(0.4, zoomTransform.k / 3))
             .attr("x1", d => zx(d.source.x))
             .attr("x2", d => zx(d.target.x))
             .attr("y1", d => zy(d.source.y))
@@ -192,9 +193,14 @@
         const svg = d3.select(el.value)
         svg.selectAll('*').remove()
 
-        let wscale;
+        let maxWeight= 1
+
         if (props.weightAttr){
-            wscale = d3.scaleQuantile(links.map(d => d[props.weightAttr]), [2, 4, 6, 8])
+            const [minW, maxW] = d3.extent(links.map(d => d[props.weightAttr]))
+            maxWeight = maxW
+            wscale = d3.scaleLinear()
+                .domain([minW, maxW])
+                .range([2, 8])
         } else {
             wscale = () => 2
         }
@@ -273,10 +279,6 @@
             .domain([0, props.height])
             .range([0, props.height])
 
-        let maxWeight = 1
-        if (props.weightAttr) {
-            maxWeight = d3.max(links, d => d[props.weightAttr])
-        }
 
         function distanceFunction(d) {
             return props.weightAttr ?

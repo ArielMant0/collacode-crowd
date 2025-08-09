@@ -5,12 +5,12 @@
  */
 
 // Composables
-import { createRouter, createWebHistory } from 'vue-router/auto'
+import { createRouter, createWebHistory, createWebHashHistory } from 'vue-router/auto'
 import { setupLayouts } from 'virtual:generated-layouts'
 import { routes } from 'vue-router/auto-routes'
 
 const router = createRouter({
-  history: createWebHistory(__APP_BASE_PATH__),
+  history: createWebHashHistory(__APP_BASE_PATH__),
   routes: setupLayouts(routes),
 })
 
