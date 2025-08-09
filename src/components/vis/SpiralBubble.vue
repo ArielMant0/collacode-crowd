@@ -196,7 +196,7 @@
 
         const simulateSpacing = () => {
             let theta = 0
-            let s = 14; // initial guess for spacing
+            let s = numPoints > 200 ? 12 : 14; // initial guess for spacing
             let b = s / (1.75 * Math.PI); // tightness factor
             let r = 0, i = 0
             while (r < maxRadius && i < numPoints) {

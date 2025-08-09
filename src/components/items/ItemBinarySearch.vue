@@ -4,8 +4,8 @@
             <div v-if="inLastStep">
                 <div style="text-align: center;">this would be your final set of {{ app.itemName }}s</div>
                 <v-sheet v-if="inLastStep" rounded="lg" border class="pa-2 d-flex flex-wrap justify-center" style="max-width: 100%; width: 100%;">
-                    <ItemTeaser v-for="id in finalItems"
-                        :id="id"
+                    <ItemTeaser v-for="item in finalItems"
+                        :item="item"
                         class="mr-2 mb-2"
                         :width="imageWidth"
                         :height="imageHeight"
@@ -14,7 +14,7 @@
                 </v-sheet>
             </div>
 
-            <div v-for="(obj, idx) in split" :key="obj.tag" class="binsearch-q">
+            <div v-for="(obj, idx) in split" :key="obj.key" class="binsearch-q">
 
                 <div style="text-align: center;" class="qtext">
                     <div v-if="idx === 0 && !inLastStep" style="font-size: large;">
@@ -139,13 +139,11 @@
 </template>
 
 <script setup>
-    import * as d3 from 'd3'
     import { ref, onMounted, onBeforeUnmount, onUpdated, computed } from 'vue';
     import DM from '@/use/data-manager';
     import { useApp } from '@/stores/app';
     import { GR_COLOR } from '@/stores/games';
     import { randomChoice } from '@/use/random';
-    import { capitalize, mediaPath } from '@/use/utility';
     import { useTooltip } from '@/stores/tooltip';
     import SpiralBubble from '../vis/SpiralBubble.vue';
     import ItemTeaser from './ItemTeaser.vue';
@@ -422,11 +420,7 @@
         }
 
         // reset available tags
-        tagsToUse.forEach(t => {
-            if (!app.excludedTags.has(t.name)) {
-                tagsLeft.add(t.id)
-            }
-        })
+        tagsToUse.forEach(t => tagsLeft.add(t.id))
 
         // clear splits
         split.value = []
@@ -466,16 +460,19 @@
                 const c1 = getItemClusters(withTag.map(idx => itemsToUse[idx]))
                 const c2 = getItemClusters(without.map(idx => itemsToUse[idx]))
 
-                const clustersYes = []
-                const clustersNo = []
+                const clustersYes = c1 ? [] : withTag.map(idx => [idx])
+                const clustersNo = c2 ? [] : without.map(idx => [idx])
                 allClusters = []
-                const maxnum = Math.max(c1.clusters.length, c2.clusters.length)
+                const maxnum = Math.max(
+                    c1 ? c1.clusters.length : 0,
+                    c2 ? c2.clusters.length : 0
+                )
                 for (let i = 0; i < maxnum; ++i) {
-                    if (i < c1.clusters.length) {
+                    if (c1 && i < c1.clusters.length) {
                         clustersYes.push(c1.clusters[i].map(dd => itemsToUse.findIndex(d => d.id === dd.id)))
                         allClusters.push(clustersYes.at(-1))
                     }
-                    if (i < c2.clusters.length) {
+                    if (c2 && i < c2.clusters.length) {
                         clustersNo.push(c2.clusters[i].map(dd => itemsToUse.findIndex(d => d.id === dd.id)))
                         allClusters.push(clustersNo.at(-1))
                     }
@@ -545,7 +542,6 @@
             })
 
             last.tag = splitTag
-            tagsLeft.delete(last.tag.id)
         }
     }
     function prevTag() {
@@ -581,8 +577,10 @@
     }
 
     async function splitItems() {
+        const hasNextSplit = itemsLeft.size > props.minItems
+
         // remove
-        if (!inLastStep.value && split.value.length > 0) {
+        if (!inLastStep.value && hasNextSplit && split.value.length > 0) {
             const last = split.value.at(0)
             const choice = last.tag.id
             const indices = Array.from(itemsLeft.values())
@@ -599,8 +597,8 @@
             const last = split.value.at(0)
 
             finalItems.value = last.hasTag ?
-                last.with.map(idx => itemsToUse[idx].id) :
-                last.without.map(idx => itemsToUse[idx].id)
+                last.with.map(idx => itemsToUse[idx]) :
+                last.without.map(idx => itemsToUse[idx])
 
             emit("ready", true)
             return
@@ -614,21 +612,26 @@
                 counts.set(t.id, (counts.get(t.id) || 0) + 1)
             })
         })
+
         tagsToUse.forEach(t => {
-            if (counts.has(t.id)) {
-                t.freq.push(counts.get(t.id) / itemsLeft.size)
+            const c = counts.get(t.id)
+            if (c !== undefined && c > 1 && c < itemsLeft.size-1) {
+                t.freq = c / itemsLeft.size
+                t.count = c
             } else {
-                t.freq.push(0)
+                t.freq = 0
+                t.count = 0
             }
         })
 
         // sort tags by difference to 50%
-        tagsToUse.sort((a, b) => Math.abs(0.5 - a.freq.at(-1)) - Math.abs(0.5 - b.freq.at(-1)))
+        const tagCands = tagsToUse.filter(t => t.freq > 0)
+        tagCands.sort((a, b) => Math.abs(0.5 - a.freq) - Math.abs(0.5 - b.freq))
 
         tagIndex.value = 0
-        tagList.value = tagsToUse
+        tagList.value = tagCands
         // choose first tag as the one to split on
-        const splitTag = tagsToUse[0]
+        const splitTag = tagCands[0]
 
         // divide items based on split tag
         const withTag = [], without = []
@@ -649,16 +652,20 @@
             const c1 = getItemClusters(withTag.map(idx => itemsToUse[idx]))
             const c2 = getItemClusters(without.map(idx => itemsToUse[idx]))
 
-            const clustersYes = []
-            const clustersNo = []
+            const clustersYes = c1 ? [] : withTag.map(idx => [idx])
+            const clustersNo = c2 ? [] : without.map(idx => [idx])
             allClusters = []
-            const maxnum = Math.max(c1.clusters.length, c2.clusters.length)
+            const maxnum = Math.max(
+                c1 ? c1.clusters.length : 0,
+                c2 ? c2.clusters.length : 0
+            )
+
             for (let i = 0; i < maxnum; ++i) {
-                if (i < c1.clusters.length) {
+                if (c1 && i < c1.clusters.length) {
                     clustersYes.push(c1.clusters[i].map(dd => itemsToUse.findIndex(d => d.id === dd.id)))
                     allClusters.push(clustersYes.at(-1))
                 }
-                if (i < c2.clusters.length) {
+                if (c2 && i < c2.clusters.length) {
                     clustersNo.push(c2.clusters[i].map(dd => itemsToUse.findIndex(d => d.id === dd.id)))
                     allClusters.push(clustersNo.at(-1))
                 }
@@ -712,6 +719,7 @@
 
         const h = getImageHeight(withTag.length, without.length)
         split.value.unshift({
+            key: split.value.length,
             tag: splitTag,
             hasTag: null,
             with: withTag,
@@ -749,11 +757,15 @@
 
         // remove following tags if we clicked on a previous tag
         if (index > 0) {
-            // add items back to list of available items
+            tagsLeft.add(split.value[0].tag.id)
+            // add items and tags back to list of available items
             for (let i = 1; i <= index; ++i) {
                 const s = split.value.at(i)
                 s.with.forEach(id => itemsLeft.add(id))
                 s.without.forEach(id => itemsLeft.add(id))
+                if (i < index) {
+                    tagsLeft.add(s.tag.id)
+                }
             }
             // remove splits
             split.value.splice(0, index)
@@ -785,10 +797,10 @@
         itemsToUse = DM.getDataBy("items", d => d.allTags.length > 0 && (!props.target || d.id !== props.target))
         const tags = DM.getData("tags", false)
         tagsToUse = tags
-            .filter(d => d.is_leaf === 1)
+            .filter(d => d.is_leaf === 1 && !app.excludedTags.has(d.name))
             .map(d => {
                 const obj = Object.assign({}, d)
-                obj.freq = []
+                obj.freq = 0
                 return obj
             })
     }
@@ -801,23 +813,15 @@
         itemsLeft.clear()
         tagsLeft.clear()
         itemsToUse.forEach((_, idx) => itemsLeft.add(idx))
-        tagsToUse.forEach(t => {
-            if (!app.excludedTags.has(t.name)) {
-                tagsLeft.add(t.id)
-            }
-        })
+        tagsToUse.forEach(t => tagsLeft.add(t.id))
         if (update) {
             splitItems()
         }
     }
 
     function getSubmitData() {
-        const indices = itemsLeft.size <= props.maxItems ?
-            Array.from(itemsLeft.values()) :
-            randomChoice(Array.from(itemsLeft.values()), props.maxItems)
-
         return {
-            candidates: indices.map(idx => itemsToUse[idx]),
+            candidates: finalItems.value,
             log: log
         }
     }

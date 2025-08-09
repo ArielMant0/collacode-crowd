@@ -230,7 +230,7 @@ export function getItemClusters(data, metric="euclidean", minStd=4.5, maxStd=1.2
     }
 
     let numTooSmall = indices.reduce((acc, list) => acc + (list.length < minSize ? 1 : 0), 0)
-    while (numTooSmall > 0) {
+    for (let iter = 0; iter < 10 && numTooSmall > 0; ++iter) {
         const takenFinal = new Set()
         const final = []
         for (let i = 0; i < indices.length; ++i) {
