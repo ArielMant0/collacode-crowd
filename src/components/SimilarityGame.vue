@@ -99,6 +99,7 @@
                     :item-limit="10"
                     :target="gameData.target.id"
                     :items="gameData.resultItems"
+                    @search="setSearchHistory"
                     @update="setAdditionalItems"/>
             </div>
 
@@ -208,6 +209,8 @@
     let attentionDone = false, attentionNext = null
     let timeStart, timeEnd
     let timeStartTutorial, timeEndTutorial
+    let tabChangeWarning = false, numTabChanged = 0
+    let searchHistory = []
 
     const props = defineProps({
         method: {
@@ -517,6 +520,9 @@
     function setAdditionalItems(items) {
         gameData.customItems = items
     }
+    function setSearchHistory(searchTerms) {
+        searchHistory = searchTerms
+    }
 
     function startRound(timestamp=null) {
         state.value = STATES.START
@@ -679,6 +685,8 @@
                 durationPerStep: gameData.durPerStep,
                 language: window.navigator.language,
                 userAgent: window.navigator.userAgent,
+                tabChanges: numTabChanged,
+                searchHistory: searchHistory,
                 window: {
                     width: window.innerWidth,
                     height: window.innerHeight
@@ -708,6 +716,9 @@
                     { position: POSITION.TOP_CENTER, timeout: 1500 }
                 )
                 setTimeout(function() { router.replace("/feedback") }, 3000)
+            } else if (app.isCrowdWorker) {
+                // redirect to home after 30 seconds
+                setTimeout(function() { router.replace("/") }, 30000)
             }
 
             state.value = STATES.END
@@ -747,6 +758,7 @@
         gameData.timePerStep = {}
         gameData.durPerStep = {}
         gameData.lastStep = null
+        searchHistory = []
         app.resetInteraction()
     }
     function reset() {
@@ -766,10 +778,26 @@
             function() { userGeoLoc = null },
             {
                 enableHighAccuracy: false,
-                timeout: 2000,
-                maximumAge: 0
+                timeout: 2000
             }
         )
+
+        numTabChanged = 0
+        document.addEventListener("visibilitychange", function() {
+            if (document.hidden) {
+                tabChangeWarning = app.isCrowdWorker
+                numTabChanged++
+            } else if (tabChangeWarning) {
+                tabChangeWarning = false
+                toast.warning(
+                    "please do not leave the page during the study",
+                    {
+                        position: POSITION.TOP_CENTER,
+                        timeout: 5000
+                    }
+                )
+            }
+        })
 
         tutorialDone = Boolean(localStorage.getItem("tutorial_"+props.method)) === true
 

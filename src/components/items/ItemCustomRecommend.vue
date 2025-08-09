@@ -243,7 +243,7 @@
         }
     })
 
-    const emit = defineEmits(["update"])
+    const emit = defineEmits(["update", "search"])
 
     const itemHigh = reactive(new Set())
     const itemMed = reactive(new Set())
@@ -266,10 +266,21 @@
     let dragId = null, dragOrigin, dragIndex
     let dragElem = null, dragClassName = ""
 
+    let searchHistory = []
+
     function searchByName() {
         app.addInteraction("step3")
         if (search.value && search.value.length > 2) {
             const name = new RegExp(search.value, "gi")
+
+            const lower = search.value.toLowerCase()
+            const contained = searchHistory.find(s => s.includes(lower))
+            if (!contained) {
+                searchHistory = searchHistory.filter(s => !lower.includes(s))
+                searchHistory.push(lower)
+            }
+            emit("search", searchHistory)
+
             bySearch.value = DM.getDataBy("items", d => !isChosenItem(d.id) && name.test(d.name))
                 .map(d => ({ id: d.id, value: 0 }))
         } else {
@@ -448,11 +459,15 @@
     }
 
     function update() {
-        emit("update", highItems.value.map(d => ({ id: d.id, value: 2, origin: d.origin }))
-            .concat(medItems.value.map(d => ({ id: d.id, value: 1, origin: d.origin }))))
+        emit(
+            "update",
+            highItems.value.map(d => ({ id: d.id, value: 2, origin: d.origin }))
+                .concat(medItems.value.map(d => ({ id: d.id, value: 1, origin: d.origin })))
+        )
     }
 
     function init() {
+        searchHistory = []
         fixed.clear()
         props.items.forEach(d => fixed.add(d.id))
         getSuggestions()
