@@ -301,11 +301,14 @@
                 }
             })
             if (record) {
-                history.value.push(id)
-                if (history.value.length >= 30) {
-                    history.value = history.value.slice(10, history.value.length)
+                const last = history.value.length > 0 ? history.value.at(-1) : null
+                if (!last || last !== id) {
+                    history.value.push(id)
+                    if (history.value.length >= 30) {
+                        history.value = history.value.slice(10, history.value.length)
+                    }
+                    historyIndex.value = history.value.length-1
                 }
-                historyIndex.value = history.value.length-1
                 updateHistoryItems()
             }
         } else {
