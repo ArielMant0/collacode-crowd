@@ -354,8 +354,8 @@ export function getItemClusters(data, targets=[], metric="euclidean", minStd=4, 
 
     const clusters = indices.map(list => list.map(i => data[i]))
 
-    console.log(clusters.length)
-    clusters.forEach(list => console.log(list.map(d => d.name)))
+    // console.log(clusters.length)
+    // clusters.forEach(list => console.log(list.map(d => d.name)))
 
     const k = clusters.length
     const maxDistances = new Array(k)

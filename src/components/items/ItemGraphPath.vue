@@ -204,7 +204,7 @@
     const miniImageHeight = computed(() => Math.round(miniImageWidth.value * 0.5))
 
 
-    let itemsToUse, allItems
+    let allItems
     let log = []
     let candidateItems = []
     let clusters = null, maxClsSize = 0
@@ -277,7 +277,7 @@
             const added = []
             // add similar items
             for (let j = 0; j < cands1.length && added.length < s1; ++j) {
-                const item = itemsToUse[cands1[j].index]
+                const item = allItems[cands1[j].index]
                 if (added.length < s1 && (!idSet.has(item.id) || j === 0)) {
                     added.push(item)
                     idSet.add(item.id)
@@ -699,7 +699,7 @@
             const selObj = {
                 id: id,
                 cluster: csi,
-                index: itemsToUse.findIndex(d => d.id === id)
+                index: allItems.findIndex(d => d.id === id)
             }
             // perform replacement or adding
             if (replace) {
@@ -823,7 +823,6 @@
         allItems = DM.getDataBy("items", d => d.allTags.length > 0)
         allItems.sort((a, b) => a.id - b.id)
         allItems.forEach((d, i) => d._cidx = i)
-        itemsToUse = allItems.filter(d => !props.target || d.id !== props.target)
         clusters = null
         clsIndex.value = 0
         clsGroups.value = []
