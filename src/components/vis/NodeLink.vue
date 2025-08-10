@@ -440,7 +440,7 @@
         d3.select(el.value).call(zoom.transform, transform)
     }
 
-    defineExpose({ resetZoom, focus })
+    defineExpose({ resetZoom, focus, draw })
 
     onMounted(function() {
         window.addEventListener("keydown", onKeyDown)

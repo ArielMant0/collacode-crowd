@@ -390,6 +390,7 @@
 
     function startTutorial() {
         clearAnswers()
+        finalItems.value = []
         // emit event so that things like timers can be cancelled
         emit("tutorial-start")
         tutorial.start()

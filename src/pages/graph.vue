@@ -11,17 +11,27 @@
         <div v-if="showGraph"
             :style="{ maxWidth: (graphWidth+320)+'px' }"
             style="min-width: 300px; width: 75%;">
-            <v-text-field v-model="search"
-                label="Search by name (min. 3 characters)"
-                variant="outlined"
-                density="compact"
-                class="mb-2 mt-4"
-                style="width: 100%;"
-                @keyup.prevent="onSearchKey"
-                hide-details
-                hide-spin-buttons
-                clearable>
-            </v-text-field>
+
+            <div class="d-flex align-center">
+                <v-text-field v-model="search"
+                    label="Search by name (min. 3 characters)"
+                    variant="outlined"
+                    density="compact"
+                    class="mb-2 mt-4"
+                    style="width: 75%;"
+                    @keyup.prevent="onSearchKey"
+                    hide-details
+                    hide-spin-buttons
+                    clearable>
+                </v-text-field>
+                <v-btn
+                    @click="refreshLayout"
+                    class="ml-2 text-caption"
+                    density="comfortable"
+                    color="secondary">
+                    refresh layout
+                </v-btn>
+            </div>
             <div v-if="search" class="text-caption d-flex">
                 <div style="min-width: 70px;"><b>{{ searchHits.length }} {{ searchHits.length === 1 ? 'hit' : 'hits' }}</b></div>
                 <div style="width: 100%; max-height: 100px; overflow-y: auto;">
@@ -34,6 +44,7 @@
             </div>
             <div class="d-flex align-start justify-space-between">
                 <NodeLink v-if="graphData.nodes && graphData.links"
+                    ref="nl"
                     :nodes="graphData.nodes"
                     :links="graphData.links"
                     :width="graphWidth"
@@ -170,7 +181,7 @@
     import DM from '@/use/data-manager';
     import { useTimes } from '@/stores/times';
     import { useWindowSize } from '@vueuse/core';
-    import { computed, onMounted, reactive, watch } from 'vue';
+    import { computed, onMounted, reactive, useTemplateRef, watch } from 'vue';
     import NodeLink from '@/components/vis/NodeLink.vue';
     import ItemTeaser from '@/components/items/ItemTeaser.vue';
     import { max } from 'd3';
@@ -187,6 +198,8 @@
     const tt = useTooltip()
     const times = useTimes()
     const { width, height } = useWindowSize()
+
+    const nl = useTemplateRef("nl")
 
     const graphWidth = computed(() => Math.max(300, Math.min(1000, width.value-300)))
     const graphHeight = computed(() => Math.max(400, Math.min(1000, Math.floor(height.value*0.80))))
@@ -244,6 +257,12 @@
         nextItemName.value = historyIndex.value < history.value.length-1 ?
             DM.getDataItem("items_name", history.value[historyIndex.value+1]) :
             ""
+    }
+
+    function refreshLayout() {
+        if (nl.value) {
+            nl.value.draw()
+        }
     }
 
     function onSearchKey(event) {

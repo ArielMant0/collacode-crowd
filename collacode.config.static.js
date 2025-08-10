@@ -5,7 +5,7 @@ export const URL_STATIC_DATA = "data/"
 export const URL_SOUND = "sounds/"
 export const URL_IMAGES = "images/"
 export const ALLOWED_HOSTS = false
-export const DEV_MODE = true
+export const DEV_MODE = false
 
 export function getApiUrl(port=8000) {
     return `https://www2.visus.uni-stuttgart.de/colladata/api/v1`

@@ -1,6 +1,8 @@
 <template>
     <div>
-        <div v-if="state === STATES.INGAME && notInCheck" style="max-width: 300px; position: absolute; top: 60px; left: 5px;">
+        <div v-if="state === STATES.INGAME && notInCheck"
+            style="max-width: 300px; position: absolute; top: 60px; left: 5px; pointer-events: none;">
+
             <v-stepper-vertical flat :model-value="stepIndex" class="mr-4 cursor-default" hide-actions>
                 <template #default>
                     <v-stepper-vertical-item  v-for="(s, idx) in gameData.steps"
@@ -8,7 +10,12 @@
                         :title="s.title"
                         :value="idx+1"
                         color="primary text-wrap"
-                        :complete="s.step < step"/>
+                        :complete="s.step < step">
+
+                        <template #title="{ title }">
+                            <span style="font-size: small;">{{ title }}</span>
+                        </template>
+                    </v-stepper-vertical-item>
                 </template>
             </v-stepper-vertical>
         </div>
