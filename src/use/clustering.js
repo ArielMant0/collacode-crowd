@@ -87,7 +87,7 @@ export function getMinMaxMeanDistBetweenClusters(ca, cb, pwd) {
     return [mind, maxd, meand / (ca.length*cb.length)]
 }
 
-export function getItemClusters(data, metric="euclidean", minStd=4, maxStd=1.5, minSize=5, maxSize=13, allTags=true, useWeights=false) {
+export function getItemClusters(data, targets=[], metric="euclidean", minStd=4, maxStd=2, minSize=5, maxSize=13, allTags=true, useWeights=false) {
     const n = data.length
     if (n <= minSize) return null
 
@@ -181,7 +181,7 @@ export function getItemClusters(data, metric="euclidean", minStd=4, maxStd=1.5, 
             }
         }
 
-        cand.sort((a, b) => Math.abs(a.dist - b.dist))
+        cand.sort((a, b) => a.dist - b.dist)
         cand.forEach(d => {
             const i = d.index
             const i2 = d.other
@@ -227,14 +227,14 @@ export function getItemClusters(data, metric="euclidean", minStd=4, maxStd=1.5, 
             mergeMinBase *= 1.1
         }
         if (mergeMaxBase < meanD) {
-            mergeMaxBase *= 1.05
+            mergeMaxBase *= 1.075
         }
     }
 
     let numTooSmall = indices.reduce((acc, list) => acc + (list.length < minSize ? 1 : 0), 0)
     numNoChanges = 0
 
-    for (let iter = 0; iter < 15 && numTooSmall > 0; ++iter) {
+    for (let iter = 0; iter < 20 && numTooSmall > 0; ++iter) {
 
         const cand = []
         const k = indices.length
@@ -243,33 +243,39 @@ export function getItemClusters(data, metric="euclidean", minStd=4, maxStd=1.5, 
 
         for (let i = 0; i < indices.length; ++i) {
             if (indices[i] === null) continue
-            if (indices[i].length <= maxSize-minSize) {
 
-                let bestmin = Number.MAX_VALUE, best = -1
+            let bestmin = Number.MAX_VALUE, bestmax = 0, best = -1
 
-                // find the cluster with the best min distance
-                for (let j = 0; j < indices.length; ++j) {
-                    if (i === j || indices[j] === null) continue
+            // find the cluster with the best min distance
+            for (let j = 0; j < indices.length; ++j) {
+                if (i === j || indices[j] === null) continue
 
-                    const newSize = indices[i].length + indices[j].length
-                    if (newSize > maxSize) continue
+                const newSize = indices[i].length + indices[j].length
+                if (newSize > maxSize) continue
+                const tooSmall = indices[i].length < minSize
 
-                    const [mind, maxd, _meand] = getMinMaxMeanDistBetweenClusters(indices[i], indices[j], pwd)
-                    if (mind < bestmin && (newSize <= minSize || maxd <= mergeMaxBase || lastIter)) {
-                        best = j
-                        bestmin = mind
-                    }
+                const [mind, maxd, _meand] = getMinMaxMeanDistBetweenClusters(indices[i], indices[j], pwd)
+                if (mind < bestmin && (newSize <= minSize || maxd <= mergeMaxBase || (lastIter && tooSmall))) {
+                    best = j
+                    bestmin = mind
+                    bestmax = maxd
                 }
+            }
 
-                if (best >= 0) {
-                    cand.push({ index: i, other: best, dist: bestmin })
-                }
+            if (best >= 0) {
+                cand.push({ index: i, other: best, dist: bestmin, bestMax: bestmax })
             }
         }
 
         let numMerges = 0
 
-        cand.sort((a, b) => Math.abs(b.dist - a.dist))
+        cand.sort((a, b) => {
+            if (a.dist === b.dist) {
+                return a.bestMax - b.bestMax
+            }
+            return a.dist - b.dist
+        })
+
         cand.forEach(d => {
             const i = d.index
             const i2 = d.other
@@ -289,9 +295,10 @@ export function getItemClusters(data, metric="euclidean", minStd=4, maxStd=1.5, 
 
                     const newSize = indices[i].length + indices[j].length
                     if (newSize > maxSize) continue
+                    const tooSmall = indices[i].length < minSize
 
                     const [mind, maxd, _] = getMinMaxMeanDistBetweenClusters(indices[i], indices[j], pwd)
-                    if (mind <= mergeMinBase && (newSize <= minSize || maxd <= mergeMaxBase || lastIter)) {
+                    if (mind <= mergeMinBase && (newSize <= minSize || maxd <= mergeMaxBase || (lastIter && tooSmall))) {
                         if (mind < bestMin) {
                             bestCls = j
                             bestMin = mind
@@ -308,7 +315,7 @@ export function getItemClusters(data, metric="euclidean", minStd=4, maxStd=1.5, 
         })
 
         if (mergeMaxBase < meanD) {
-            mergeMaxBase *= 1.05
+            mergeMaxBase *= 1.075
         }
 
         numNoChanges = numMerges > 0 ? 0 : numNoChanges+1
@@ -319,6 +326,14 @@ export function getItemClusters(data, metric="euclidean", minStd=4, maxStd=1.5, 
 
 
     indices.sort((a, b) => b.length - a.length)
+
+    const targetSet = new Set(targets)
+    if (targetSet.size > 0) {
+        for (let i = 0; i < indices.length; ++i) {
+            indices[i] = indices[i].filter(idx => !targetSet.has(data[idx].id))
+        }
+    }
+
     // sort all items in a cluster by their avg distance to each other
     indices.forEach(list => {
         if (list.length < 2) return
@@ -339,8 +354,8 @@ export function getItemClusters(data, metric="euclidean", minStd=4, maxStd=1.5, 
 
     const clusters = indices.map(list => list.map(i => data[i]))
 
-    // console.log(clusters.length)
-    // clusters.forEach(list => console.log(list.map(d => d.name)))
+    console.log(clusters.length)
+    clusters.forEach(list => console.log(list.map(d => d.name)))
 
     const k = clusters.length
     const maxDistances = new Array(k)

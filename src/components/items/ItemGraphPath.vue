@@ -204,7 +204,7 @@
     const miniImageHeight = computed(() => Math.round(miniImageWidth.value * 0.5))
 
 
-    let itemsToUse
+    let itemsToUse, allItems
     let log = []
     let candidateItems = []
     let clusters = null, maxClsSize = 0
@@ -572,11 +572,11 @@
 
     async function init() {
         if (!clusters) {
-            if (itemsToUse.length === 0) {
+            if (allItems.length === 0) {
                 return console.debug("no items")
             }
 
-            clusters = getItemClusters(itemsToUse)
+            clusters = getItemClusters(allItems, props.target ? [props.target] : [])
             clusterLeft.clear()
             maxClsSize = 0
 
@@ -819,9 +819,11 @@
         clusterLeft.clear()
         numCls.value = clusterLeft.size
         numClsLeft.value = clusterLeft.size
-        itemsToUse = DM.getDataBy("items", d => d.allTags.length > 0 && (!props.target || d.id !== props.target))
-        itemsToUse.sort((a, b) => a.id - b.id)
-        itemsToUse.forEach((d, i) => d._cidx = i)
+
+        allItems = DM.getDataBy("items", d => d.allTags.length > 0)
+        allItems.sort((a, b) => a.id - b.id)
+        allItems.forEach((d, i) => d._cidx = i)
+        itemsToUse = allItems.filter(d => !props.target || d.id !== props.target)
         clusters = null
         clsIndex.value = 0
         clsGroups.value = []
