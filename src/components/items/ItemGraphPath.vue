@@ -271,14 +271,17 @@
         selectionItems.value.forEach((sel, i) => {
             const s1 = Math.ceil(counts[i] * 0.66)
             // for half the items, select the most similar items
-            const cands1 = clusters.pwd[sel.index].map((v, j) => ({ index: j, value: v }))
+            const cands1 = clusters.pwd[sel.index]
+                .map((v, j) => ({ index: j, value: v }))
+                .filter(d => allItems[d.index].id !== props.target)
+
             cands1.sort((a, b) => a.value - b.value)
 
             const added = []
             // add similar items
             for (let j = 0; j < cands1.length && added.length < s1; ++j) {
                 const item = allItems[cands1[j].index]
-                if (added.length < s1 && (!idSet.has(item.id) || j === 0)) {
+                if (added.length < s1 && (item.id === sel.id || !idSet.has(item.id))) {
                     added.push(item)
                     idSet.add(item.id)
                 }
