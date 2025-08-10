@@ -87,7 +87,7 @@ export function getMinMaxMeanDistBetweenClusters(ca, cb, pwd) {
     return [mind, maxd, meand / (ca.length*cb.length)]
 }
 
-export function getItemClusters(data, metric="euclidean", minStd=4.5, maxStd=1.2, minSize=5, maxSize=13, allTags=true, useWeights=true) {
+export function getItemClusters(data, metric="euclidean", minStd=4, maxStd=1.5, minSize=5, maxSize=13, allTags=true, useWeights=false) {
     const n = data.length
     if (n <= minSize) return null
 
@@ -137,134 +137,186 @@ export function getItemClusters(data, metric="euclidean", minStd=4.5, maxStd=1.2
     let mergeMaxBase = meanD - maxStd*stdD
 
     let changes = true
-    const minIter = 15, maxIter = 30
+    let numNoChanges = 0, maxNumNoChanges = 3
+    const maxIter = 30
 
-
-    for (let iter = 0; iter < maxIter && (changes || iter < minIter); ++iter) {
+    for (let iter = 0; iter < maxIter && numNoChanges < maxNumNoChanges; ++iter) {
 
         changes = false
-        // indices = randomShuffle(indices)
+        indices.sort((a, b) => a.length - b.length)
 
         const k = indices.length
 
         const cand = []
+        let numMerges = 0
 
         // for each cluster
         for (let i = 0; i < k; ++i) {
             // find closest cluster
-            for (let j = i+1; j < k; ++j) {
-                if (indices[i].length + indices[j].length > maxSize) continue
+            let bestCls = -1
+            let bestMin = Number.MAX_VALUE
+
+            // already merged this cluster
+            if (indices[i] === null) continue
+
+            for (let j = 0; j < k; ++j) {
+                // same cluster, already merged or too large
+                if (i === j || indices[j] === null) continue
+
+                const newSize = indices[i].length + indices[j].length
+                if (newSize > maxSize) continue
+
                 const [mind, maxd, _] = getMinMaxMeanDistBetweenClusters(indices[i], indices[j], pwd)
-                if (mind <= mergeMinBase && maxd <= mergeMaxBase) { // && (maxd < mad || maxd === mad && mind < mid)) {
-                    cand.push({ from: i, to: j, minDistance: mind, maxDistance: maxd })
+
+                if (mind <= mergeMinBase && (newSize <= minSize || maxd <= mergeMaxBase)) {
+                    if (mind <= bestMin) {
+                        bestCls = j
+                        bestMin = mind
+                    }
                 }
+            }
+
+            if (bestCls >= 0) {
+                cand.push({ index: i, other: bestCls, dist: bestMin })
             }
         }
 
-        cand.sort((a, b) => {
-            if (a.maxDistance === b.maxDistance) {
-                return Math.abs(a.minDistance - b.minDistance)
+        cand.sort((a, b) => Math.abs(a.dist - b.dist))
+        cand.forEach(d => {
+            const i = d.index
+            const i2 = d.other
+            if (indices[i] !== null && indices[i2] !== null && indices[i].length+indices[i2].length <= maxSize) {
+                indices[i] = indices[i].concat(indices[i2])
+                indices[i2] = null
+                numMerges++
+            } else if (indices[i] !== null) {
+
+                let bestCls = -1
+                let bestMin = Number.MAX_VALUE
+
+                for (let j = 0; j < k; ++j) {
+                    // same cluster or already merged
+                    if (i === j || indices[j] === null) continue
+
+                    const newSize = indices[i].length + indices[j].length
+                    if (newSize > maxSize) continue
+
+                    const [mind, maxd, _] = getMinMaxMeanDistBetweenClusters(indices[i], indices[j], pwd)
+                    if (mind <= mergeMinBase && (newSize <= minSize || maxd <= mergeMaxBase)) {
+                        if (mind < bestMin) {
+                            bestCls = j
+                            bestMin = mind
+                        }
+                    }
+                }
+
+                if (bestCls >= 0) {
+                    indices[i] = indices[i].concat(indices[bestCls])
+                    indices[bestCls] = null
+                    numMerges++
+                }
             }
-            return Math.abs(a.maxDistance - b.maxDistance)
-        })
-
-        const merged = []
-        const taken = new Set()
-        let numMerges = 0
-
-        cand.forEach(ca => {
-            if (taken.has(ca.from) || taken.has(ca.to)) return
-            // merge this cluster into another
-            taken.add(ca.from)
-            taken.add(ca.to)
-            merged.push(indices[ca.from].concat(indices[ca.to]))
-            numMerges++
         })
 
         changes = numMerges > 0
+        numNoChanges = changes ? 0 : numNoChanges+1
 
-        const singles = []
-        // leftover clusters
-        indices.forEach((list, i) => {
-            if (!taken.has(i) && list.length > 1) {
-                taken.add(i)
-                merged.push(list)
-            } else if (!taken.has(i) && list.length === 1) {
-                singles.push(i)
-            }
-        })
+        indices = indices.filter(list => list !== null && list.length > 0)
 
-        const staken = new Set(taken)
-        for (let i = 0; i < singles.length; ++i) {
-            const idx = singles[i]
-            if (staken.has(idx)) continue
-            // find closest cluster
-            let bestmin = Number.MAX_VALUE, best = -1
-            for (let j = i+1; j < singles.length; ++j) {
-                const jdx = singles[j]
-                const [mind, _maxd, _] = getMinMaxMeanDistBetweenClusters(indices[idx], indices[jdx], pwd)
-                if (mind <= bestmin && !staken.has(jdx)) {
-                    bestmin = mind
-                    best = jdx
-                }
-            }
-
-            if (best >= 0) {
-                // merge this cluster into another
-                staken.add(idx)
-                staken.add(best)
-                merged.push([indices[idx][0], indices[best][0]])
-                // console.log("merged", data[indices[idx][0]].name, "and", data[indices[best][0]].name)
-            } else {
-                merged.push(indices[idx])
-            }
-        }
-
-        indices = merged
         if (mergeMinBase < meanD - stdD) {
             mergeMinBase *= 1.1
         }
-        if (mergeMaxBase > meanD) {
-            mergeMaxBase *= 0.9
+        if (mergeMaxBase < meanD) {
+            mergeMaxBase *= 1.05
         }
     }
 
     let numTooSmall = indices.reduce((acc, list) => acc + (list.length < minSize ? 1 : 0), 0)
-    for (let iter = 0; iter < 10 && numTooSmall > 0; ++iter) {
-        const takenFinal = new Set()
-        const final = []
+    numNoChanges = 0
+
+    for (let iter = 0; iter < 15 && numTooSmall > 0; ++iter) {
+
+        const cand = []
+        const k = indices.length
+        const lastIter = numNoChanges > 1 || iter === maxIter-1
+        indices.sort((a, b) => a.length - b.length)
+
         for (let i = 0; i < indices.length; ++i) {
-            if (takenFinal.has(i)) continue
-            if (indices[i].length < minSize) {
+            if (indices[i] === null) continue
+            if (indices[i].length <= maxSize-minSize) {
+
                 let bestmin = Number.MAX_VALUE, best = -1
+
                 // find the cluster with the best min distance
                 for (let j = 0; j < indices.length; ++j) {
-                    if (i === j || indices[i].length+indices[j].length > maxSize) continue
-                    const [mind, _max, meand] = getMinMaxMeanDistBetweenClusters(indices[i], indices[j], pwd)
-                    if (mind < bestmin && !takenFinal.has(j)) {
-                        bestmin = mind
+                    if (i === j || indices[j] === null) continue
+
+                    const newSize = indices[i].length + indices[j].length
+                    if (newSize > maxSize) continue
+
+                    const [mind, maxd, _meand] = getMinMaxMeanDistBetweenClusters(indices[i], indices[j], pwd)
+                    if (mind < bestmin && (newSize <= minSize || maxd <= mergeMaxBase || lastIter)) {
                         best = j
+                        bestmin = mind
                     }
                 }
 
                 if (best >= 0) {
-                    // merge this cluster into another
-                    takenFinal.add(i)
-                    takenFinal.add(best)
-                    final.push(indices[i].concat(indices[best]))
+                    cand.push({ index: i, other: best, dist: bestmin })
                 }
             }
         }
 
-        for (let i = 0; i < indices.length; ++i) {
-            if (!takenFinal.has(i)) {
-                final.push(indices[i])
+        let numMerges = 0
+
+        cand.sort((a, b) => Math.abs(b.dist - a.dist))
+        cand.forEach(d => {
+            const i = d.index
+            const i2 = d.other
+
+            if (indices[i] !== null && indices[i2] !== null && indices[i].length+indices[i2].length <= maxSize) {
+                indices[i] = indices[i].concat(indices[i2])
+                indices[i2] = null
+                numMerges++
+            } else if (indices[i] !== null) {
+
+                let bestCls = -1
+                let bestMin = Number.MAX_VALUE
+
+                for (let j = 0; j < k; ++j) {
+                    // same cluster or already merged
+                    if (i === j || indices[j] === null) continue
+
+                    const newSize = indices[i].length + indices[j].length
+                    if (newSize > maxSize) continue
+
+                    const [mind, maxd, _] = getMinMaxMeanDistBetweenClusters(indices[i], indices[j], pwd)
+                    if (mind <= mergeMinBase && (newSize <= minSize || maxd <= mergeMaxBase || lastIter)) {
+                        if (mind < bestMin) {
+                            bestCls = j
+                            bestMin = mind
+                        }
+                    }
+                }
+
+                if (bestCls >= 0) {
+                    indices[i] = indices[i].concat(indices[bestCls])
+                    indices[bestCls] = null
+                    numMerges++
+                }
             }
+        })
+
+        if (mergeMaxBase < meanD) {
+            mergeMaxBase *= 1.05
         }
 
-        indices = final
+        numNoChanges = numMerges > 0 ? 0 : numNoChanges+1
+        indices = indices.filter(list => list !== null && list.length > 0)
+        // indices = final
         numTooSmall = indices.reduce((acc, list) => acc + (list.length < minSize ? 1 : 0), 0)
     }
+
 
     indices.sort((a, b) => b.length - a.length)
     // sort all items in a cluster by their avg distance to each other
