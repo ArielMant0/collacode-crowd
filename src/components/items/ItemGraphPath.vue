@@ -416,8 +416,8 @@
                 },
                 buttons: [{ text: "next", action: tutorial.next, classes: "bg-primary" }],
                 text: `This timer shows you how much time you have left for each step.
-                    If you are not done by the time it ends, the page automatically goes to the
-                    next step with your current results.`
+                    If you are not done by the time it ends, the page <b>automatically</b> goes to
+                    the next step with your current results.`
             },{
                 id: "show-target",
                 attachTo: {
@@ -438,29 +438,32 @@
                 },
                 buttons: [{ text: "next", action: tutorial.next, classes: "bg-primary" }],
                 text: `<p>These are different groups of ${plural} from our dataset.
-                    They help you to look through ${plural} in our dataset more quickly.
-                    <span style="min-height: 1em"></span>
+                    They help you to look through ${plural} more quickly.
+                    <div style="min-height: 1em"></div>
 
-                    You can click on any ${single} or drag it into one of the three selection boxes
-                    below to get a list of similar ${plural} shown at the bottom. You can get a
-                    maximum of ${props.maxItems} suggestions for similar ${plural}.</p>`
+                    You can <b>click</b> on any ${single} or <b>drag</b> it into one of the three selection boxes
+                    below. Then you get a list of similar ${plural} shown at the bottom.
+
+                    <div style="min-height: 1em"></div>
+                    You can get a <b>maximum of ${props.maxItems} ${plural}</b>.</p>`
             },{
                 id: "click-item",
                 attachTo: {
                     element: "#cluster-options .item-teaser",
                     on: "right-start"
                 },
-                text: `Select this ${single}!`
+                text: `<b>Select this ${single}!</b>`
             },{
                 id: "show-collected",
                 attachTo: {
                     element: "#collected-items",
                     on: "top-end"
                 },
-                text: `These are now your <b>collected similar ${plural}</b> from which you will select
-                    the most similar ${plural} to your target in the next step. You can add
-                    other ${plural} by selecting a different ${single} here or in a group above.
-                    Select another ${single} from this list!`
+                text: `<p>These are now your <b>collected similar ${plural}</b> which you refine in
+                    the next step. You can add other ${plural} by selecting a different ${single}
+                    here or in a group above.
+                    <div style="min-height: 1em"></div>
+                    <b>Select another ${single} from this list!</b></p>`
             },{
                 id: "collected-update",
                 attachTo: {
@@ -468,13 +471,22 @@
                     on: "top-end"
                 },
                 buttons: [{ text: "next", action: tutorial.next, classes: "bg-primary" }],
-                text: `Now your collection has split, showing ${props.maxItems} similar ${plural}
+                text: `Now your collection has <b>split</b>, showing ${props.maxItems} similar ${plural}
                     for your selected ${plural}.`
             },{
                 id: "remove-item",
                 attachTo: {
                     element: ".seed",
                     on: "top"
+                },
+                beforeShowPromise: async function() {
+                    if (!selection.value[0]) {
+                        toggleItem(
+                            clusters.clusters[clsGroups.value[clsOrder.list][0]][0].id,
+                            "tutorial",
+                            0
+                        )
+                    }
                 },
                 text: `Click on this ${single} again to remove it from your selection.`
             },{
@@ -484,7 +496,7 @@
                     on: "bottom"
                 },
                 extraHighlights: ["#cluster-options"],
-                text: `To see the next groups of ${plural} use the right arrow button.`
+                text: `To see the next groups of ${plural} use the <b>right arrow</b> button.`
             },{
                 id: "cls-prev",
                 attachTo: {
@@ -492,15 +504,15 @@
                     on: "bottom"
                 },
                 extraHighlights: ["#cluster-options"],
-                text: `To go back to the previous groups of ${plural}, use the left arrow button.`
+                text: `To go back to the previous groups of ${plural}, use the <b>left arrow</b> button.`
             },{
                 id: "show-history",
                 attachTo: {
                     element: "#item-history",
                     on: "top-start"
                 },
-                text: `We keep track of the ${plural} you selected. Click on a ${single}
-                    here to re-select it!`
+                text: `We keep track of the ${plural} you selected. <b>Click on a ${single}
+                    from the history!</b>`
             },{
                 id: "submit",
                 attachTo: {
@@ -645,6 +657,12 @@
         const cand = getCandidates()
         candidateItems = cand.flat()
         candidates.value = cand.map(list => list.map(d => d.id))
+        if (!tutorial.isActive()) {
+            logAction({
+                desc: "candidates",
+                items: candidates.value.slice(0)
+            })
+        }
         emit("ready", candidates.value.length > 0)
     }
 
@@ -659,7 +677,7 @@
         const move = index >= 0 && target !== null && newIdx !== index
         const replace = index < 0 && newIdx >= 0 && selection.value[newIdx]
 
-        if (tutorial.isActive()) {
+        if (tutorial.isActive() && source !== "tutorial") {
             const sid = tutorial.getCurrentStep()
             if (sid.id === 'click-item' || sid.id === 'show-collected' ||
                 sid.id === 'remove-item' || sid.id === 'show-history') {
@@ -708,31 +726,28 @@
 
     function addSelection(index, object, source="") {
         sounds.play(SOUND.PLOP)
-        logAction({
-            desc: "add item",
-            source: source,
-            item: object.id
-        })
-        app.addInteraction("step1")
-
         // add the cluster to the list of selected clusters
         clsOrder.selected.add(object.cluster)
         // set the selected item
         selection.value[index] = object
+
+        logAction({
+            desc: "add item",
+            source: source,
+            item: object.id,
+            selection: selection.value.filter(d => d !== null).map(d => d.id)
+        })
+        app.addInteraction("step1")
+
         addToHistory(object.id)
         updateCandidates()
     }
 
     function removeSelection(index, source="") {
         if (selection.value[index]) {
-            sounds.play(SOUND.PLOP)
-            logAction({
-                desc: "remove item",
-                source: source,
-                item: selection.value[index].id
-            })
-            app.addInteraction("step1")
 
+            sounds.play(SOUND.PLOP)
+            const itemId = selection.value[index].id
             const c = selection.value[index].cluster
             const numCls = selectionItems.value.reduce((acc, d) => acc + (d.cluster === c ? 1 : 0), 0)
             // remove cluster highlight (if this was the only related item)
@@ -740,6 +755,14 @@
                 clsOrder.selected.delete(selection.value[index].cluster)
             }
             selection.value[index] = null
+
+            logAction({
+                desc: "remove item",
+                source: source,
+                item: itemId,
+                selection: selection.value.filter(d => d !== null).map(d => d.id)
+            })
+            app.addInteraction("step1")
 
             // update candidates for suggestion
             updateCandidates()
@@ -764,14 +787,7 @@
         if (selection.value[index]) {
 
             sounds.play(SOUND.PLOP)
-            logAction({
-                desc: "replace item",
-                source: source,
-                item: replacement.id,
-                previous: selection.value[index].id
-            })
-            app.addInteraction("step1")
-
+            const prevId = selection.value[index].id
             const c = selection.value[index].cluster
             const numCls = selectionItems.value.reduce((acc, d) => acc + (d.cluster === c ? 1 : 0), 0)
             // remove cluster highlight (if this was the only related item)
@@ -781,6 +797,16 @@
             selection.value[index] = replacement
             clsOrder.selected.add(replacement.cluster)
             addToHistory(replacement.id)
+
+            logAction({
+                desc: "replace item",
+                source: source,
+                item: replacement.id,
+                previous: prevId,
+                selection: selection.value.filter(d => d !== null).map(d => d.id)
+            })
+            app.addInteraction("step1")
+
             // update candidates for suggestion
             updateCandidates()
         }
@@ -794,6 +820,7 @@
         numCls.value = clusterLeft.size
         numClsLeft.value = clusterLeft.size
         itemsToUse = DM.getDataBy("items", d => d.allTags.length > 0 && (!props.target || d.id !== props.target))
+        itemsToUse.sort((a, b) => a.id - b.id)
         itemsToUse.forEach((d, i) => d._cidx = i)
         clusters = null
         clsIndex.value = 0

@@ -332,7 +332,6 @@
         if (route.query.prolific_pid) {
             const before = app.cwId ? app.cwId : localStorage.getItem("cw-id")
             const pid = ""+route.query.prolific_pid
-            console.log(before, pid)
             if (before !== pid) {
                 localStorage.setItem("cw-id", pid)
                 localStorage.setItem("cw-source", "prolific")

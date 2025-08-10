@@ -10,6 +10,7 @@
                 class="ml-2 mr-2"
                 rounded="sm"
                 size="80"
+                :disabled="answered"
                 @click="select(o)">
                 <v-icon size="64" :color="o.color">{{ 'mdi-'+o.shape }}</v-icon>
             </v-btn>
@@ -33,6 +34,7 @@
     const shapes = ["square", "circle", "triangle"]
     const colors = ["blue", "red", "black", "grey"]
 
+    const answered = ref(false)
     const options = ref([])
     const target = reactive({
         shape: null,
@@ -45,6 +47,7 @@
     })
 
     function select(option) {
+        answered.value = true
         emit("submit", option.shape === target.shape && option.color === target.color)
     }
 

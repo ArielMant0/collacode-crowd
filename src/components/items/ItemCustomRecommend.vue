@@ -108,8 +108,9 @@
                                 <div>
                                     <div>select {{ app.itemName }}s <b>very similar</b> to your target</div>
                                     <p class="mt-1">
-                                        there can be small differences regarding the setting, artstyle,
-                                        or minor {{ app.itemName }} mechanics, but the core <b>gameplay</b> should be very similar
+                                        there can be <b>small</b> differences regarding the setting, artstyle,
+                                        or <b>minor</b> {{ app.itemName }} mechanics, but the core <b>gameplay</b>
+                                        should be <b>very similar</b>
                                     </p>
                                 </div>
                             </template>
@@ -163,7 +164,8 @@
                                     <div>select {{ app.itemName }}s <b>similar</b> to the target</div>
                                     <p class="mt-1">
                                         there can be some differences regarding the setting, artstyle,
-                                        or {{ app.itemName }} mechanics, but the core <b>gameplay</b> should be similar
+                                        or {{ app.itemName }} mechanics, but the core <b>gameplay</b>
+                                        should be <b>similar</b>
                                     </p>
                                 </div>
                             </template>
@@ -285,11 +287,11 @@
                 .map(d => ({ id: d.id, value: 0 }))
         } else {
             bySearch.value = []
-            chosen.value.forEach(d => {
-                if (d.origin === "search") {
-                    d.origin = null
-                }
-            })
+            // chosen.value.forEach(d => {
+            //     if (d.origin === "search") {
+            //         d.origin = null
+            //     }
+            // })
         }
     }
     async function getSuggestions() {
@@ -375,13 +377,15 @@
         if (!origin || id <= 0) return
         switch(origin) {
             case "search":
-                bySearch.value.push({ id: id})
+                if (search.value && search.value.length > 0) {
+                    bySearch.value.push({ id: id })
+                }
                 break
             case "name":
-                suggs.byName.push({ id: id})
+                suggs.byName.push({ id: id })
                 break
             case "crowd":
-                suggs.byCrowd.push({ id: id})
+                suggs.byCrowd.push({ id: id })
                 break
         }
     }
@@ -401,12 +405,12 @@
     }
     function setItem(id, origin, index, where=0) {
         app.addInteraction("step3")
-        sounds.play(SOUND.PLOP)
         if (where === 2) {
             if (props.itemLimit > 0 && (itemHigh.size+highFixed.value.length) >= props.itemLimit) {
                 return toast.warning(`maximum number of ${app.itemName}s reached`)
             }
 
+            sounds.play(SOUND.PLOP)
             const inFixed = props.items.find(d => d.id === id)
             if (inFixed) {
                 inFixed.value = 2
@@ -425,6 +429,7 @@
                 return toast.warning(`maximum number of ${app.itemName}s reached`)
             }
 
+            sounds.play(SOUND.PLOP)
             const inFixed = props.items.find(d => d.id === id)
             if (inFixed) {
                 inFixed.value = 1
@@ -442,6 +447,7 @@
 
             let org = null
             if (idx >= 0) {
+                sounds.play(SOUND.PLOP)
                 org = chosen.value[idx].origin
                 chosen.value.splice(idx, 1)
                 if (org) {

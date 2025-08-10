@@ -236,8 +236,9 @@
             }
         )
         read()
+
         if (app.isCrowdWorker) {
-            cwDialog.value = true
+            setTimeout(() => cwDialog.value = true, 100)
         }
     }
 

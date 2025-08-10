@@ -51,8 +51,9 @@
                                 <div>
                                     <div>select {{ app.itemName }}s <b>very similar</b> to your target</div>
                                     <p class="mt-1">
-                                        there can be small differences regarding the setting, artstyle,
-                                        or minor {{ app.itemName }} mechanics, but the core <b>gameplay</b> should be very similar
+                                        there can be <b>small</b> differences regarding the setting, artstyle,
+                                        or <b>minor</b> {{ app.itemName }} mechanics, but the core <b>gameplay</b>
+                                        should be <b>very similar</b>
                                     </p>
                                 </div>
                             </template>
@@ -94,7 +95,8 @@
                                     <div>select {{ app.itemName }}s <b>similar</b> to the target</div>
                                     <p class="mt-1">
                                         there can be some differences regarding the setting, artstyle,
-                                        or {{ app.itemName }} mechanics, but the core <b>gameplay</b> should be similar
+                                        or {{ app.itemName }} mechanics, but the core <b>gameplay</b>
+                                        should be <b>similar</b>
                                     </p>
                                 </div>
                             </template>

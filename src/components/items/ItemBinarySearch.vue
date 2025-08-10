@@ -275,7 +275,7 @@
                 },
                 buttons: [{ text: "next", action: tutorial.next, classes: "bg-primary" }],
                 text: `This timer shows you how much time you have left for each step.
-                    If you are not done by the time it ends, the page automatically goes to the
+                    If you are not done by the time it ends, the page <b>automatically</b> goes to the
                     next step with your current results.`
             },{
                 id: "show-target",
@@ -296,9 +296,9 @@
                     on: "bottom"
                 },
                 buttons: [{ text: "next", action: tutorial.next, classes: "bg-primary" }],
-                text: `Each questions splits the remaining ${plural} in <b>half</b> based on a specific tag.
+                text: `Each questions <b>splits</b> the remaining ${plural} based on a specific tag.
                     You have to decide which group (left or right) makes for a <b>better fit</b>,
-                    i.e. which is more similar to your target.`
+                    i.e. which group is more similar to your target.`
             },{
                 id: "show-text",
                 attachTo: {
@@ -315,14 +315,14 @@
                 },
                 extraHighlights: [".item-examples-no"],
                 buttons: [{ text: "next", action: tutorial.next, classes: "bg-primary" }],
-                text: `On the sides, you can see a limited number of ${plural} from each group.`
+                text: `On the sides, you can see a <b>limited</b> number of ${plural} from each group.`
             },{
                 id: "click-yes",
                 attachTo: {
                     element: () => getLast(document.querySelectorAll(".answer-yes")),
                     on: "bottom"
                 },
-                text: "Let's proceed by answering <b>yes</b>!"
+                text: "<b>Let's answer yes!</b>"
             },{
                 id: "next-tag",
                 attachTo: {
@@ -330,9 +330,9 @@
                     on: "bottom"
                 },
                 extraHighlights: [".binsearch-q:first-child .tag-name"],
-                text: `If the current question tag is not a good fit, it's better to look for a
-                    different tag using the arrow buttons. Select the next tag by clicking on
-                    this button!`
+                text: `If the current question tag is <b>not a good fit</b>, it's better to look
+                    for a different tag using the arrow buttons. <b>Select the next tag</b> by
+                    clicking on the <b>right arrow</b> button!`
             },{
                 id: "prev-tag",
                 attachTo: {
@@ -341,7 +341,8 @@
                 },
                 extraHighlights: [".binsearch-q:first-child .tag-name"],
                 text: `Now you have a different tag and the grouping of ${plural} has changed.
-                    To go back to the previous tag, simply click this button. Try it now!`
+                    To <b>go back</b> to the previous tag, click the <b>left arrow</b> button.
+                    <b>Try it now!</b>`
             },{
                 id: "click-no",
                 attachTo: {
@@ -349,7 +350,7 @@
                     on: "top"
                 },
                 text: `You can change a previous answer by clicking on a different answer button.
-                    Change your answer to <b>no</b>!`
+                    <b>Change your answer to no!</b>`
             },{
                 id: "submit",
                 attachTo: {
@@ -364,8 +365,8 @@
                 text: `When you have answered enough questions to narrow your selection to
                     ${props.minItems} ${plural}, you will see a <b>preview</b> of your selection
                     at the top of the page.
-                    <span style="min-height: 1em"></span>
-                    If you think the ${plural} fit, use this button to go to the next step.`
+                    <div style="min-height: 1em"></div>
+                    If you think the ${plural} <b>fit well</b>, use this button to go to the next step.`
             },{
                 id: "show-tutorial",
                 attachTo: {
@@ -440,11 +441,10 @@
             const last = split.value.at(0)
             const splitTag = selectedTag.value
             tagsLeft.add(last.tag.id)
-            // if we already decided once, add items back in again
-            if (last.hasTag !== null) {
-                last.with.forEach(i => itemsLeft.add(i))
-                last.without.forEach(i => itemsLeft.add(i))
-            }
+            last.hasTag = null
+            // add items back in again
+            last.with.forEach(i => itemsLeft.add(i))
+            last.without.forEach(i => itemsLeft.add(i))
             // split items by with out without again
             const withTag = [], without = []
             itemsLeft.forEach(idx => {
@@ -544,6 +544,7 @@
             })
 
             last.tag = splitTag
+            last.tagIndex = tagIndex.value
         }
     }
     function prevTag() {
@@ -579,29 +580,21 @@
     }
 
     async function splitItems() {
-        const hasNextSplit = itemsLeft.size > props.minItems
-
-        // remove
-        if (!inLastStep.value && hasNextSplit && split.value.length > 0) {
-            const last = split.value.at(0)
-            const choice = last.tag.id
-            const indices = Array.from(itemsLeft.values())
-            indices.forEach(idx => {
-                const hasTag = itemsToUse[idx].allTags.find(t => t.id === choice) !== undefined
-                if (hasTag !== last.hasTag) {
-                    itemsLeft.delete(idx)
-                }
-            })
-        }
 
         // we should not split again
         if (itemsLeft.size <= props.minItems) {
             const last = split.value.at(0)
 
-            finalItems.value = last.hasTag ?
+            const tmp = last.hasTag ?
                 last.with.map(idx => itemsToUse[idx]) :
                 last.without.map(idx => itemsToUse[idx])
 
+            finalItems.value = tmp.slice(0, props.minItems)
+
+            logAction({
+                desc: "candidates",
+                items: finalItems.value.map(d => d.id)
+            })
             emit("ready", true)
             return
         }
@@ -632,6 +625,7 @@
 
         tagIndex.value = 0
         tagList.value = tagCands
+
         // choose first tag as the one to split on
         const splitTag = tagCands[0]
 
@@ -723,6 +717,8 @@
         split.value.unshift({
             key: split.value.length,
             tag: splitTag,
+            tagIndex: tagIndex.value,
+            tagList: tagCands.map(t => t.id),
             hasTag: null,
             with: withTag,
             without: without,
@@ -769,8 +765,18 @@
                     tagsLeft.add(s.tag.id)
                 }
             }
+
             // remove splits
             split.value.splice(0, index)
+        }
+
+        // remove items in the other group
+        if (it.hasTag) {
+            it.without.forEach(id => itemsLeft.delete(id))
+            it.with.forEach(id => itemsLeft.add(id))
+        } else {
+            it.with.forEach(id => itemsLeft.delete(id))
+            it.without.forEach(id => itemsLeft.add(id))
         }
 
         if (inLastStep.value) {
@@ -779,6 +785,12 @@
         }
 
         splitItems()
+
+        if (index > 0) {
+            const last = split.value.at(0)
+            tagList.value = last.tagList.map(id => tagsToUse.find(t => t.id === id))
+            tagIndex.value = last.tagIndex
+        }
 
         if (tutorial.isActive()) {
             const sid = tutorial.getCurrentStep()
@@ -797,6 +809,7 @@
 
     function read() {
         itemsToUse = DM.getDataBy("items", d => d.allTags.length > 0 && (!props.target || d.id !== props.target))
+        itemsToUse.sort((a, b) => a.id - b.id)
         const tags = DM.getData("tags", false)
         tagsToUse = tags
             .filter(d => d.is_leaf === 1 && !app.excludedTags.has(d.name))

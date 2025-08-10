@@ -268,7 +268,7 @@
         comprehension: [],
         timePerStep: {},
         durPerStep: {},
-        lastStep: null
+        stepOrder: [],
     })
 
 
@@ -326,9 +326,12 @@
     function onTutorialStop(completed) {
         localStorage.setItem("tutorial_"+props.method, true)
         tutorialDone = tutorialDone || completed
-        timeEndTutorial = Date.now()
-        gameData.timePerStep.tutorial = timeEndTutorial
-        gameData.durPerStep.tutorial = Math.round((timeEndTutorial-timeStartTutorial) / 1000)
+        // only record the first time the tutorial is done
+        if (timeEndTutorial === undefined) {
+            timeEndTutorial = Date.now()
+            gameData.timePerStep.tutorial = timeEndTutorial
+            gameData.durPerStep.tutorial = timeEndTutorial-timeStartTutorial
+        }
         unpauseTimer()
     }
     function checkTutorial() {
@@ -368,17 +371,18 @@
     }
 
     function logStepTime(name) {
-        const prevTime = gameData.lastStep ? gameData.timePerStep[gameData.lastStep] : timeStart
+        const last = gameData.stepOrder.length > 0 ? gameData.stepOrder.at(-1) : null
+        const prevTime = last !== null ? gameData.timePerStep[last] : timeStart
         gameData.timePerStep[name] = Date.now()
-        gameData.durPerStep[name] = Math.round((gameData.timePerStep[name] - prevTime) / 1000)
-        gameData.lastStep = name
+        gameData.durPerStep[name] = gameData.timePerStep[name] - prevTime
+        gameData.stepOrder.push(name)
     }
 
     function nextStep(onTimerEnd=false) {
         stopTimer()
         switch(step.value) {
             case PR_STEPS.COMPREHENSION:
-                logStepTime("comprehension")
+                logStepTime(PR_STEPS.COMPREHENSION)
                 if (onTimerEnd) {
                     // the user did not answer the questions in time
                     testComp(cc.value ? cc.value.getAnswers() : null)
@@ -392,7 +396,7 @@
                 break
             case PR_STEPS.GAME: {
                 let data
-                logStepTime("game")
+                logStepTime(PR_STEPS.GAME)
                 // get the data from clusters/binary search
                 if (clusters.value) {
                     data = clusters.value.getSubmitData()
@@ -405,7 +409,7 @@
                 }
 
                 // see if we do the attention check now
-                if (!attentionDone && props.attentionChecks) { // && Math.random() > 0.75) {
+                if (!attentionDone && props.attentionChecks && Math.random() > 0.75) {
                     step.value = PR_STEPS.ATTENTION
                     attentionNext = PR_STEPS.SELECT
                     sounds.play(SOUND.ATTENTION)
@@ -419,7 +423,7 @@
                 break
             }
             case PR_STEPS.SELECT:
-                logStepTime("select (1)")
+                logStepTime(PR_STEPS.SELECT)
                 if (!attentionDone && props.attentionChecks && Math.random() > 0.5) {
                     step.value = PR_STEPS.ATTENTION
                     attentionNext = PR_STEPS.REFINE
@@ -433,7 +437,7 @@
                 startTimer(150)
                 break
             case PR_STEPS.REFINE:
-                logStepTime("refine (2)")
+                logStepTime(PR_STEPS.REFINE)
                 if (!attentionDone && props.attentionChecks) {
                     step.value = PR_STEPS.ATTENTION
                     attentionNext = null
@@ -445,7 +449,7 @@
                 }
                 break
             case PR_STEPS.ATTENTION:
-                logStepTime("attention")
+                logStepTime(PR_STEPS.ATTENTION)
                 attentionDone = true
                 if (onTimerEnd) {
                     // user did not complete attention check in time
@@ -473,7 +477,11 @@
             }
             const result = await testComprehensionData(target.value.id, answers, props.method)
             if (result.passed === true) {
-                compdata = answers
+                compdata = {
+                    questions: gameData.comprehension.map(q => q.question),
+                    answersText: answers.map((a, i) => gameData.comprehension[i].options[a].name),
+                    answers: answers,
+                }
                 nextStep()
             } else {
                 compdata = null
@@ -682,7 +690,8 @@
             data: {
                 start: timeStart,
                 end: timeEnd,
-                duration: Math.floor((timeEnd-timeStart) / 1000),
+                duration: timeEnd-timeStart,
+                stepOrder: gameData.stepOrder,
                 timePerStep: gameData.timePerStep,
                 durationPerStep: gameData.durPerStep,
                 language: window.navigator.language,
@@ -752,6 +761,10 @@
         compdata = null
         attentionDone = false
         attentionNext = null
+        timeEnd = undefined
+        timeStart = undefined
+        timeEndTutorial = undefined
+        timeStartTutorial = undefined
         allowNext.value = true
         stepIndex.value = 1
         candidates.value = []
@@ -762,7 +775,7 @@
         gameData.comprehension = []
         gameData.timePerStep = {}
         gameData.durPerStep = {}
-        gameData.lastStep = null
+        gameData.stepOrder = []
         searchHistory = []
         app.resetInteraction()
     }
