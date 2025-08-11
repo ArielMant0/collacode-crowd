@@ -651,7 +651,6 @@ import DM from '@/use/data-manager';
             .concat(gameData.customItems)
             .map(d => transform(d, gameData.target.id))
 
-        let countAuto = 0
         // get all highly similar items
         const highSim = allItems
             .filter(d => d.item_id !== gameData.target.id && d.value > 1)

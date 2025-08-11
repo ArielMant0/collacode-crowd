@@ -40,6 +40,7 @@
         useDataManager: { type: Boolean, default: false },
         useKeyNavigation: { type: Boolean, default: false },
         transitionDuration: { type: Number, default: 1000 },
+        minWeight: { type: Number, default: 0 }
     })
 
     const emit = defineEmits(["click", "hover", "right-click"])
@@ -134,17 +135,23 @@
         ng
             .attr("transform", d => `translate(${zx(d.x)},${zy(d.y)}) scale(${Math.max(0.4, zoomTransform.k / 3)})`)
 
-        lg
-            .attr("stroke-width", d => wscale(d.value) * Math.max(0.4, zoomTransform.k / 3))
-            .attr("x1", d => zx(d.source.x))
-            .attr("x2", d => zx(d.target.x))
-            .attr("y1", d => zy(d.source.y))
-            .attr("y2", d => zy(d.target.y))
+        if (transform === null) {
+            lg
+                .style("visibility", "visible")
+                .attr("stroke-width", d => wscale(d.value) * Math.max(0.4, zoomTransform.k / 3))
+                .attr("x1", d => zx(d.source.x))
+                .attr("x2", d => zx(d.target.x))
+                .attr("y1", d => zy(d.source.y))
+                .attr("y2", d => zy(d.target.y))
+        } else {
+            lg.style("visibility", "hidden")
+        }
     }
 
     function highlight(id) {
         const match = new Set()
         const matchLink = new Set()
+
         if (id) {
             links.forEach(d => {
                 if (d.source.id === id || d.target.id === id) {
@@ -163,6 +170,7 @@
             .raise()
             .selectAll(".outline")
             .attr("stroke", props.highlightColor)
+
         lg
             .attr("stroke", d => d.source.id === props.target || d.target.id === props.target ? props.targetColor : "currentColor")
 
@@ -181,6 +189,12 @@
         once = false
         nodes = props.nodes.map(d => ({ ...d }))
         links = props.links.map(d => ({ ...d }))
+        if (props.weightAttr && props.minWeight > 0) {
+            links = links.filter(d => d[props.weightAttr] >= props.minWeight)
+            nodes = nodes.filter(d => links.find(dd => dd.target === d.id || dd.source === d.di))
+        }
+
+
         nodes.forEach(d => {
             d.x = Math.random() * props.width - props.radius
             d.y = Math.random() * props.height - props.radius / 2
@@ -189,6 +203,7 @@
         zoom = d3.zoom()
             .scaleExtent([0.1, 32])
             .on("zoom", ({transform}) => updateNodesAndLinks(transform))
+            .on("end", () => updateNodesAndLinks())
 
         const svg = d3.select(el.value)
         svg.selectAll('*').remove()
@@ -200,7 +215,7 @@
             maxWeight = maxW
             wscale = d3.scaleLinear()
                 .domain([minW, maxW])
-                .range([2, 8])
+                .range([3, 12])
         } else {
             wscale = () => 2
         }
@@ -215,7 +230,7 @@
             .attr("y2", d => d.target.y)
             .attr("stroke", d => d.source.id === props.target || d.target.id === props.target ? props.targetColor : "currentColor")
             .attr("stroke-width", d => wscale(d.value))
-            .attr("opacity", 0.5)
+            .attr("opacity", 0.25)
 
         ng = svg.append("g")
             .selectAll("g")
@@ -468,7 +483,8 @@
         props.height,
         props.radius,
         props.weightAttr,
-        props.imageAttr
+        props.imageAttr,
+        props.minWeight
     ]), draw, { deep: true })
 </script>
 

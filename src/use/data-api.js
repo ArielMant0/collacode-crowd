@@ -136,12 +136,9 @@ export async function getSimilarities(dataset=null) {
     return loader.get(`similarity/dataset/${dataset ? dataset : app.ds}`)
 }
 
-export async function getSimilarByTarget(target, limit=0) {
+export async function getSimilarByTarget(target, limit=0, minUnique=1) {
     const loader = useLoader();
-    if (limit > 0) {
-        return loader.get(`similarity/target/${target}/top/${limit}`)
-    }
-    return loader.get(`similarity/target/${target}`)
+    return loader.get(`similarity/target/${target}`, { limit: limit, minUnique: minUnique })
 }
 
 export async function addSimilarity(info, data) {

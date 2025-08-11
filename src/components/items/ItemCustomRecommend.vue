@@ -323,7 +323,7 @@
             return !isFixedItem(d.id) && names.some(n1 => dn.some(n2 => n1 === n2))
         })
         suggs.byName = other.map(d => ({ id: d.id }))
-        const crowd = await getSimilarByTarget(props.target, 20)
+        const crowd = await getSimilarByTarget(props.target, 20, 3)
         suggs.byCrowd = crowd
             .filter(d => !isFixedItem(d.item_id) && !suggs.byName.find(dd => dd.id === d.item_id))
             .slice(0, 10)
