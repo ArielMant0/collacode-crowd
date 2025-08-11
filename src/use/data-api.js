@@ -52,7 +52,7 @@ export async function loadCrowdItems() {
 
 export async function getClientStatus() {
     const loader = useLoader()
-    return loader.get("similarity/status", makeAuth())
+    return loader.get("crowd/client/status", makeAuth())
 }
 
 export async function setCrowdWorkerSubmitted() {

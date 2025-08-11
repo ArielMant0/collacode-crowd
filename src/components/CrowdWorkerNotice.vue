@@ -12,10 +12,20 @@
                 </div>
             </v-card-title>
             <v-card-text>
-                <div v-if="app.isCrowdWorkerDone">
+                <div v-if="app.isCrowdWorkerBlocked">
+                    You failed too many attention checks, please use this link to go back to Prolific.
+                    <a :href="app.cwLinks.linkFail" target="_blank">{{ app.cwLinks.linkFail }}</a>
+                    You can also use this code to submit your participation: <b>{{ app.cwLinks.codeFail }}</b>
+                </div>
+                <div v-else-if="app.isCrowdWorkerSoftlocked">
+                    You failed too many knowledge checks and there are not enough {{ app.itemName }}s left, please use this link to go back to Prolific.
+                    <a :href="app.cwLinks.linkSoftlock" target="_blank">{{ app.cwLinks.linkSoftlock }}</a>
+                    You can also use this code to submit your participation: <b>{{ app.cwLinks.codeSoftlock }}</b>
+                </div>
+                <div v-else-if="app.isCrowdWorkerDone">
                     You reached the end of the study. Use this link to complete the study and go back to Prolific:
-                    <a :href="app.cwLink" target="_blank">{{ app.cwLink }}</a>
-                    You can also use this completion code to submit your participation: <b>{{ app.cwCode }}</b>
+                    <a :href="app.cwLinks.linkSuccess" target="_blank">{{ app.cwLinks.linkSuccess }}</a>
+                    You can also use this code to submit your participation: <b>{{ app.cwLinks.codeSuccess }}</b>
                     <div class="mt-4">
                         If you want to continue with other {{ app.itemName }}s and have turned in the study on Prolific,
                         you can click the button below to confirm that. <b>This will hide the return link to Prolific.
@@ -30,7 +40,8 @@
                 </div>
                 <div v-else>
                     Complete {{ CW_MAX_SUB }} {{ app.itemName }}s and the feedback questionnaire to complete this study.
-                    <b>Please do not refresh the page during the study.</b> Click on a game you know well to start the process.
+                    Please do not refresh the page during the study unless you encounter errors.
+                    Click on a game you know well to start the process.
                     <div class="mt-4" style="text-align: center;">
                         You have completed <b>{{ app.numSubmissions }} out of {{ CW_MAX_SUB }}</b> {{ app.itemName }}s
                     </div>

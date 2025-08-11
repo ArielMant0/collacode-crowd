@@ -90,7 +90,7 @@
             <div style="font-size: large; text-align: center;">
                 Thanks for participating in this study! Click on this link to get back to Prolific:
                 <div class="mt-2">
-                    <a :href="app.cwLink" target="_blank">{{ app.cwLink }}</a>
+                    <a :href="app.cwLinks.linkSuccess" target="_blank">{{ app.cwLinks.linkSuccess }}</a>
                 </div>
             </div>
         </template>

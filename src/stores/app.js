@@ -38,13 +38,20 @@ export const useApp = defineStore('app', {
         guid: null,
         ipAddress: null,
         userSrc: null,
+        userBlocked: false,
         cwId: null,
         cwSubmitted: false,
 
         numFeedback: 0,
 
-        cwLink: "/",
-        cwCode: "",
+        cwLinks: {
+            linkSuccess: "/",
+            codeSuccess: "",
+            linkFail: "/",
+            codeFail: "",
+            linkSoftlock: "/",
+            codeSoftlock: "",
+        },
 
         numSubmissions: 0,
 
@@ -78,7 +85,12 @@ export const useApp = defineStore('app', {
         itemNameCaptial: state => capitalize(state.itemName),
         hasNextItem: state => state.itemsLeft.size > 0,
         isCrowdWorker: state => state.cwId !== null && state.cwSubmitted === false,
-        isCrowdWorkerReady: state => state.isCrowdWorker && state.numSubmissions >= CW_MAX_SUB,
+        isCrowdWorkerBlocked: state => state.isCrowdWorker && state.userBlocked,
+        isCrowdWorkerSoftlocked: state => {
+            const diff = CW_MAX_SUB - state.numSubmissions
+            return state.isCrowdWorker && diff > 0 && state.itemsLeft.size < diff
+        },
+        isCrowdWorkerReady: state => state.isCrowdWorker && state.numSubmissions >= CW_MAX_SUB && !state.userBlocked,
         isCrowdWorkerDone: state => state.isCrowdWorkerReady && state.numFeedback >= 4,
     },
 
@@ -121,8 +133,7 @@ export const useApp = defineStore('app', {
             this.dataset = meta.dataset
             this.ds = meta.dataset.id
             this.excludedTags = new Set(meta.excludedTags)
-            this.cwLink = meta.cwLink
-            this.cwCode = meta.cwCode
+            this.cwLinks = meta.cwLinks
             this.setActiveUser(
                 meta.client,
                 meta.guid,
@@ -130,6 +141,7 @@ export const useApp = defineStore('app', {
                 meta.cwId,
                 meta.cwSubmitted
             )
+            this.setUserBlocked(meta.blocked)
             this.numSubmissions = meta.submissions
         },
 
@@ -140,6 +152,7 @@ export const useApp = defineStore('app', {
             this.itemCounts = meta.itemCounts
             this.method = meta.method ? meta.method : 0
             this.numSubmissions = meta.submissions
+            this.setUserBlocked(meta.blocked)
             this.itemTime = Date.now()
         },
 
@@ -183,6 +196,10 @@ export const useApp = defineStore('app', {
             this.cwId = cwId ? cwId : null
             this.cwSubmitted = cwId ? cwSubmitted : false
             this.numSubmissions = 0
+        },
+
+        setUserBlocked(blocked) {
+            this.userBlocked = blocked
         },
 
         addMethodCount(method) {

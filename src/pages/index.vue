@@ -17,10 +17,12 @@
     async function checkUpdate() {
         try {
             const updates = await loadLastUpdate()
-            const cut = updates.find(d => d.name === "crowd")
-            if (cut && cut.timestamp > times.crowd) {
-                times.needsReload("crowd_meta")
-                times.needsReload("crowd")
+            if (updates) {
+                const cut = updates.find(d => d.name === "crowd")
+                if (cut && cut.timestamp > times.crowd) {
+                    times.needsReload("crowd_meta")
+                    times.needsReload("crowd")
+                }
             }
         } catch(e) {
             console.error(e)

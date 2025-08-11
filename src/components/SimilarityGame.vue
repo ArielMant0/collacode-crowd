@@ -678,12 +678,13 @@
         try {
             // check whether this client should be blocked (e.g. too many requests)
             await getClientStatus()
-            console.info("client status is OK")
         } catch (e) {
             console.error(e.toString())
+            app.setUserBlocked(true)
             const str = app.isCrowdWorker ?
-                "reached maximum number of submissions" :
+                "failed too many checks" :
                 "blocked due to suspicious activity / too many failed checks"
+
             toast.error(str, { timeout: 2000, position: POSITION.TOP_CENTER })
             return goHome(2500)
         }
