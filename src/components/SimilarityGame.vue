@@ -184,6 +184,7 @@
     import { constructSimilarityGraph } from '@/use/utility';
     import NodeLink from './vis/NodeLink.vue';
     import { useTooltip } from '@/stores/tooltip';
+import DM from '@/use/data-manager';
 
     const emit = defineEmits(["end", "close", "cancel"])
 
@@ -650,26 +651,24 @@
             .concat(gameData.customItems)
             .map(d => transform(d, gameData.target.id))
 
+        let countAuto = 0
         // get all highly similar items
-        const highSim = new Set(
-            allItems
-                .filter(d => d.item_id !== gameData.target.id && d.value > 1)
-                .map(d => d.item_id)
-            )
-        // get all "normally" similar items
-        const normalSim = new Set(
-            allItems
-                .filter(d => d.item_id !== gameData.target.id && d.value === 1)
-                .map(d => d.item_id)
-        )
+        const highSim = allItems
+            .filter(d => d.item_id !== gameData.target.id && d.value > 1)
+            .map(d => d.item_id)
 
-        // add automatic similarity judgements
+        // get all "normally" similar items
+        const normalSim = allItems
+            .filter(d => d.item_id !== gameData.target.id && d.value === 1)
+            .map(d => d.item_id)
+
+        // add automatic similarity judgements ((n-1)*n) / 2 + n*m
         for (let i = 0; i < highSim.length; ++i) {
-            // add high similarity for very similar items
+            // add high similarity for very similar items -> adds ((n-1)*n) / 2 similarities
             for (let j = i+1; j < highSim.length; ++j) {
                 allItems.push(transform({ id: highSim[j], value: 2, origin: "auto" }, highSim[i]))
             }
-            // add normal similarity for similar items
+            // add normal similarity for similar items -> add n*m similarities
             for (let j = 0; j < normalSim.length; ++j) {
                 allItems.push(transform({ id: normalSim[j], value: 1, origin: "auto" }, highSim[i]))
             }
@@ -754,7 +753,7 @@
     }
 
     function goToFeedback() {
-        router.replace("/feedback")
+        router.push("/feedback")
     }
 
     function close() {
