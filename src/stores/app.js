@@ -37,7 +37,7 @@ export const useApp = defineStore('app', {
         activeUserId: null,
         guid: null,
         ipAddress: null,
-        cwSource: null,
+        userSrc: null,
         cwId: null,
         cwSubmitted: false,
 
@@ -126,8 +126,8 @@ export const useApp = defineStore('app', {
             this.setActiveUser(
                 meta.client,
                 meta.guid,
+                meta.source,
                 meta.cwId,
-                meta.cwSource,
                 meta.cwSubmitted
             )
             this.numSubmissions = meta.submissions
@@ -175,12 +175,12 @@ export const useApp = defineStore('app', {
             }
         },
 
-        setActiveUser(id, guid, cwId=null, cwSource="prolific", cwSubmitted=false) {
+        setActiveUser(id, guid, userSrc=null, cwId=null , cwSubmitted=false) {
             this.methodCounts.clear()
             this.activeUserId = id
             this.guid = guid
+            this.userSrc = userSrc ? userSrc : "misc"
             this.cwId = cwId ? cwId : null
-            this.cwSource = cwId ? cwSource : null
             this.cwSubmitted = cwId ? cwSubmitted : false
             this.numSubmissions = 0
         },

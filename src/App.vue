@@ -328,13 +328,32 @@
     }
 
     function readQuery() {
-        // check if we were passed a crowd worker id
+        let pid = null
         if (route.query.prolific_pid) {
+            pid = "" + route.query.prolific_pid
+        }
+        if (route.query.PROLIFIC_PID) {
+            pid = "" + route.query.PROLIFIC_PID
+        }
+
+        let src = null
+        if (route.query.source) {
+            src = "" + route.query.source
+        }
+        if (route.query.SOURCE) {
+            src = "" + route.query.SOURCE
+        }
+
+        if (src) {
+            localStorage.setItem("crowd-source", src)
+        }
+
+        // check if we were passed a crowd worker id
+        if (pid) {
             const before = app.cwId ? app.cwId : localStorage.getItem("cw-id")
-            const pid = ""+route.query.prolific_pid
             if (before !== pid) {
                 localStorage.setItem("cw-id", pid)
-                localStorage.setItem("cw-source", "prolific")
+                localStorage.setItem("crowd-source", "prolific")
                 localStorage.removeItem("crowd-client")
                 localStorage.removeItem("crowd-guid")
                 return true
@@ -349,10 +368,10 @@
         // try to read the users id from local storage
         const clientId = localStorage.getItem("crowd-client")
         const guid = localStorage.getItem("crowd-guid")
+        const userSrc = localStorage.getItem("crowd-source")
         // crowd sourcing data
         const cwid = localStorage.getItem("cw-id")
-        const cwsrc = localStorage.getItem("cw-source")
-        app.setActiveUser(clientId, guid, cwid, cwsrc)
+        app.setActiveUser(clientId, guid, userSrc, cwid)
 
         // try to get the user's ip address
         try {
@@ -447,9 +466,9 @@
         if (app.activeUserId) {
             localStorage.setItem("crowd-client", app.activeUserId)
             localStorage.setItem("crowd-guid", app.guid)
+            localStorage.setItem("crowd-source", app.userSrc)
             if (app.isCrowdWorker) {
                 localStorage.setItem("cw-id", app.cwId)
-                localStorage.setItem("cw-source", app.cwSource)
             }
         }
     })

@@ -29,49 +29,35 @@ export async function loadDataTagsByCode(code) {
 // Crowd Sourcing
 ////////////////////////////////////////////////////////////
 
-export async function loadCrowdMeta() {
+function makeAuth() {
     const app = useApp()
-    const loader = useLoader();
-    return loader.get("crowd", {
+    return {
         client: app.activeUserId,
         guid: app.guid,
         ip: app.ipAddress,
+        source: app.userSrc,
         cwId: app.cwId,
-        cwSource: app.cwSource
-    })
+    }
+}
+
+export async function loadCrowdMeta() {
+    const loader = useLoader();
+    return loader.get("crowd", makeAuth())
 }
 
 export async function loadCrowdItems() {
-    const app = useApp()
     const loader = useLoader();
-    return loader.get("crowd/items", {
-        client: app.activeUserId,
-        guid: app.guid,
-        ip: app.ipAddress,
-        cwId: app.cwId
-    })
+    return loader.get("crowd/items", makeAuth())
 }
 
 export async function getClientStatus() {
-    const app = useApp()
     const loader = useLoader()
-    return loader.get("similarity/status", {
-        client: app.activeUserId,
-        guid: app.guid,
-        ip: app.ipAddress,
-        cwId: app.cwId,
-    })
+    return loader.get("similarity/status", makeAuth())
 }
 
 export async function setCrowdWorkerSubmitted() {
-    const app = useApp()
     const loader = useLoader()
-    return loader.post("crowd/prolific/submitted", {
-        client: app.activeUserId,
-        guid: app.guid,
-        ip: app.ipAddress,
-        cwId: app.cwId,
-    })
+    return loader.post("crowd/prolific/submitted", makeAuth())
 }
 
 
@@ -81,55 +67,34 @@ export async function loadComprehensionData(itemId) {
     return loader.get("crowd/comprehension", { itemId: itemId })
 }
 export async function testComprehensionData(itemId, answers, game) {
-    const app = useApp()
     const loader = useLoader();
-    return loader.post("crowd/comprehension/test", {
-        client: app.activeUserId,
-        guid: app.guid,
-        ip: app.ipAddress,
-        cwId: app.cwId,
-        gameId: game,
-        // actual data
-        itemId: itemId,
-        answers: answers,
-    })
+    const obj = makeAuth()
+    obj.gameId = game
+    obj.itemId = itemId
+    obj.answers = answers
+    return loader.post("crowd/comprehension/test", obj)
 }
 // Attention Checks
 export async function addAttentionFail(itemId, game) {
-    const app = useApp()
     const loader = useLoader();
-    return loader.post("crowd/attention/fail", {
-        client: app.activeUserId,
-        guid: app.guid,
-        ip: app.ipAddress,
-        cwId: app.cwId,
-        gameId: game,
-        itemId: itemId
-    })
+    const obj = makeAuth()
+    obj.gameId = game
+    obj.itemId = itemId
+    return loader.post("crowd/attention/fail", obj)
 }
 
 export async function addFeedback(text) {
-    const app = useApp()
     const loader = useLoader();
-    return loader.post("crowd/feedback/add", {
-        client: app.activeUserId,
-        guid: app.guid,
-        ip: app.ipAddress,
-        cwId: app.cwId,
-        text: text,
-    })
+    const obj = makeAuth()
+    obj.text = text
+    return loader.post("crowd/feedback/add", obj)
 }
 
 export async function getClientRatings() {
     const app = useApp()
     if (!app.activeUserId) return []
     const loader = useLoader();
-    return loader.get("crowd/ratings", {
-        client: app.activeUserId,
-        guid: app.guid,
-        ip: app.ipAddress,
-        cwId: app.cwId,
-    })
+    return loader.get("crowd/ratings", makeAuth())
 }
 
 export async function getRatingStats() {
@@ -140,13 +105,9 @@ export async function getRatingStats() {
 export async function addRatings(ratings) {
     const app = useApp()
     const loader = useLoader();
-    return loader.post("crowd/ratings/add", {
-        client: app.activeUserId,
-        guid: app.guid,
-        ip: app.ipAddress,
-        cwId: app.cwId,
-        ratings: ratings,
-    })
+    const obj = makeAuth()
+    obj.ratings = ratings
+    return loader.post("crowd/ratings/add", obj)
 }
 
 
@@ -169,16 +130,9 @@ export async function getSimilarByTarget(target, limit=0) {
 }
 
 export async function addSimilarity(info, data) {
-    const app = useApp()
     const loader = useLoader();
-    return loader.post("add/similarity", {
-        // client data
-        client: app.activeUserId,
-        guid: app.guid,
-        ip: app.ipAddress,
-        cwId: app.cwId,
-        // data
-        info: info,
-        rows: Array.isArray(data) ? data : [data]
-    })
+    const obj = makeAuth()
+    obj.info = info
+    obj.rows = Array.isArray(data) ? data : [data]
+    return loader.post("add/similarity", obj)
 }
