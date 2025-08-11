@@ -14,6 +14,7 @@
     import { useApp } from '@/stores/app';
     import { GAME_IDS } from '@/stores/games';
     import { useTimes } from '@/stores/times';
+    import { addInteractionLog } from '@/use/data-api';
     import { useWindowSize } from '@vueuse/core';
     import { computed, onBeforeUnmount, onMounted, watch } from 'vue';
     import { POSITION, useToast } from 'vue-toastification';
@@ -95,7 +96,11 @@
         }
     }
 
-    onMounted(read)
+    onMounted(function() {
+        addInteractionLog("game page", app.target ? app.target.id : null)
+        read()
+    })
+
     onBeforeUnmount(function() {
         hideSizeAlert()
         app.setTarget(null)

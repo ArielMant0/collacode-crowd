@@ -103,13 +103,28 @@ export async function getRatingStats() {
 }
 
 export async function addRatings(ratings) {
-    const app = useApp()
     const loader = useLoader();
     const obj = makeAuth()
     obj.ratings = ratings
     return loader.post("crowd/ratings/add", obj)
 }
 
+export async function addInteractionLog(action, data=null) {
+    const loader = useLoader();
+    const obj = makeAuth()
+    if (!obj.client) return
+    obj.rows = [{
+        action: action,
+        data: data ? ""+data : null,
+        timestamp: Date.now()
+    }]
+
+    try {
+        loader.post("crowd/interactions", obj)
+    } catch(e) {
+        console.error(e.toString())
+    }
+}
 
 ////////////////////////////////////////////////////////////
 // Crowd Similarity Data

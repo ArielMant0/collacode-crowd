@@ -102,7 +102,7 @@
     import { CW_MAX_SUB, useApp } from '@/stores/app';
     import CrowdWorkerNotice from '@/components/CrowdWorkerNotice.vue';
     import { SOUND, useSounds } from '@/stores/sounds';
-    import { addFeedback, addRatings, getClientRatings, getRatingStats } from '@/use/data-api';
+    import { addFeedback, addInteractionLog, addRatings, getClientRatings, getRatingStats } from '@/use/data-api';
     import { storeToRefs } from 'pinia';
     import { computed, onMounted, reactive, watch } from 'vue';
     import { POSITION, useToast } from 'vue-toastification';
@@ -247,7 +247,10 @@
     }
 
 
-    onMounted(read)
+    onMounted(function() {
+        addInteractionLog("feedback page")
+        read()
+    })
 
     watch(activeUserId, read)
 </script>

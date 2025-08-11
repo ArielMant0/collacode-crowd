@@ -152,8 +152,9 @@
     import w4 from '@/assets/about-workflow-4.jpg'
     import w5 from '@/assets/about-workflow-5.jpg'
     import wa from '@/assets/about-workflow-attention.jpg'
-    import { computed, useTemplateRef } from 'vue'
+    import { computed, onMounted, useTemplateRef } from 'vue'
     import { useElementVisibility } from '@vueuse/core'
+    import { addInteractionLog } from '@/use/data-api'
 
     const app = useApp()
 
@@ -184,7 +185,9 @@
         return "95%"
     })
 
-
+    onMounted(function() {
+        addInteractionLog("about page")
+    })
 
 </script>
 

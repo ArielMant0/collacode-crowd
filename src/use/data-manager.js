@@ -25,7 +25,7 @@ class DataManager {
         return this.graph !== null
     }
 
-    getGraph(graph) {
+    getGraph() {
         return this.graph
     }
 

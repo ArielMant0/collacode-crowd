@@ -192,7 +192,7 @@
     import imgUrl1 from '@/assets/graph-tutorial-links.jpg'
     import imgUrl2 from '@/assets/graph-tutorial-search.jpg'
     import imgUrl3 from '@/assets/graph-tutorial-sidebar.jpg'
-    import { loadLastUpdate } from '@/use/data-api';
+    import { addInteractionLog, loadLastUpdate } from '@/use/data-api';
 
     const app = useApp()
     const tt = useTooltip()
@@ -337,6 +337,7 @@
     }
 
     onMounted(async function() {
+        addInteractionLog("graph page")
         await checkUpdate()
         read()
     })

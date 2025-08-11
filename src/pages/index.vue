@@ -9,7 +9,7 @@
     import CrowdWorkerNotice from '@/components/CrowdWorkerNotice.vue';
     import ItemSelectionView from '@/components/ItemSelectionView.vue';
     import { useTimes } from '@/stores/times';
-    import { loadLastUpdate } from '@/use/data-api';
+    import { addInteractionLog, loadLastUpdate } from '@/use/data-api';
     import { onMounted } from 'vue';
 
     const times = useTimes()
@@ -27,5 +27,8 @@
         }
     }
 
-    onMounted(checkUpdate)
+    onMounted(function() {
+        addInteractionLog("main page")
+        checkUpdate()
+    })
 </script>
