@@ -17,12 +17,19 @@
 
 <script setup>
     import { CW_MAX_SUB, useApp } from '@/stores/app';
+    import { GAME_IDS } from '@/stores/games';
 
     const app = useApp()
     const show = computed(() => {
         return !app.isCrowdWorker &&
-            app.numFeedback < 4 &&
-            app.numSubmissions >= CW_MAX_SUB
+            (
+                app.numFeedback[GAME_IDS.BINSEARCH] < 4 &&
+                app.methodCounts.get(GAME_IDS.BINSEARCH) >= CW_MAX_SUB
+            ) ||
+            (
+                app.numFeedback[GAME_IDS.CLUSTERS] < 4 &&
+                app.methodCounts.get(GAME_IDS.CLUSTERS) >= CW_MAX_SUB
+            )
     })
 
     const props = defineProps({

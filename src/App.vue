@@ -321,7 +321,10 @@
         if (!app.activeUserId) return
         try {
             const res = await api.getClientRatings()
-            app.numFeedback = Object.values(res).reduce((acc, d) => acc + (d !== null ? 1 : 0), 0)
+            for (const gameId in res) {
+                app.numFeedback[gameId] = Object.values(res[gameId])
+                    .reduce((acc, d) => acc + (d !== null ? 1 : 0), 0)
+            }
         } catch (e) {
             console.error(e.toString())
         }

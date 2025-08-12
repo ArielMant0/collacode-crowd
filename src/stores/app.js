@@ -42,7 +42,7 @@ export const useApp = defineStore('app', {
         cwId: null,
         cwSubmitted: false,
 
-        numFeedback: 0,
+        numFeedback: { 0: 0, 1: 0, 2: 0 },
 
         cwLinks: {
             linkSuccess: "/",
@@ -90,7 +90,7 @@ export const useApp = defineStore('app', {
             return state.isCrowdWorker && diff > 0 && state.itemsLeft.size < diff
         },
         isCrowdWorkerReady: state => state.isCrowdWorker && state.numSubmissions >= CW_MAX_SUB && !state.userBlocked,
-        isCrowdWorkerDone: state => state.isCrowdWorkerReady && state.numFeedback >= 4,
+        isCrowdWorkerDone: state => state.isCrowdWorkerReady && state.numFeedback[state.method] >= 4,
     },
 
     actions: {

@@ -20,7 +20,6 @@ export const BASE_PATH = config.APP_BASE_PATH
 export default defineConfig(({ mode }) => {
 
   const env = loadEnv(mode, process.cwd())
-  console.log(env)
 
   return {
     base: BASE_PATH,

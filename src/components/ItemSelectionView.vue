@@ -5,15 +5,7 @@
                 <i v-if="canFixMethod">use this to fix the similarity game mode</i>
                 <i v-else>submit similarities for at least {{ CW_MAX_SUB }} {{ app.itemName }}s to unlock fixing the similarity game mode</i>
             </div>
-            <v-btn-toggle v-model="fixedMethod"
-                divided
-                :disabled="!canFixMethod"
-                density="comfortable"
-                color="primary"
-                variant="outlined">
-                <v-btn prepend-icon="mdi-cards-variant" :value="1">clustering</v-btn>
-                <v-btn prepend-icon="mdi-graph-outline" :value="2">binary search</v-btn>
-            </v-btn-toggle>
+            <GameModeToggle v-model="fixedMethod" :disabled="!canFixMethod"/>
         </div>
         <ItemSelectionPanel v-if="app.itemsLeft.size > 0"
             :subset="0"
@@ -52,6 +44,7 @@
     import { computed } from 'vue';
     import { useDisplay } from 'vuetify';
     import { storeToRefs } from 'pinia';
+    import GameModeToggle from './GameModeToggle.vue';
 
     const app = useApp()
     const { fixedMethod } = storeToRefs(app)

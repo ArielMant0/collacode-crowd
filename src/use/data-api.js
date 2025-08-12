@@ -83,9 +83,10 @@ export async function addAttentionFail(itemId, game) {
     return loader.post("crowd/attention/fail", obj)
 }
 
-export async function addFeedback(text) {
+export async function addFeedback(gameId, text) {
     const loader = useLoader();
     const obj = makeAuth()
+    obj.game_id = gameId
     obj.text = text
     return loader.post("crowd/feedback/add", obj)
 }

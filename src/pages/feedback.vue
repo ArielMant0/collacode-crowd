@@ -3,91 +3,102 @@
     <CrowdWorkerNotice/>
 
     <div class="d-flex justify-center">
-        <div v-if="app.numSubmissions >= CW_MAX_SUB" style="min-width: 300px; width: 75%; max-width: 900px">
+        <div  style="min-width: 300px; width: 75%; max-width: 900px">
+
             <div style="margin-top: 2em;">
 
-                <div v-if="!app.isCrowdWorker && app.numFeedback < questions.length" class="text-caption">
-                    be aware, feedback can only be submitted <b style="text-decoration: underline;">once</b>
+                <div v-if="!app.isCrowdWorker" style="width: 100%; text-align: center;">
+                    <GameModeToggle v-model="gameId" :disabled="app.isCrowdWorker"/>
                 </div>
 
-                <div v-for="(q, idx) in questions" class="mb-8">
-                    <div class="mb-1"><b>{{ idx+1 }}.</b><span class="text-red">*</span> {{ q.text }}</div>
+                <div v-if="!app.isCrowdWorker && isValidGameId && app.numFeedback[gameId] < questions.length"
+                    style="text-align: center;"
+                    class="text-caption mt-1">
+                    be aware, feedback can only be submitted <b style="text-decoration: underline;">once</b> per game mode
+                </div>
 
-                    <div class="d-flex align-center flex-column">
+                <div v-if="canGiveFeedback || done" class="mt-4">
+                    <div v-for="(q, idx) in questions" class="mb-8">
+                        <div class="mb-1"><b>{{ idx+1 }}.</b><span class="text-red">*</span> {{ q.text }}</div>
 
-                        <div class="d-flex align-start justify-space-between" style="width: 100%;">
+                        <div class="d-flex align-center flex-column">
 
-                            <div v-for="o in answerOptions"
-                                class="d-flex flex-column align-center pa-2"
-                                :style="{
-                                    width: optWidth+'px',
-                                    maxWidth: optWidth+'px',
-                                    border: '1px solid ' + (done && data.ratings[q.id] === o.value ? theme.current.value.colors.primary : 'white')
-                                }">
-                                <svg v-if="data.stats[q.id] && done && data.sumCount >=3" :width="optWidth" height="30">
-                                    <rect
-                                        :x="10"
-                                        :y="30 - (data.stats[q.id][o.value]/data.sumCount)*30"
-                                        :width="optWidth-20"
-                                        :height="(data.stats[q.id][o.value]/data.sumCount)*30"
-                                        :fill="theme.current.value.colors.primary">
-                                    </rect>
-                                    <text v-if="data.stats[q.id][o.value]"
-                                        :x="0.5*optWidth"
-                                        :y="25"
-                                        font-size="10"
-                                        font-weight="bold"
-                                        text-anchor="middle"
-                                        stroke="white"
-                                        stroke-width="2"
-                                        paint-order="stroke"
-                                        fill="black">
-                                        {{ Math.round(data.stats[q.id][o.value] / data.sumCount * 100) }}%
-                                    </text>
-                                </svg>
-                                <v-btn
-                                    :icon="data.ratings[q.id] === o.value ? 'mdi-radiobox-marked' : 'mdi-radiobox-blank'"
-                                    :color="data.ratings[q.id] === o.value ? 'primary' : 'default'"
-                                    :disabled="done"
-                                    density="compact"
-                                    variant="text"
-                                    @click="setRating(q.id, o.value)"/>
-                                <div style="text-align: center" :style="{ opacity: done && data.ratings[q.id]!==o.value ? 0.33 : 1 }">
-                                    <div class="text-dots">{{ o.name }}</div>
-                                    <v-icon v-if="o.icon">{{ o.icon }}</v-icon>
+                            <div class="d-flex align-start justify-space-between" style="width: 100%;">
+
+                                <div v-for="o in answerOptions"
+                                    class="d-flex flex-column align-center pa-2"
+                                    :style="{
+                                        width: optWidth+'px',
+                                        maxWidth: optWidth+'px',
+                                        border: '1px solid ' + (done && activeRating && activeRating[q.id] === o.value ? theme.current.value.colors.primary : 'white')
+                                    }">
+                                    <svg v-if="activeStats && activeStats[q.id] && done && activeSum >=3" :width="optWidth" height="30">
+                                        <rect
+                                            :x="10"
+                                            :y="30 - (activeStats[q.id][o.value]/activeSum)*30"
+                                            :width="optWidth-20"
+                                            :height="(activeStats[q.id][o.value]/activeSum)*30"
+                                            :fill="theme.current.value.colors.primary">
+                                        </rect>
+                                        <text v-if="activeStats[q.id][o.value]"
+                                            :x="0.5*optWidth"
+                                            :y="25"
+                                            font-size="10"
+                                            font-weight="bold"
+                                            text-anchor="middle"
+                                            stroke="white"
+                                            stroke-width="2"
+                                            paint-order="stroke"
+                                            fill="black">
+                                            {{ Math.round(activeStats[q.id][o.value] / activeSum * 100) }}%
+                                        </text>
+                                    </svg>
+                                    <v-btn
+                                        :icon="activeRating && activeRating[q.id] === o.value ? 'mdi-radiobox-marked' : 'mdi-radiobox-blank'"
+                                        :color="activeRating && activeRating[q.id] === o.value ? 'primary' : 'default'"
+                                        :disabled="done"
+                                        density="compact"
+                                        variant="text"
+                                        @click="setRating(q.id, o.value)"/>
+                                    <div style="text-align: center" :style="{ opacity: done && activeRating && activeRating[q.id]!==o.value ? 0.33 : 1 }">
+                                        <div class="text-dots">{{ o.name }}</div>
+                                        <v-icon v-if="o.icon">{{ o.icon }}</v-icon>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
+
+                    <v-textarea v-if="!done"
+                        v-model="text"
+                        density="compact"
+                        variant="outlined"
+                        style="margin-top: 2em;"
+                        label="Open feedback (max. 1000 characters)"
+                        hide-spin-buttons
+                        :rows="10"
+                        :rules="[v => v.length <= 1000 || 'feedback can only be up to 1000 characters']"
+                        placeholder="Write down your feedback here.."/>
+
+                    <div v-if="!done" style="text-align: center;">
+                        <v-btn
+                            size="large"
+                            density="comfortable"
+                            @click="submit"
+                            color="primary"
+                            :disabled="numAnswered < questions.length"
+                            :color="text && text.length > 0 ? 'primary' : 'default'">
+                            submit
+                        </v-btn>
+                    </div>
+                </div>
+                <div v-else style="margin-top: 2em; font-size: 30px; text-align: center;">
+                    You must complete at least {{ CW_MAX_SUB }} {{ app.itemName }}s  for this mode before
+                    you can give feedback.
                 </div>
             </div>
-
-            <v-textarea v-if="!done"
-                v-model="text"
-                density="compact"
-                variant="outlined"
-                style="margin-top: 2em;"
-                label="Open feedback (max. 1000 characters)"
-                hide-spin-buttons
-                :rows="10"
-                :rules="[v => v.length <= 1000 || 'feedback can only be up to 1000 characters']"
-                placeholder="Write down your feedback here.."/>
-
-            <div v-if="!done" style="text-align: center;">
-                <v-btn
-                    size="large"
-                    density="comfortable"
-                    @click="submit"
-                    color="primary"
-                    :disabled="numAnswered < questions.length"
-                    :color="text && text.length > 0 ? 'primary' : 'default'">
-                    submit
-                </v-btn>
-            </div>
         </div>
-        <div v-else style="margin-top: 2em; font-size: 30px; text-align: center;">
-            You must complete at least {{ CW_MAX_SUB }} {{ app.itemName }}s before you can give feedback.
-        </div>
+
     </div>
 
     <MiniDialog v-model="cwDialog" min-width="300" @close="onDialogClose" @cancel="onDialogClose" no-actions close-icon>
@@ -114,6 +125,8 @@
     import { useTheme } from 'vuetify';
     import MiniDialog from '@/components/MiniDialog.vue';
     import router from '@/router';
+    import { GAME_IDS } from '@/stores/games';
+    import GameModeToggle from '@/components/GameModeToggle.vue';
 
     const app = useApp()
     const toast = useToast()
@@ -122,18 +135,29 @@
 
     const { activeUserId } = storeToRefs(app)
 
+    const gameId = ref(app.method)
+    const isValidGameId = computed(() => gameId.value === GAME_IDS.BINSEARCH || gameId.value === GAME_IDS.CLUSTERS)
     const text = ref("")
 
     const optWidth = 120
     const data = reactive({
         ratings: {},
         stats: {},
-        sumCount: 1
+        sumCount: {}
     })
 
+    const activeRating = computed(() => isValidGameId.value ? data.ratings[gameId.value] : null)
+    const activeStats = computed(() => isValidGameId.value ? data.stats[gameId.value] : null)
+    const activeSum = computed(() => isValidGameId.value ? data.sumCount[gameId.value] : null)
+
     const cwDialog = ref(false)
-    const done = computed(() => app.numFeedback >= questions.value.length)
-    const numAnswered = computed(() => Object.values(data.ratings).reduce((acc, d) => acc + (d !== null ? 1 : 0), 0))
+
+    const canGiveFeedback = computed(() => isValidGameId.value && app.methodCounts.get(gameId.value) >= CW_MAX_SUB)
+    const done = computed(() => isValidGameId.value && app.numFeedback[gameId.value] >= questions.value.length)
+    const numAnswered = computed(() => isValidGameId.value && activeRating.value ?
+        Object.values(activeRating.value).reduce((acc, d) => acc + (d !== null ? 1 : 0), 0) :
+        0
+    )
 
     const questions = computed(() => ([
         { id: "ease", text: "I found it easy to use this application." },
@@ -156,19 +180,26 @@
     async function read() {
 
         const obj = {}
-        questions.value.forEach(q => obj[q.id] = null)
+        const gids = [GAME_IDS.BINSEARCH, GAME_IDS.CLUSTERS]
+
+        gids.forEach(gid => {
+            obj[gid] = {}
+            questions.value.forEach(q => obj[gid][q.id] = null)
+        })
 
         try {
-            let num = 0
-            // get ratings for this client
             const res = await getClientRatings()
-            for (const id in res) {
-                obj[id] = res[id]
-                if (res[id] !== null) {
-                    num++
+            gids.forEach(gid => {
+                let num = 0
+                // get ratings for this client
+                for (const id in res[gid]) {
+                    obj[gid][id] = res[gid][id]
+                    if (res[gid][id] !== null) {
+                        num++
+                    }
                 }
-            }
-            app.numFeedback = num
+                app.numFeedback[gid] = num
+            })
         } catch (e) {
             console.error(e.toString())
         }
@@ -184,15 +215,19 @@
         try {
             // get global ratings stats
             const res = await getRatingStats()
-            let maxSum = 0
-            for (const id in res) {
-                let sumPerQ = 0
-                for (const rating in res[id]) {
-                    sumPerQ += res[id][rating]
+            const gids = [GAME_IDS.BINSEARCH, GAME_IDS.CLUSTERS]
+            data.sumCount = {}
+            gids.forEach(gid => {
+                let maxSum = 0
+                for (const id in res[gid]) {
+                    let sumPerQ = 0
+                    for (const rating in res[gid][id]) {
+                        sumPerQ += res[gid][id][rating]
+                    }
+                    maxSum = Math.max(maxSum, sumPerQ)
                 }
-                maxSum = Math.max(maxSum, sumPerQ)
-            }
-            data.sumCount = maxSum
+                data.sumCount[gid] = maxSum
+            })
             data.stats = res
         } catch (e) {
             console.error(e.toString())
@@ -201,28 +236,38 @@
 
 
     function setRating(id, value) {
-        data.ratings[id] = value
+        if (!isValidGameId.value) {
+            return toast.error("please select a game mode")
+        }
+        data.ratings[gameId.value][id] = value
         sounds.play(SOUND.CLICK)
     }
 
     async function submitRatings() {
-        const values = Object.values(data.ratings)
-        if (values.some(v => v !== null)) {
-            try {
-                // submit ratings
-                await addRatings(data.ratings)
-            } catch(e) {
-                console.error(e.toString())
-                toast.error("invalid rating")
-            }
+        if (numAnswered.value < questions.value.length) {
+            return toast.error("please answer all questions")
+        }
+        if (!isValidGameId.value) {
+            return toast.error("please select a game mode")
+        }
+
+        try {
+            // submit ratings
+            await addRatings(Object.assign({ game_id: gameId.value }, activeRating.value))
+        } catch(e) {
+            console.error(e.toString())
+            toast.error("invalid rating")
         }
     }
 
     async function submitText() {
+        if (!isValidGameId.value) {
+            return toast.error("please select a game mode")
+        }
         if (text.value && text.value.length > 0) {
             try {
                 // submit text feedback
-                await addFeedback(text.value)
+                await addFeedback(gameId.value, text.value)
                 text.value = ""
             } catch(e) {
                 console.error(e.toString())
@@ -233,7 +278,10 @@
 
     async function submit() {
         if (numAnswered.value < questions.value.length) {
-            return toast.error("please answer all questions before submitting")
+            return toast.error("please answer all questions")
+        }
+        if (!isValidGameId.value) {
+            return toast.error("please select a game mode")
         }
         await submitRatings()
         await submitText()
@@ -258,9 +306,19 @@
 
 
     onMounted(function() {
+        if (app.isCrowdWorker) {
+            gameId.value = app.method
+        } else {
+            if (app.getMethodCount(GAME_IDS.BINSEARCH) < CW_MAX_SUB) {
+                gameId.value = GAME_IDS.BINSEARCH
+            } else {
+                gameId.value = GAME_IDS.CLUSTERS
+            }
+        }
         addInteractionLog("feedback page")
         read()
     })
 
     watch(activeUserId, read)
+    watch(gameId, getGlobalRatings)
 </script>
