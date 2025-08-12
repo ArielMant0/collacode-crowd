@@ -369,7 +369,7 @@
         readQuery()
 
         // try to read the users id from local storage
-        const clientId = localStorage.getItem("crowd-client")
+        const clientId = Number.parseInt(localStorage.getItem("crowd-client"))
         const guid = localStorage.getItem("crowd-guid")
         const userSrc = localStorage.getItem("crowd-source")
         // crowd sourcing data

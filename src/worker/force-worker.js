@@ -12,7 +12,7 @@ onmessage = function(event) {
 
     function distanceFunction(d) {
         return weightAttr ?
-            (1 + ((maxWeight - d[weightAttr]) / maxWeight)) * radius * 0.5 :
+            (1 + ((maxWeight - d[weightAttr]) / maxWeight)) * radius :
             radius
     }
 

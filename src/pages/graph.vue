@@ -102,13 +102,12 @@
 
                     <v-divider class="mt-2 mb-2"></v-divider>
 
-                    <div v-for="item in graphData.connected" class="mb-2 d-flex align-center justify-start">
+                    <div v-for="item in connectedVisible" class="mb-2 d-flex align-center justify-start">
                         <div class="mr-1">
                             <ItemTeaser
                                 :id="item.id"
                                 :width="140"
                                 :height="70"
-                                show-name
                                 @click="setTarget(item.id)"
                                 prevent-context
                                 prevent-open/>
@@ -127,6 +126,19 @@
                             <div>Count: {{ item.count }}</div>
                         </div>
                     </div>
+
+                    <div v-if="graphData.connected.length > connectedVisible.length"
+                        class="text-caption text-italic">
+                        and {{ graphData.connected.length - connectedVisible.length }} more..
+                    </div>
+                    <v-btn v-if="!connectedLastPage"
+                        density="comfortable"
+                        variant="flat"
+                        color="secondary"
+                        block
+                        @click="loadMoreConnections">
+                        load more
+                    </v-btn>
                 </div>
             </div>
         </div>
@@ -220,13 +232,27 @@
     const prevItemName = ref("")
     const nextItemName = ref("")
 
+    const showGraph = computed(() => app.numSubmissions >= 5)
+
     const target = ref(-1)
     const graphData = reactive({
         nodes: [],
         links: [],
-        connected: []
+        connected: [],
+        conPage: 1,
+        conPerPage: 5
     })
-    const showGraph = computed(() => app.numSubmissions >= 5)
+
+    const connectedLastPage = computed(() => graphData.conPage*graphData.conPerPage >= graphData.connected.length)
+    const connectedVisible = computed(() => {
+        const end = Math.min(graphData.connected.length, graphData.conPage*graphData.conPerPage)
+        return graphData.connected.slice(0, end)
+    })
+
+    function loadMoreConnections() {
+        graphData.conPage++
+    }
+
 
     function setSearchTarget(item) {
         search.value = ""
@@ -288,6 +314,7 @@
     function setTarget(id, record=true) {
         target.value = id
         if (id && id > 0) {
+            graphData.conPage = 1
             const tmp = graphData.links.filter(l => l.source === id || l.target === id)
             tmp.sort((a, b) => b.value - a.value)
             const maxValue = max(tmp, d => d.value)

@@ -138,7 +138,7 @@
         if (transform === null) {
             lg
                 .style("visibility", "visible")
-                .attr("stroke-width", d => wscale(d.value) * Math.max(0.4, zoomTransform.k / 3))
+                .attr("stroke-width", d => wscale(d.value) * Math.max(0.5, zoomTransform.k / 3))
                 .attr("x1", d => zx(d.source.x))
                 .attr("x2", d => zx(d.target.x))
                 .attr("y1", d => zy(d.source.y))
@@ -194,10 +194,12 @@
             nodes = nodes.filter(d => links.find(dd => dd.target === d.id || dd.source === d.di))
         }
 
-
-        nodes.forEach(d => {
-            d.x = Math.random() * props.width - props.radius
-            d.y = Math.random() * props.height - props.radius / 2
+        const initRadius = Math.floor(Math.min(props.width, props.height) / 2)
+        const initX = props.width / 2
+        const initY = props.height / 2
+        nodes.forEach((d, i) => {
+            d.x = initX + initRadius * Math.cos(i * 2 * Math.PI / nodes.left)
+            d.y = initY + initRadius * Math.sin(i * 2 * Math.PI / nodes.left)
         })
 
         zoom = d3.zoom()
@@ -210,17 +212,24 @@
 
         let maxWeight= 1
 
+        let opacScale
         if (props.weightAttr){
             const [minW, maxW] = d3.extent(links.map(d => d[props.weightAttr]))
             maxWeight = maxW
             wscale = d3.scaleLinear()
                 .domain([minW, maxW])
                 .range([3, 12])
+
+            opacScale = d3.scaleLinear()
+                .domain([minW, maxW])
+                .range([0.2, 0.8])
         } else {
             wscale = () => 2
+            opacScale = () => 0.2
         }
 
         lg = svg.append("g")
+            // .style("mix-blend-mode", "exclusion")
             .selectAll("line")
             .data(links)
             .join("line")
@@ -229,8 +238,8 @@
             .attr("y1", d => d.source.y)
             .attr("y2", d => d.target.y)
             .attr("stroke", d => d.source.id === props.target || d.target.id === props.target ? props.targetColor : "currentColor")
-            .attr("stroke-width", d => wscale(d.value))
-            .attr("opacity", 0.25)
+            .attr("stroke-width", d => wscale(d[props.weightAttr]))
+            .attr("opacity", d => opacScale(d[props.weightAttr]))
 
         ng = svg.append("g")
             .selectAll("g")
@@ -297,7 +306,7 @@
 
         function distanceFunction(d) {
             return props.weightAttr ?
-                (1 + ((maxWeight - d[props.weightAttr]) / maxWeight)) * props.radius * 0.5 :
+                (1 + ((maxWeight - d[props.weightAttr]) / maxWeight)) * props.radius :
                 props.radius
         }
 
@@ -384,7 +393,7 @@
         svg.call(zoom)
 
         if (props.target) {
-            setTimeout(() => focus(props.target), 2000)
+            setTimeout(() => focus(props.target), 1000)
         }
 
     }
