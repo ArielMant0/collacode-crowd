@@ -1,10 +1,15 @@
 <template>
     <div class="pb-8">
     <CrowdWorkerNotice/>
-    <div class="d-flex justify-center">
 
+    <div class="d-flex justify-center">
         <div v-if="app.numSubmissions >= CW_MAX_SUB" style="min-width: 300px; width: 75%; max-width: 900px">
             <div style="margin-top: 2em;">
+
+                <div v-if="!app.isCrowdWorker && app.numFeedback < questions.length" class="text-caption">
+                    be aware, feedback can only be submitted <b style="text-decoration: underline;">once</b>
+                </div>
+
                 <div v-for="(q, idx) in questions" class="mb-8">
                     <div class="mb-1"><b>{{ idx+1 }}.</b><span class="text-red">*</span> {{ q.text }}</div>
 
@@ -126,15 +131,19 @@
     })
 
     const cwDialog = ref(false)
-    const done = computed(() => app.numFeedback >= questions.length)
+    const done = computed(() => app.numFeedback >= questions.value.length)
     const numAnswered = computed(() => Object.values(data.ratings).reduce((acc, d) => acc + (d !== null ? 1 : 0), 0))
 
-    const questions = [
+    const questions = computed(() => ([
         { id: "ease", text: "I found it easy to use this application." },
         { id: "fun", text: "I had fun using this application." },
         { id: "satisfaction", text: "I am satisfied with the results I got using this application." },
-        { id: "preference", text: "I prefer using this application over searching through a list to find similar items." },
-    ]
+        {
+            id: "preference",
+            text: "I prefer using this application over going through a list of 400 " +
+                app.itemName + "s ony by one."
+        },
+    ]))
     const answerOptions = [
         { name: "strongly agree", value: 5, icon: "mdi-emoticon-happy-outline" },
         { name: "agree", value: 4 },
@@ -146,7 +155,7 @@
     async function read() {
 
         const obj = {}
-        questions.forEach(q => obj[q.id] = null)
+        questions.value.forEach(q => obj[q.id] = null)
 
         try {
             let num = 0
@@ -222,7 +231,7 @@
     }
 
     async function submit() {
-        if (numAnswered.value < questions.length) {
+        if (numAnswered.value < questions.value.length) {
             return toast.error("please answer all questions before submitting")
         }
         await submitRatings()

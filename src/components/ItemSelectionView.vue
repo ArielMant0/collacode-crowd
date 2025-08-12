@@ -54,7 +54,7 @@
         }
     })
 
-    const countTarget = 10
+    const countTarget = 5
 
     const { smAndDown } = useDisplay()
     const maxWidth = computed(() => smAndDown.value ? "95%" : "90%")

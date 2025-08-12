@@ -16,7 +16,7 @@ export function registerPlugins (app) {
     .use(router)
     .use(pinia)
     .use(Toast, {
-      timeout: 1500,
+      timeout: 2000,
       toastClassName: 'ctoast',
       bodyClassName: ['ctoast'],
     })

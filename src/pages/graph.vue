@@ -131,7 +131,7 @@
             </div>
         </div>
         <div v-else>
-            <p style="font-size: large; margin-top: 3em;">
+            <p style="margin-top: 2em; font-size: 30px; text-align: center;">
                 Add similarities for <b>at least 5 {{ app.itemName }}s</b> to explore the similarity graph!
             </p>
         </div>

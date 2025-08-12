@@ -12,13 +12,14 @@
 
             <div
                 class="d-flex flex-column align-center bordered-grey-light-thin pa-2 mr-4 rounded-lg"
-                style="max-width: 49%; width: 49%; border: 2px dashed black;">
+                :style="{ minWidth: (imageWidth+10)+'px' }"
+                style="max-width: 49%; width: 40%; border: 2px dashed black;">
                 <h3 class="sectitle">Candidates</h3>
                 <div class="d-flex flex-wrap justify-center align-start"
                     @drop.prevent="dropItem(0)"
                     @dragover.prevent
                     style="width: 100%; max-width: 100%;"
-                    :style="{ minHeight: ((imageHeight+10)*4)+'px' }">
+                    :style="{ minHeight: ((imageHeight+10)*6)+'px' }">
                     <ItemTeaser v-for="item in restItems"
                         :item="item"
                         :width="imageWidth"
@@ -33,7 +34,7 @@
                 </div>
             </div>
 
-            <div class="ml-4" style="max-width: 49%; width: 35%;">
+            <div class="ml-4" style="max-width: 49%; width: 40%;" :style="{ minWidth: (imageWidth+10)+'px' }">
 
                 <div class="d-flex flex-column align-center rounded-lg pa-2 mb-1 drop-area"
                     @drop.prevent="dropItem(2)"
@@ -42,25 +43,20 @@
                     @dragleave="e => onDragLeave(e, 'bg-primary-light')"
                     style="width: 100%; max-width: 100%;"
                     :style="{ border: '2px dashed '+theme.current.value.colors.primary }">
-                    <h3 class="d-flex align-center">
-                        <v-tooltip location="top center">
-                            <template v-slot:activator="{ props }">
-                                <v-icon v-bind="props" class="mr-1" size="sm">mdi-information-outline</v-icon>
-                            </template>
-                            <template #default>
-                                <div>
-                                    <div>select {{ app.itemName }}s <b>very similar</b> to your target</div>
-                                    <p class="mt-1">
-                                        there can be <b>small</b> differences regarding the setting, artstyle,
-                                        or <b>minor</b> {{ app.itemName }} mechanics, but the core <b>gameplay</b>
-                                        should be <b>very similar</b>
-                                    </p>
-                                </div>
-                            </template>
-                        </v-tooltip>
-                        Very Similar
-                        <span v-if="itemLimit > 0" class="ml-1 text-caption">(max. {{ itemLimit }})</span>
+
+                    <h3>
+                        Very Similar <span v-if="itemLimit > 0" class="ml-1 text-caption">(max. {{ itemLimit }})</span>
                     </h3>
+
+                    <v-divider class="mt-2 mb-1" style="width: 100%;" color="primary"></v-divider>
+                    <p class="mt-1 text-caption">
+                        core <b>gameplay</b> should be <b>very similar</b>, but there can be
+                        <b>small differences</b> regarding the setting, artstyle, or
+                        other {{ app.itemName }} mechanics - all {{ app.itemName }}s here
+                        should also be <b>very similar</b> to each other
+                    </p>
+                    <v-divider class="mt-2 mb-1" style="width: 100%;" color="primary"></v-divider>
+
                     <div class="d-flex flex-wrap justify-center align-start pa-2"
                         style="pointer-events: none; width: 100%; max-width: 100%;"
                         :style="{ minHeight: ((imageHeight+10)*3)+'px' }">
@@ -85,25 +81,17 @@
                     @dragenter="e => onDragEnter(e, 'bg-tertiary-light')"
                     @dragleave="e => onDragLeave(e, 'bg-tertiary-light')"
                     style="width: 100%; max-width: 100%;">
-                    <h3 class="d-flex align-center">
-                        <v-tooltip location="top center">
-                            <template v-slot:activator="{ props }">
-                                <v-icon v-bind="props" class="mr-1" size="sm">mdi-information-outline</v-icon>
-                            </template>
-                            <template #default>
-                                <div>
-                                    <div>select {{ app.itemName }}s <b>similar</b> to the target</div>
-                                    <p class="mt-1">
-                                        there can be some differences regarding the setting, artstyle,
-                                        or {{ app.itemName }} mechanics, but the core <b>gameplay</b>
-                                        should be <b>similar</b>
-                                    </p>
-                                </div>
-                            </template>
-                        </v-tooltip>
-                        Similar
-                        <span v-if="itemLimit > 0" class="ml-1 text-caption">(max. {{ itemLimit }})</span>
+                    <h3>
+                        Similar <span v-if="itemLimit > 0" class="ml-1 text-caption">(max. {{ itemLimit }})</span>
                     </h3>
+
+                    <v-divider class="mt-2 mb-1" style="width: 100%;" color="tertiary"></v-divider>
+                    <p class="mt-1 text-caption">
+                        core <b>gameplay</b> should be <b>similar</b>, but there can be differences
+                        regarding the setting, artstyle, or other {{ app.itemName }} mechanics
+                    </p>
+                    <v-divider class="mt-2 mb-1" style="width: 100%;" color="tertiary"></v-divider>
+
                     <div class="d-flex flex-wrap justify-center align-start pa-2"
                         style="pointer-events: none; width: 100%; max-width: 100%;"
                         :style="{ minHeight: ((imageHeight+10)*3)+'px' }">
