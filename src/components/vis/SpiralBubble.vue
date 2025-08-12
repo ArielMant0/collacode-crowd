@@ -75,8 +75,8 @@
     const aspect = computed(() => props.width / props.height)
 
     function getColor(d, set, high) {
-        if (props.dataColors !== undefined) {
-            return props.dataColors[d.id] ? props.dataColors[d.id] : props.color
+        if (props.dataColors !== undefined && props.dataColors[d.id]) {
+            return props.dataColors[d.id]
         }
         return set.has(d.id) ? props.selectedColor : (high.has(d.id) ? props.highlightsColor : props.color)
     }
@@ -279,5 +279,5 @@
     watch(() => ([props.selectedColor, props.highlightsColor]), () => draw(false))
     watch(() => props.selected, () => draw(false))
     watch(() => props.highlights, () => draw(false))
-    watch(() => props.dataColors, () => draw(false))
+    watch(() => props.dataColors, () => draw(false), { deep: true })
 </script>

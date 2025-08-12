@@ -27,9 +27,11 @@
                     <a :href="app.cwLinks.linkSuccess" target="_blank">{{ app.cwLinks.linkSuccess }}</a>
                     You can also use this code to submit your participation: <b>{{ app.cwLinks.codeSuccess }}</b>
                     <div class="mt-4">
-                        If you want to continue with other {{ app.itemName }}s and have turned in the study on Prolific,
-                        you can click the button below to confirm that. <b>This will hide the return link to Prolific.
-                        This action cannot be reversed.</b>
+                        If you like this application, you can come back - <span>after you turned in your study on Prolific</span> -
+                        and do <b>more {{ app.itemName }}s</b> or try out the <b>other condition</b>.
+                        If you have turned in the study on Prolific, you can click the button below to confirm that and then
+                        all the remaining {{ app.itemName }}s and conditions will be unlocked for you.
+                        <b>Clicking the button will hide the return link to Prolific. This action cannot be reversed.</b>
                         <v-btn class="mt-1" block variant="flat" color="error" @click="confirm">
                             i confirm that i submitted the study on Prolific
                         </v-btn>
@@ -52,14 +54,17 @@
 </template>
 
 <script setup>
+    import router from '@/router';
     import { CW_MAX_SUB, useApp } from '@/stores/app';
     import { useTimes } from '@/stores/times';
     import { setCrowdWorkerSubmitted } from '@/use/data-api';
+    import { useRoute } from 'vue-router';
     import { useToast } from 'vue-toastification';
 
     const app = useApp()
     const times = useTimes()
     const toast = useToast()
+    const route = useRoute()
 
     const props = defineProps({
         maxWidth: {
@@ -70,8 +75,12 @@
 
     async function confirm() {
         if (app.isCrowdWorker && app.isCrowdWorkerDone) {
+            const inFeedback = route.name.startsWith("/feedback")
             try {
                 await setCrowdWorkerSubmitted()
+                if (inFeedback) {
+                    setTimeout(() => router.push("/"), 3000)
+                }
                 times.needsReload("crowd_meta")
                 times.needsReload("crowd")
             } catch(e) {

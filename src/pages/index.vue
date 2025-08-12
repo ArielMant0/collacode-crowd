@@ -1,5 +1,5 @@
 <template>
-  <div style="max-width: 100%" class="d-flex flex-column align-center mt-4">
+  <div style="max-width: 100%" class="d-flex flex-column align-center">
     <CrowdWorkerNotice/>
     <ItemSelectionView class="mt-4"/>
   </div>

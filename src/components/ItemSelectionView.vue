@@ -1,9 +1,18 @@
 <template>
     <div class="pa-2" :style="{ maxWidth: maxWidth }">
-        <div v-if="app.inDevMode" style="text-align: center;" class="mb-6">
-            <v-btn-toggle v-model="fixedMethod" divided density="comfortable" color="primary" variant="outlined">
-                <v-btn icon="mdi-cards-variant" :value="1"></v-btn>
-                <v-btn icon="mdi-graph-outline" :value="2"></v-btn>
+        <div v-if="!app.isCrowdWorker" style="text-align: center;" class="mb-6">
+            <div class="text-caption">
+                <i v-if="canFixMethod">use this to fix the similarity game mode</i>
+                <i v-else>submit similarities for at least {{ CW_MAX_SUB }} {{ app.itemName }}s to choose the similarity game mode</i>
+            </div>
+            <v-btn-toggle v-model="fixedMethod"
+                divided
+                :disabled="!canFixMethod"
+                density="comfortable"
+                color="primary"
+                variant="outlined">
+                <v-btn prepend-icon="mdi-cards-variant" :value="1">clustering</v-btn>
+                <v-btn prepend-icon="mdi-graph-outline" :value="2">binary search</v-btn>
             </v-btn-toggle>
         </div>
         <ItemSelectionPanel v-if="app.itemsLeft.size > 0"
@@ -37,7 +46,7 @@
 </template>
 
 <script setup>
-    import { useApp } from '@/stores/app';
+    import { CW_MAX_SUB, useApp } from '@/stores/app';
     import router from '@/router';
     import ItemSelectionPanel from './ItemSelectionPanel.vue';
     import { computed } from 'vue';
@@ -58,6 +67,8 @@
 
     const { smAndDown } = useDisplay()
     const maxWidth = computed(() => smAndDown.value ? "95%" : "90%")
+
+    const canFixMethod = computed(() => app.inDevMode || app.numSubmissions >= CW_MAX_SUB)
 
     function chooseItem(item) {
         if (item._done) return
