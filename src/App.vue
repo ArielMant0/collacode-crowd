@@ -61,10 +61,33 @@
         isLoading.value = false;
     }
 
+    function storeClientData() {
+        if (app.activeUserId) {
+            localStorage.setItem("crowd-client", app.activeUserId)
+        }
+        if (app.guid) {
+            localStorage.setItem("crowd-guid", app.guid)
+        }
+        if (app.userSrc) {
+            localStorage.setItem("crowd-source", app.userSrc)
+        }
+
+        // crowd worker related
+        if (app.cwId) {
+            localStorage.setItem("cw-id", app.cwId)
+        } else {
+            localStorage.removeItem("cw-id")
+        }
+        if (app.cwId && app.cwSubmitted) {
+            localStorage.setItem("cw-submitted", app.cwSubmitted)
+        }
+    }
+
     async function loadCrowdMeta() {
         try {
             const result = await api.loadCrowdMeta()
             app.setCrowdMeta(result)
+            storeClientData()
         } catch (e) {
             console.error(e.toString())
             toast.error("error loading crowd info")
@@ -75,6 +98,7 @@
         try {
             const result = await api.loadCrowdItems()
             app.setCrowdItems(result)
+            storeClientData()
         } catch (e) {
             console.error(e.toString())
             toast.error("error loading crowd items")
@@ -467,12 +491,7 @@
 
     watch(activeUserId, function() {
         if (app.activeUserId) {
-            localStorage.setItem("crowd-client", app.activeUserId)
-            localStorage.setItem("crowd-guid", app.guid)
-            localStorage.setItem("crowd-source", app.userSrc)
-            if (app.isCrowdWorker) {
-                localStorage.setItem("cw-id", app.cwId)
-            }
+            storeClientData()
         }
     })
 
