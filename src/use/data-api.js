@@ -31,13 +31,12 @@ export async function loadDataTagsByCode(code) {
 
 function makeAuth() {
     const app = useApp()
-    return {
-        client: app.activeUserId,
-        guid: app.guid,
-        ip: app.ipAddress,
-        source: app.userSrc,
-        cwId: app.cwId,
-    }
+    const obj = {}
+    if (app.activeUserId) { obj.client = app.activeUserId }
+    if (app.guid) { obj.guid = app.guid }
+    if (app.userSrc) { obj.source = app.userSrc }
+    if (app.cwId) { obj.cwId = app.cwId }
+    return obj
 }
 
 export async function loadCrowdMeta() {
