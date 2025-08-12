@@ -1037,10 +1037,7 @@
                 }
             })
         } else {
-            const tmp = randomShuffle(
-                last.with.map(idx => itemsToUse[idx])
-                .concat(last.without.map(idx => itemsToUse[idx]))
-            )
+            const tmp = randomShuffle(last.with.concat(last.without))
             for (let i = 0; i < tmp.length && cands.length < props.maxItems; ++i) {
                 if (!inventory.has(itemsToUse[tmp[i]].id)) {
                     cands.push(itemsToUse[tmp[i]])
