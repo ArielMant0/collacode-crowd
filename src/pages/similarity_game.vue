@@ -46,31 +46,31 @@
         onCancel(350)
     }
     function read() {
-        if (app.inDevMode && (app.fixedMethod === 1 || app.fixedMethod === 2)) {
+        if (app.fixedMethod === GAME_IDS.CLUSTERS || app.fixedMethod === GAME_IDS.BINSEARCH) {
             method.value = app.fixedMethod
         } else {
             if (app.isCrowdWorker) {
                 switch (app.method) {
-                    case 1:
-                    case 2:
+                    case GAME_IDS.CLUSTERS:
+                    case GAME_IDS.BINSEARCH:
                         method.value = app.method
-                        app.addMethodCount(method.value)
                         break
                     default:
                         method.value = 0
                         toast.error("invalid method")
                 }
             } else {
-                if (app.lastMethod === 0) {
+                const c1 = app.getMethodCount(GAME_IDS.CLUSTERS)
+                const c2 = app.getMethodCount(GAME_IDS.BINSEARCH)
+                if (c1 > c2) {
+                    method.value = GAME_IDS.BINSEARCH
+                } else if (c2 > c2) {
+                    method.value = GAME_IDS.CLUSTERS
+                } else {
                     method.value = Math.random() > 0.5 ?
                         GAME_IDS.BINSEARCH :
                         GAME_IDS.CLUSTERS
-                } else {
-                    method.value = app.lastMethod === GAME_IDS.CLUSTERS ?
-                        GAME_IDS.BINSEARCH :
-                        GAME_IDS.CLUSTERS
                 }
-                app.addMethodCount(method.value)
             }
         }
     }

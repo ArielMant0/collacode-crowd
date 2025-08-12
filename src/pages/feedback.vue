@@ -113,6 +113,7 @@
     import { POSITION, useToast } from 'vue-toastification';
     import { useTheme } from 'vuetify';
     import MiniDialog from '@/components/MiniDialog.vue';
+    import router from '@/router';
 
     const app = useApp()
     const toast = useToast()
@@ -252,7 +253,7 @@
     }
 
     function onDialogClose() {
-        setTimeout(() => window.scrollTo(0, 0, { behavior: "smooth" }), 350)
+        setTimeout(() => router.push("/"), 1000)
     }
 
 

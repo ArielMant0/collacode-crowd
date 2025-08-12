@@ -19,7 +19,7 @@ export const PR_STEPS = Object.freeze({
     FEEDBACK: 5
 })
 
-export const CW_MAX_SUB = 3
+export const CW_MAX_SUB = __CW_MAX_SUB__
 
 export const useApp = defineStore('app', {
     state: () => ({
@@ -60,7 +60,6 @@ export const useApp = defineStore('app', {
         fixedMethod: null,
         method: 0,
         methodCounts: new Map(),
-        lastMethod: 0,
 
         // which items the user can still do
         itemsLeft: new Set(),
@@ -139,7 +138,8 @@ export const useApp = defineStore('app', {
                 meta.guid,
                 meta.source,
                 meta.cwId,
-                meta.cwSubmitted
+                meta.methodCounts,
+                meta.cwSubmitted,
             )
             this.setUserBlocked(meta.blocked)
             this.numSubmissions = meta.submissions
@@ -152,6 +152,9 @@ export const useApp = defineStore('app', {
             this.itemCounts = meta.itemCounts
             this.method = meta.method ? meta.method : 0
             this.numSubmissions = meta.submissions
+            if (meta.methodCounts) {
+                this.setMethodCounts(meta.methodCounts)
+            }
             this.setUserBlocked(meta.blocked)
             this.itemTime = Date.now()
         },
@@ -188,23 +191,27 @@ export const useApp = defineStore('app', {
             }
         },
 
-        setActiveUser(id, guid, userSrc=null, cwId=null , cwSubmitted=false) {
-            this.methodCounts.clear()
+        setActiveUser(id, guid, userSrc=null, cwId=null, methodCounts=null, cwSubmitted=false) {
             this.activeUserId = id
             this.guid = guid
             this.userSrc = userSrc ? userSrc : "misc"
             this.cwId = cwId ? cwId : null
             this.cwSubmitted = cwId ? cwSubmitted : false
             this.numSubmissions = 0
+            this.setMethodCounts(methodCounts)
+        },
+
+        setMethodCounts(counts) {
+            this.methodCounts.clear()
+            if (counts) {
+                for (const method in counts) {
+                    this.methodCounts.set(+method, counts[method])
+                }
+            }
         },
 
         setUserBlocked(blocked) {
             this.userBlocked = blocked
-        },
-
-        addMethodCount(method) {
-            this.methodCounts.set(method, (this.methodCounts.get(method) || 0) + 1)
-            this.lastMethod = method
         },
 
         getMethodCount(method) {

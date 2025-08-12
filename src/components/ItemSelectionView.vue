@@ -3,7 +3,7 @@
         <div v-if="!app.isCrowdWorker" style="text-align: center;" class="mb-6">
             <div class="text-caption">
                 <i v-if="canFixMethod">use this to fix the similarity game mode</i>
-                <i v-else>submit similarities for at least {{ CW_MAX_SUB }} {{ app.itemName }}s to choose the similarity game mode</i>
+                <i v-else>submit similarities for at least {{ CW_MAX_SUB }} {{ app.itemName }}s to unlock fixing the similarity game mode</i>
             </div>
             <v-btn-toggle v-model="fixedMethod"
                 divided

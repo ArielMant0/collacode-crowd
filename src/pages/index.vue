@@ -1,12 +1,14 @@
 <template>
   <div style="max-width: 100%" class="d-flex flex-column align-center">
     <CrowdWorkerNotice/>
+    <FeedbackNotice/>
     <ItemSelectionView class="mt-4"/>
   </div>
 </template>
 
 <script setup>
     import CrowdWorkerNotice from '@/components/CrowdWorkerNotice.vue';
+    import FeedbackNotice from '@/components/FeedbackNotice.vue';
     import ItemSelectionView from '@/components/ItemSelectionView.vue';
     import { useTimes } from '@/stores/times';
     import { addInteractionLog, loadLastUpdate } from '@/use/data-api';

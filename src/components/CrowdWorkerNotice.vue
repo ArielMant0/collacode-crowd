@@ -27,7 +27,7 @@
                     <a :href="app.cwLinks.linkSuccess" target="_blank">{{ app.cwLinks.linkSuccess }}</a>
                     You can also use this code to submit your participation: <b>{{ app.cwLinks.codeSuccess }}</b>
                     <div class="mt-4">
-                        If you like this application, you can come back - <span>after you turned in your study on Prolific</span> -
+                        If you like this application, you can come back - <span style="text-decoration: underline;">after you turned in your study on Prolific</span> -
                         and do <b>more {{ app.itemName }}s</b> or try out the <b>other condition</b>.
                         If you have turned in the study on Prolific, you can click the button below to confirm that and then
                         all the remaining {{ app.itemName }}s and conditions will be unlocked for you.

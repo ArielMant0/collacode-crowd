@@ -305,7 +305,7 @@
         } else {
             action = "add"
             if (inventory.size >= props.maxInventory) {
-                toast.warning(`max ${props.maxInventory} ${app.itemName}s can be highlighted`)
+                toast.warning(`max ${props.maxInventory} ${app.itemName}s can be stored`)
             } else {
                 inventory.add(id)
             }
@@ -390,10 +390,10 @@
             },{
                 id: "show-examples",
                 attachTo: {
-                    element: ".item-examples-yes",
+                    element: ".binsearch-q:first-child .item-examples-yes",
                     on: "top"
                 },
-                extraHighlights: [".item-examples-no"],
+                extraHighlights: [".binsearch-q:first-child .item-examples-no"],
                 buttons: [{ text: "next", action: tutorial.next, classes: "bg-primary" }],
                 text: `On the sides, you can see a <b>limited</b> number of ${plural} from each group.`
             },{
@@ -423,7 +423,8 @@
                 },
                 extraHighlights: [
                     ".binsearch-q:first-child .tag-name",
-                    ".binsearch-q:first-child .item-groups"
+                    ".binsearch-q:first-child .item-examples-yes",
+                    ".binsearch-q:first-child .item-examples-no",
                 ],
                 text: `If the current tag is <b>not a good fit</b>, it's better to look
                     for a different one using the arrow buttons. <b>Select the next tag</b> by
@@ -436,7 +437,8 @@
                 },
                 extraHighlights: [
                     ".binsearch-q:first-child .tag-name",
-                    ".binsearch-q:first-child .item-groups"
+                    ".binsearch-q:first-child .item-examples-yes",
+                    ".binsearch-q:first-child .item-examples-no",
                 ],
                 text: `Now you have a different tag and the groups of ${plural} has changed.
                     To <b>go back</b> to the previous tag, click the <b>left arrow</b> button.
