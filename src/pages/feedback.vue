@@ -105,8 +105,12 @@
         <template #text>
             <div style="font-size: large; text-align: center;">
                 Thanks for participating in this study! Click on this link to get back to Prolific:
-                <div class="mt-2">
+                <div class="mt-2 mb-2">
                     <a :href="app.cwLinks.linkSuccess" target="_blank">{{ app.cwLinks.linkSuccess }}</a>
+                </div>
+                If you want to continue with other games after the study, you can come back anytime using this link:
+                <div class="mt-2 mb-2" style="text-align: center;">
+                    <a href="https://arielmant0.github.io/collacode-crowd/" target="_blank">https://arielmant0.github.io/collacode-crowd/</a>
                 </div>
             </div>
         </template>

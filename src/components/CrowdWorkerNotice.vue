@@ -27,12 +27,16 @@
                     <a :href="app.cwLinks.linkSuccess" target="_blank">{{ app.cwLinks.linkSuccess }}</a>
                     You can also use this code to submit your participation: <b>{{ app.cwLinks.codeSuccess }}</b>
                     <div class="mt-4">
-                        If you like this application, you can come back - <span style="text-decoration: underline;">after you turned in your study on Prolific</span> -
-                        and do <b>more {{ app.itemName }}s</b> or try out the <b>other condition</b>.
+                        If you like this application, you can come back anytime using the link below
+                        - <span style="text-decoration: underline;">after you turned in the study on Prolific</span>.
+                        Then you can do any of the <b>other {{ app.itemName }}s</b> or try out the <b>other condition</b>.
+                        <div class="mt-1 mb-3" style="text-align: center;">
+                            <a href="https://arielmant0.github.io/collacode-crowd/" target="_blank">https://arielmant0.github.io/collacode-crowd/</a>
+                        </div>
                         If you have turned in the study on Prolific, you can click the button below to confirm that and then
                         all the remaining {{ app.itemName }}s and conditions will be unlocked for you.
                         <b>Clicking the button will hide the return link to Prolific. This action cannot be reversed.</b>
-                        <v-btn class="mt-1" block variant="flat" color="error" @click="confirm">
+                        <v-btn class="mt-2" block variant="flat" color="error" @click="confirm">
                             i confirm that i submitted the study on Prolific
                         </v-btn>
                     </div>

@@ -12,6 +12,7 @@
                         class="mr-2 mb-2"
                         :width="imageWidth"
                         :height="imageHeight"
+                        @click="toggleInventory(item.id)"
                         prevent-click
                         prevent-context/>
                 </v-sheet>
@@ -469,6 +470,12 @@
                     element: () => getFirst(document.querySelectorAll(".item-groups")),
                     on: "bottom"
                 },
+                beforeShowPromise: async function() {
+                    // remove last item from inventory if its already full
+                    if (inventory.size === props.maxInventory) {
+                        toggleInventory(Array.from(inventory.values()).at(-1))
+                    }
+                },
                 text: `Click on <b>two different</b> ${app.itemName} images or dots in the
                     spiral to <b>store</b> ${plural}!`
             },{
@@ -488,6 +495,7 @@
                     on: "left"
                 },
                 beforeShowPromise: async function() {
+                    // add item to inventory if its empty
                     if (inventory.size === 0) {
                         const first = split.value.at(-1)
                         const id = randomChoice(first.with.map(i => itemsToUse[i].id), 1)
