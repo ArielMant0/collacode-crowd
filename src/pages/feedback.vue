@@ -309,7 +309,23 @@
         if (app.isCrowdWorker) {
             gameId.value = app.method
         } else {
-            if (app.getMethodCount(GAME_IDS.BINSEARCH) < CW_MAX_SUB) {
+            //  C  |  B
+            // ---------
+            // 0 0 | 0 0 -> C
+            // 0 Y | 0 0 -> C
+            // 0 0 | 0 Y -> B
+            // Y Y | 0 0 -> C
+            // 0 0 | Y Y -> B
+            // Y Y | 0 Y -> B
+            // 0 Y | Y Y -> C
+            // Y Y | Y Y -> C
+            if (
+                app.getMethodCount(GAME_IDS.BINSEARCH) >= CW_MAX_SUB &&
+                (
+                    app.getMethodCount(GAME_IDS.CLUSTERS) < CW_MAX_SUB ||
+                    app.numFeedback[GAME_IDS.BINSEARCH] < questions.value.length
+                )
+            ) {
                 gameId.value = GAME_IDS.BINSEARCH
             } else {
                 gameId.value = GAME_IDS.CLUSTERS

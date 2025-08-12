@@ -310,6 +310,7 @@
                 inventory.add(id)
             }
         }
+        app.addInteraction("step1")
 
         updateFinalItems(getCandidates())
         if (tutorial.isActive()) {
