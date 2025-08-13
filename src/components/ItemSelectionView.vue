@@ -7,7 +7,7 @@
             </div>
             <GameModeToggle v-model="fixedMethod" :disabled="!canFixMethod"/>
         </div>
-        <ItemSelectionPanel v-if="app.itemsLeft.size > 0"
+        <ItemSelectionPanel
             :subset="0"
             class="mb-8"
             @click="chooseItem"
@@ -17,7 +17,7 @@
             :pagination="false"
             :selectable="true"/>
 
-        <ItemSelectionPanel v-if="app.itemsDone.size > 0"
+        <ItemSelectionPanel
             class="mb-8"
             :subset="1"
             :title="'Completed '+app.itemNameCaptial+'s'"
@@ -26,10 +26,10 @@
             :sortable="false"
             :selectable="false"/>
 
-        <ItemSelectionPanel v-if="app.itemsGone.size > 0"
+        <ItemSelectionPanel
             :subset="2"
             :title="'Blocked '+app.itemNameCaptial+'s'"
-            :subtitle="'these '+app.itemName+'s are blocked for you'"
+            :subtitle="'these '+app.itemName+'s are blocked (for you)'"
             :count-target="countTarget"
             :sortable="false"
             :selectable="false"/>

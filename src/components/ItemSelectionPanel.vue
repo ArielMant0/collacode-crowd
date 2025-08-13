@@ -1,6 +1,5 @@
 <template>
-
-    <v-card rounded="lg" class="panel" :class="[textClass, panelClass]">
+    <v-card v-if="items.length > 0" rounded="lg" class="panel" :class="[textClass, panelClass]">
         <v-card-title v-if="title">
             <div style="font-weight: 400; font-size: 30px;" class="bitcount-prop-double">
                 {{ title }}
@@ -42,13 +41,21 @@
                     <ItemProgress :value="itemCounts[item.id]" :target="countTarget"/>
                     <ItemTeaser v-if="selectable"
                         :item="item"
-                        @click="emit('click', item)"
+                        @click="onClick(item)"
                         prevent-open/>
-                    <ItemTeaser v-else
-                        :item="item"
-                        hide-overlay
-                        prevent-click
-                        style="opacity: 0.33"/>
+
+                    <div v-else style="position: relative;">
+                        <ItemTeaser
+                            :item="item"
+                            hide-overlay
+                            prevent-click
+                            style="opacity: 0.33"/>
+                        <div v-if="isItemDone(item.id)"
+                            class="d-flex align-center justify-center text-error"
+                            style="width: 160px; height: 80px; position: absolute; top: 0; left: 0;">
+                            <b style="text-shadow: black 0 0 1px;">max. submissions reached</b>
+                        </div>
+                    </div>
                 </v-sheet>
             </div>
 
@@ -149,6 +156,16 @@
         }
     })
 
+    function isItemDone(id) {
+        return itemCounts.value[id] >= props.countTarget
+    }
+
+    function onClick(item) {
+        if (!app.isCrowdWorker || !isItemDone(item.id)) {
+            emit('click', item)
+        }
+    }
+
     function applySort() {
         if (!props.sortable) return
         settings.panelSort[props.subset] = sortBy.value
@@ -169,7 +186,7 @@
         let tmp
         switch (props.subset) {
             case 0:
-                tmp = DM.getDataBy("items", d => app.itemsLeft.has(d.id))
+                tmp = DM.getDataBy("items", d => app.itemsLeft.has(d.id) && !isItemDone(d.id))
                 tmp.forEach(d => d._done = false)
                 break
             case 1:
@@ -177,7 +194,7 @@
                 tmp.forEach(d => d._done = true)
                 break
             case 2:
-                tmp = DM.getDataBy("items", d => app.itemsGone.has(d.id))
+                tmp = DM.getDataBy("items", d => app.itemsGone.has(d.id) || isItemDone(d.id))
                 tmp.forEach(d => d._done = true)
                 break
         }
