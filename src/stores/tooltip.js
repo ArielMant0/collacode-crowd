@@ -56,7 +56,7 @@ export const useTooltip = defineStore('tooltip', {
             const path = item.teaser.startsWith("http") ? item.teaser : mediaPath('teaser', item.teaser)
             this.show(
                 `<div>
-                    <img src="${path}" style="max-height: 150px; object-fit: contain;"/>
+                    <img src="${path}" style="max-height: 120px; object-fit: contain;"/>
                     <div class="mt-1 text-caption">
                         <div>${item.name}</div>
                         ${item.description ? '<div><b>Description:</b> '+item.description+'</div>' : ''}

@@ -13,7 +13,7 @@
                         :width="imageWidth"
                         :height="imageHeight"
                         @click="toggleInventory(item.id)"
-                        prevent-click
+                        prevent-open
                         prevent-context/>
                 </v-sheet>
             </div>
@@ -960,11 +960,9 @@
             it.without.forEach(id => itemsLeft.add(id))
         }
 
-        if (itemsLeft.size <= props.minItems) {
-            updateFinalItems(getCandidates())
-        }
-
         splitItems()
+
+        updateFinalItems(getCandidates())
 
         if (index > 0) {
             const last = split.value.at(0)
@@ -1036,7 +1034,7 @@
                     cands.push(itemsToUse[idx])
                 }
             })
-        } else {
+        } else if (force) {
             const tmp = randomShuffle(last.with.concat(last.without))
             for (let i = 0; i < tmp.length && cands.length < props.maxItems; ++i) {
                 if (!inventory.has(itemsToUse[tmp[i]].id)) {
@@ -1056,7 +1054,7 @@
     }
 
     function getSubmitData() {
-        if (finalItems.value.length === 0) {
+        if (finalItems.value.length === inventory.size) {
             updateFinalItems(getCandidates(true))
         }
         return {

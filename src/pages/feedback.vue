@@ -19,7 +19,7 @@
 
                 <div v-if="canGiveFeedback || done" class="mt-4">
                     <div v-for="(q, idx) in questions" class="mb-8">
-                        <div class="mb-1"><b>{{ idx+1 }}.</b><span class="text-red">*</span> {{ q.text }}</div>
+                        <div class="mb-1"><b>{{ idx+1 }}.</b><span class="text-red">*</span> <span v-html="q.text"></span></div>
 
                         <div class="d-flex align-center flex-column">
 
@@ -61,7 +61,7 @@
                                         variant="text"
                                         @click="setRating(q.id, o.value)"/>
                                     <div style="text-align: center" :style="{ opacity: done && activeRating && activeRating[q.id]!==o.value ? 0.33 : 1 }">
-                                        <div class="text-dots">{{ o.name }}</div>
+                                        <div class="text-dots" v-html="o.name "></div>
                                         <v-icon v-if="o.icon">{{ o.icon }}</v-icon>
                                     </div>
                                 </div>
@@ -164,21 +164,20 @@
     )
 
     const questions = computed(() => ([
-        { id: "ease", text: "I found it easy to use this application." },
-        { id: "fun", text: "I had fun using this application." },
-        { id: "satisfaction", text: "I am satisfied with the results I got using this application." },
+        { id: "ease", text: `I found it <span class="text-decoration-underline">easy</span> to use this application.` },
+        { id: "fun", text: `I had <span class="text-decoration-underline">fun</span> using this application.` },
+        { id: "satisfaction", text: `I am <span class="text-decoration-underline">satisfied with the results</span> I got using this application.` },
         {
             id: "preference",
-            text: "I prefer using this application over going through a list of 400 " +
-                app.itemName + "s ony by one."
+            text: `I <span class="text-decoration-underline">prefer</span> using this application over going through a list of 400 ${app.itemName}s ony by one.`
         },
     ]))
     const answerOptions = [
-        { name: "strongly agree", value: 5, icon: "mdi-emoticon-happy-outline" },
-        { name: "agree", value: 4 },
+        { name: "strongly <b>agree</b>", value: 5, icon: "mdi-emoticon-happy-outline" },
+        { name: "<b>agree</b>", value: 4 },
         { name: "neutral", value: 3, icon: "mdi-emoticon-neutral-outline" },
-        { name: "disagree", value: 2 },
-        { name: "strongly disagree", value: 1, icon: "mdi-emoticon-sad-outline" }
+        { name: "<b>disagree</b>", value: 2 },
+        { name: "strongly <b>disagree</b>", value: 1, icon: "mdi-emoticon-sad-outline" }
     ]
 
     async function read() {
