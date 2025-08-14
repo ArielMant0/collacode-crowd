@@ -13,7 +13,7 @@
 
 <script setup>
 
-    import { useApp } from '@/stores/app'
+    import { GRAPH_MIN_SUB, useApp } from '@/stores/app'
     import { useToast } from "vue-toastification";
     import { storeToRefs } from 'pinia'
     import { ref, onMounted, watch, computed } from 'vue'
@@ -252,12 +252,14 @@
     }
 
     async function loadSimilarities() {
+        if (app.numSubmissions < GRAPH_MIN_SUB) return
         try {
             const result = await api.getSimilarities()
-            const graph = constructSimilarityGraph(result)
+            const graph = constructSimilarityGraph(result, 2)
             DM.setData("similarity", result)
             DM.setGraph(graph)
-        } catch {
+        } catch (e) {
+            console.error(e.toString())
             toast.error("error loading similarities")
         }
         times.reloaded("similarity")

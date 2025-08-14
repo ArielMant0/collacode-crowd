@@ -151,6 +151,7 @@
                         :width="600"
                         :height="400"
                         weight-attr="value"
+                        value-attr="unique"
                         image-attr="teaser"
                         @hover="onHover"
                         :selectable="false"
@@ -184,7 +185,6 @@
     import { constructSimilarityGraph } from '@/use/utility';
     import NodeLink from './vis/NodeLink.vue';
     import { useTooltip } from '@/stores/tooltip';
-import DM from '@/use/data-manager';
 
     const emit = defineEmits(["end", "close", "cancel"])
 
@@ -720,7 +720,7 @@ import DM from '@/use/data-manager';
             const response = await addSimilarity(info, allItems)
             // fetch common similar items for all players
             const sims = await getSimilarByTarget(gameData.target.id)
-            gameData.graph = constructSimilarityGraph(sims)
+            gameData.graph = constructSimilarityGraph(sims, 0)
             app.numSubmissions = response.submissions
 
             // tell the parent we're done so that items get updated

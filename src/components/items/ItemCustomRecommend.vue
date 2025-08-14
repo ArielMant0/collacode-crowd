@@ -262,7 +262,9 @@
     function searchByName() {
         app.addInteraction("step3")
         if (search.value && search.value.length > 2) {
-            const name = new RegExp(search.value, "gi")
+            const accents = /[éèê]/gi
+            const noAccent = search.value.replaceAll(accents, "e")
+            const name = new RegExp(noAccent, "gi")
 
             const lower = search.value.toLowerCase()
             const contained = searchHistory.find(s => s.includes(lower))
@@ -272,15 +274,12 @@
             }
             emit("search", searchHistory)
 
-            bySearch.value = DM.getDataBy("items", d => !isChosenItem(d.id) && name.test(d.name))
+            bySearch.value = DM
+                .getDataBy("items", d => !isChosenItem(d.id) && name.test(d.name.replaceAll(accents, "e")))
                 .map(d => ({ id: d.id, value: 0 }))
+
         } else {
             bySearch.value = []
-            // chosen.value.forEach(d => {
-            //     if (d.origin === "search") {
-            //         d.origin = null
-            //     }
-            // })
         }
     }
     async function getSuggestions() {

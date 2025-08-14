@@ -269,7 +269,7 @@
         const cf = [...Array(k).keys()]
 
         selectionItems.value.forEach((sel, i) => {
-            const s1 = Math.ceil(counts[i] * 0.66)
+            const s1 = Math.ceil(counts[i] * 0.7)
             // for half the items, select the most similar items
             const cands1 = clusters.pwd[sel.index]
                 .map((v, j) => ({ index: j, value: v }))

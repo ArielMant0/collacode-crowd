@@ -157,7 +157,7 @@
     })
 
     function isItemDone(id) {
-        return itemCounts.value[id] >= props.countTarget
+        return app.isCrowdWorker && itemCounts.value[id] >= props.countTarget
     }
 
     function onClick(item) {

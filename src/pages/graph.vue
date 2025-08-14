@@ -50,6 +50,7 @@
                     :width="graphWidth"
                     :height="graphHeight"
                     weight-attr="value"
+                    value-attr="unique"
                     image-attr="teaser"
                     use-data-manager
                     use-key-navigation
@@ -144,7 +145,7 @@
         </div>
         <div v-else>
             <p style="margin-top: 2em; font-size: 30px; text-align: center;">
-                Add similarities for <b>at least 5 {{ app.itemName }}s</b> to explore the similarity graph!
+                Add similarities for <b>at least {{ GRAPH_MIN_SUB }} {{ app.itemName }}s</b> to explore the similarity graph!
             </p>
         </div>
 
@@ -197,7 +198,7 @@
     import NodeLink from '@/components/vis/NodeLink.vue';
     import ItemTeaser from '@/components/items/ItemTeaser.vue';
     import { max } from 'd3';
-    import { useApp } from '@/stores/app';
+    import { GRAPH_MIN_SUB, useApp } from '@/stores/app';
     import { useTooltip } from '@/stores/tooltip';
     import MiniDialog from '@/components/MiniDialog.vue';
 
@@ -205,10 +206,12 @@
     import imgUrl2 from '@/assets/graph-tutorial-search.jpg'
     import imgUrl3 from '@/assets/graph-tutorial-sidebar.jpg'
     import { addInteractionLog, loadLastUpdate } from '@/use/data-api';
+    import { useToast } from 'vue-toastification';
 
     const app = useApp()
     const tt = useTooltip()
     const times = useTimes()
+    const toast = useToast()
     const { width, height } = useWindowSize()
 
     const nl = useTemplateRef("nl")
@@ -232,7 +235,8 @@
     const prevItemName = ref("")
     const nextItemName = ref("")
 
-    const showGraph = computed(() => app.numSubmissions >= 5)
+    let toastId = null
+    const showGraph = computed(() => app.numSubmissions >= GRAPH_MIN_SUB)
 
     const target = ref(-1)
     const graphData = reactive({
@@ -344,11 +348,13 @@
     }
 
     async function checkUpdate() {
+        if (app.numSubmissions < GRAPH_MIN_SUB) return
         try {
             const updates = await loadLastUpdate()
             const cut = updates.find(d => d.name === "similarity")
             if (cut && cut.timestamp > times.similarity) {
                 times.needsReload("similarity")
+                toastId = toast.info("fetching graph data..", { timeout: false })
             }
         } catch(e) {
             console.error(e)
@@ -356,10 +362,23 @@
     }
 
     function read() {
+        if (toastId !== null) {
+            if (DM.hasGraph()) {
+                toast.dismiss(toastId)
+                toastId = null
+            } else {
+                return
+            }
+        }
+
+        if (app.numSubmissions < GRAPH_MIN_SUB) return
         if (DM.hasGraph()) {
             const graph = DM.getGraph()
             graphData.nodes = graph.nodes
             graphData.links = graph.links
+        } else {
+            times.needsReload("similarity")
+            toastId = toast.info("fetching graph data..", { timeout: false })
         }
     }
 

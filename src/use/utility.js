@@ -125,7 +125,7 @@ export function getValue(d, accessor) {
     return undefined
 }
 
-export function constructSimilarityGraph(data) {
+export function constructSimilarityGraph(data, minClients=1, attr="") {
     // get similarity data
     const sn = [], sl = []
     const nodeSet = new Set()
@@ -134,6 +134,7 @@ export function constructSimilarityGraph(data) {
 
     // construct the graph
     data.forEach(d => {
+        if (d.unique_clients < minClients) return
         const id = Number(d.target_id)
         const oid = Number(d.item_id)
 
@@ -164,16 +165,20 @@ export function constructSimilarityGraph(data) {
         const ex = sl.find(d => d.source === id && d.target === oid || d.source === oid && d.target === id)
         if (ex) {
             // update existing link
-            ex.value += d.value
-            ex.count += d.count
+            ex.unique += d.unique_clients
+            ex.submissions += d.unique_submissions
+            ex.value += d["value"+attr]
+            ex.count += d["count"+attr]
         } else {
             // add new link
             sl.push({
                 id: sl.length+1,
                 source: id,
                 target: oid,
-                value: d.value,
-                count: d.count
+                unique: d.unique_clients,
+                submissions: d.unique_submissions,
+                value: d["value"+attr],
+                count: d["count"+attr]
             })
         }
     })

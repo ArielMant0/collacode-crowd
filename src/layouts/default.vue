@@ -31,7 +31,7 @@
 
 <script setup>
     import router from '@/router';
-    import { CW_MAX_SUB, useApp } from '@/stores/app';
+    import { CW_MAX_SUB, GRAPH_MIN_SUB, useApp } from '@/stores/app';
     import { useRoute } from 'vue-router';
 
     const app = useApp()
@@ -59,7 +59,7 @@
                 icon: "mdi-graph-outline",
                 route: "/graph",
                 disabled: app.target !== null || (app.isCrowdWorker && app.numSubmissions < CW_MAX_SUB),
-                color: app.numSubmissions < 5 ? 'error' : 'default'
+                color: app.numSubmissions < GRAPH_MIN_SUB ? 'error' : 'default'
             },
         ]
     })

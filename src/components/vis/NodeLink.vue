@@ -27,7 +27,8 @@
         nodes: { type: Array, required: true },
         links: { type: Array, required: true },
         target: { type: Number, required: false },
-        weightAttr: { type: String, required: false },
+        weightAttr: { type: String, required: true },
+        valueAttr: { type: String, required: true },
         imageAttr: { type: String, required: false },
         colorAttr: { type: String, required: false },
         targetColor: { type: String, default: "#DC143C" },
@@ -40,10 +41,11 @@
         useDataManager: { type: Boolean, default: false },
         useKeyNavigation: { type: Boolean, default: false },
         transitionDuration: { type: Number, default: 1000 },
-        minWeight: { type: Number, default: 0 }
+        minWeight: { type: Number, default: 0 },
+        minValue: { type: Number, default: 0 },
     })
 
-    const emit = defineEmits(["click", "hover", "right-click"])
+    const emit = defineEmits(["click", "hover", "right-click", "layout-start", "layout-end"])
 
     let simulation, once = false
     let ng, lg
@@ -61,7 +63,7 @@
 
     const elVisible = useElementVisibility(el)
 
-    let worker, wscale
+    let worker, wscale, opacScale
     const workerProgress = ref(0)
     const workerActive = ref(false)
 
@@ -113,7 +115,6 @@
     }
 
     function focus(target=props.target) {
-        if (!target) return
         const node = nodes.find(d => d.id === target)
         zoomToBoundingBox(node ? node.id : null)
     }
@@ -143,16 +144,19 @@
                 .attr("x2", d => zx(d.target.x))
                 .attr("y1", d => zy(d.source.y))
                 .attr("y2", d => zy(d.target.y))
+                .attr("stroke", d => d.source.id === props.target || d.target.id === props.target ? props.targetColor : "currentColor")
+                .attr("opacity", d => d.source.id === props.target || d.target.id === props.target ? 1 : opacScale(d[props.weightAttr]))
         } else {
             lg.style("visibility", "hidden")
         }
     }
 
-    function highlight(id) {
+    function highlight(id=props.target) {
         const match = new Set()
         const matchLink = new Set()
 
         if (id) {
+
             links.forEach(d => {
                 if (d.source.id === id || d.target.id === id) {
                     matchLink.add(d.id)
@@ -180,7 +184,7 @@
             .raise()
     }
 
-    function draw() {
+    function draw(recalculate=false) {
         if (simulation) {
             simulation.stop()
             simulation = null
@@ -189,18 +193,40 @@
         once = false
         nodes = props.nodes.map(d => ({ ...d }))
         links = props.links.map(d => ({ ...d }))
-        if (props.weightAttr && props.minWeight > 0) {
+
+        let useFilter = false
+        if (props.minValue > 0) {
+            links = links.filter(d => d[props.valueAttr] >= props.minValue)
+            useFilter = true
+        }
+        if (props.minWeight > 0) {
             links = links.filter(d => d[props.weightAttr] >= props.minWeight)
-            nodes = nodes.filter(d => links.find(dd => dd.target === d.id || dd.source === d.di))
+            useFilter = true
+        }
+
+        if (useFilter) {
+            nodes = nodes.filter(d => links.find(dd => dd.target === d.id || dd.source === d.id))
         }
 
         const initRadius = Math.floor(Math.min(props.width, props.height) / 2)
         const initX = props.width / 2
         const initY = props.height / 2
-        nodes.forEach((d, i) => {
-            d.x = initX + initRadius * Math.cos(i * 2 * Math.PI / nodes.left)
-            d.y = initY + initRadius * Math.sin(i * 2 * Math.PI / nodes.left)
-        })
+
+        const graph = DM.getData("graph_layout", false)
+        if (graph && graph.length > 0) {
+            graph.forEach(d => {
+                const n = nodes.find(dd => dd.id === d.id)
+                if (n) {
+                    n.x = d.x * props.width
+                    n.y = d.y * props.height
+                }
+            })
+        } else {
+            nodes.forEach((d, i) => {
+                d.x = initX + initRadius * Math.cos(i * 2 * Math.PI / nodes.left)
+                d.y = initY + initRadius * Math.sin(i * 2 * Math.PI / nodes.left)
+            })
+        }
 
         zoom = d3.zoom()
             .scaleExtent([0.1, 32])
@@ -212,21 +238,16 @@
 
         let maxWeight= 1
 
-        let opacScale
-        if (props.weightAttr){
-            const [minW, maxW] = d3.extent(links.map(d => d[props.weightAttr]))
-            maxWeight = maxW
-            wscale = d3.scaleLinear()
-                .domain([minW, maxW])
-                .range([3, 12])
+        const [minW, maxW] = d3.extent(links.map(d => d[props.weightAttr]))
+        maxWeight = maxW
+        wscale = d3.scaleLinear()
+            .domain([minW, maxW])
+            .range([3, 12])
 
-            opacScale = d3.scaleLinear()
-                .domain([minW, maxW])
-                .range([0.2, 0.8])
-        } else {
-            wscale = () => 2
-            opacScale = () => 0.2
-        }
+        opacScale = d3.scaleLinear()
+            .domain([minW, maxW])
+            .range([0.2, 0.8])
+
 
         lg = svg.append("g")
             // .style("mix-blend-mode", "exclusion")
@@ -305,9 +326,7 @@
 
 
         function distanceFunction(d) {
-            return props.weightAttr ?
-                (1 + ((maxWeight - d[props.weightAttr]) / maxWeight)) * props.radius :
-                props.radius
+            return (1 + ((maxWeight - d[props.weightAttr]) / maxWeight)) * props.radius
         }
 
         simulation = d3.forceSimulation(nodes)
@@ -329,11 +348,11 @@
                     focus(props.target)
                     once = true
                 }
+                emit("layout-end")
             })
             .stop()
 
-        const graph = DM.getData("graph_layout", false)
-        if (graph && graph.length > 0) {
+        if (graph && graph.length > 0 && !recalculate) {
             workerActive.value = false
             worker = null
             graph.forEach(d => {
@@ -351,6 +370,7 @@
                 worker = new MyWorker()
                 workerProgress.value = 0
                 workerActive.value = true
+                emit("layout-start")
                 console.log("started layout worker")
                 worker.postMessage({
                     nodes: nodes,
@@ -381,11 +401,13 @@
                         updateNodesAndLinks()
                         once = true
                         focus(props.target)
+                        emit("layout-end")
                     }
                 }
             } else {
                 worker = null
                 workerActive.value = false
+                emit("layout-start")
                 simulation.restart()
             }
         }
@@ -485,16 +507,16 @@
         highlight()
         focus()
     })
+    watch(() => ([props.width, props.height, props.imageAttr]), () => draw(false), { deep: true })
+
     watch(() => ([
         props.nodes,
         props.links,
-        props.width,
-        props.height,
         props.radius,
         props.weightAttr,
-        props.imageAttr,
-        props.minWeight
-    ]), draw, { deep: true })
+        props.minWeight,
+        props.minValue
+    ]), function() { draw(true) }, { deep: true })
 </script>
 
 <style scoped>
