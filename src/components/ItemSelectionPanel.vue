@@ -2,7 +2,7 @@
     <v-card v-if="items.length > 0" rounded="lg" class="panel" :class="[textClass, panelClass]">
         <v-card-title v-if="title">
             <div style="font-weight: 400; font-size: 30px;" class="bitcount-prop-double">
-                {{ title }}
+                {{ title }} ({{ items.length }})
             </div>
             <div v-if="subtitle" class="text-caption" style="margin-top: -5px;">
                 {{ subtitle }}
@@ -12,25 +12,36 @@
         <v-card-text>
             <div
                 class="d-flex align-center ml-4 mr-4"
-                :class="{
-                    'justify-space-between': sortable && showPagination,
-                    'justify-end': !sortable && showPagination
-                }">
+                :class="[flexClass]">
                 <v-btn-toggle v-if="sortable"
                     v-model="sortBy"
                     :mandatory="false"
                     variant="flat"
                     density="comfortable"
+                    style="align-self: flex-start;"
                     :color="mainColor"
                     @update:model-value="applySort">
                     <v-btn icon="mdi-sort-variant" :value="1"></v-btn>
                     <v-btn icon="mdi-sort-reverse-variant" :value="2"></v-btn>
                 </v-btn-toggle>
 
+                <v-text-field v-if="searchable"
+                    v-model="search"
+                    :label="'Filter '+app.itemName+'s by name'"
+                    prepend-inner-icon="mdi-magnify"
+                    variant="outlined"
+                    density="compact"
+                    class="mb-1"
+                    style="max-width: 50%; align-self: center;"
+                    @update:model-value="onSearch"
+                    clearable
+                    hide-details/>
+
                 <v-pagination v-if="showPagination"
                     v-model="page"
                     :length="numPages"
                     show-first-last-page
+                    style="align-self: flex-end"
                     density="compact"
                     :total-visible="5">
                 </v-pagination>
@@ -103,6 +114,10 @@
             type: Boolean,
             default: true
         },
+        searchable: {
+            type: Boolean,
+            default: true
+        },
         pagination: {
             type: Boolean,
             default: true
@@ -117,14 +132,25 @@
 
     const items = ref([])
     const showPagination = computed(() => props.pagination && numPages.value > 1)
+    const matchingItems = computed(() => {
+        if (search.value && search.value.length > 1) {
+            const accents = /[éèê]/gi
+            const noAccent = search.value.replaceAll(accents, "e")
+            const name = new RegExp(noAccent, "gi")
+            return items.value.filter(d => name.test(d.name))
+        }
+        return items.value
+    })
     const visibleItems = computed(() => {
         if (!showPagination.value) {
-            return items.value
+            return matchingItems.value
         }
-        const start = (page.value-1) * props.numPerPage
-        const end = Math.min(start + props.numPerPage, items.value.length)
-        return items.value.slice(start, end)
+        const start = Math.max(0, (page.value-1) * props.numPerPage)
+        const end = Math.min(start + props.numPerPage, matchingItems.value.length)
+        return matchingItems.value.slice(start, end)
     })
+
+    const search = ref("")
 
     const page = ref(1)
     const numPages = computed(() => Math.ceil(items.value.length / props.numPerPage))
@@ -155,6 +181,25 @@
             case 2: return "error"
         }
     })
+
+    const flexClass = computed(() => {
+        let count = 0
+        if (props.sortable) count++
+        if (props.searchable) count++
+        if (showPagination.value) count++
+
+        if (count > 1) {
+            return 'justify-space-between'
+        }
+
+        return props.sortable ? 'justify-start' :
+            props.searchable ? 'justify-center' :
+            'justify-end'
+    })
+
+    function onSearch() {
+        page.value = Math.max(1, Math.min(page.value, Math.ceil(matchingItems.value.length / props.numPerPage)))
+    }
 
     function isItemDone(id) {
         return app.isCrowdWorker && itemCounts.value[id] >= props.countTarget

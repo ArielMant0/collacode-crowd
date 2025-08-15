@@ -1,5 +1,5 @@
 <template>
-    <div class="pa-2" :style="{ maxWidth: maxWidth }">
+    <div class="pa-2" :style="{ maxWidth: maxWidth, minWidth: maxWidth }">
         <div v-if="!app.isCrowdWorker" style="text-align: center;" class="mb-6">
             <div class="text-caption">
                 <i v-if="canFixMethod">use this to fix the similarity game mode</i>
@@ -13,8 +13,10 @@
             @click="chooseItem"
             :title="'Available '+app.itemNameCaptial+'s'"
             :subtitle="'pick a '+app.itemName+' you know and click on it to start'"
+            :numPerPage="40"
             :count-target="countTarget"
-            :pagination="false"
+            :pagination="!app.isCrowdWorker"
+            :searchable="!app.isCrowdWorker && app.numSubmissions >= CW_MAX_SUB"
             :selectable="true"/>
 
         <ItemSelectionPanel
