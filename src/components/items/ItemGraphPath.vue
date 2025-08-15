@@ -21,7 +21,7 @@
                     :image-width="imageWidth"
                     :image-height="imageHeight"
                     :highlights="selection.filter(d => d && d.cluster === index).map(d => d.id)"
-                    class="mb-1 mr-3 ml-3"
+                    class="mb-1 mr-3 ml-3 cluster-group"
                     hide-buttons
                     vertical
                     @dragstart-item="d => onStartDrag(d.id, 'cluster-drag')"
@@ -440,15 +440,23 @@
                     on: "bottom"
                 },
                 buttons: [{ text: "next", action: tutorial.next, classes: "bg-primary" }],
-                text: `<p>These are different groups of ${plural} from our dataset.
-                    They help you to look through ${plural} more quickly.
+                text: `These are different groups of ${plural} from our dataset.
+                    They help you to look through ${plural} more quickly.`
+            },{
+                id: "show-rect",
+                attachTo: {
+                    element: () => getFirst(document.querySelectorAll(".cluster-group")),
+                    on: "bottom"
+                },
+                buttons: [{ text: "next", action: tutorial.next, classes: "bg-primary" }],
+                text: `Each group shows images for its first 5 ${plural} - all other
+                    ${plural} are shown as grey boxes. You can <b>hover</b> over a box to see
+                    the ${single}'s name and image.
                     <div style="min-height: 1em"></div>
 
-                    You can <b>click</b> on any ${single} or <b>drag</b> it into one of the three selection boxes
-                    below. Then you get a list of similar ${plural} shown at the bottom.
-
-                    <div style="min-height: 1em"></div>
-                    You can get a <b>maximum of ${props.maxItems} ${plural}</b>.</p>`
+                    You can <b>click</b> on any ${single} or <b>drag</b> it into one of the
+                    three selection boxes below. Then you get a list of up to ${props.maxItems}
+                    similar ${plural} shown at the bottom.`
             },{
                 id: "click-item",
                 attachTo: {
@@ -535,6 +543,7 @@
                     element: "#start-tutorial",
                     on: "left"
                 },
+                canClickTarget: false,
                 scrollToHandler: function() {
                     window.scrollTo(0, 0, { behavior: 'smooth' })
                 },
@@ -544,6 +553,15 @@
             }
         ])
     }
+    function getFirst(list) {
+        const len = list.length
+        return len > 0 ? list[0] : null
+    }
+    function getLast(list) {
+        const len = list.length
+        return len > 0 ? list[len-1] : null
+    }
+
     function startTutorial() {
         setClusterIndex(0)
         clearSelection()
@@ -580,6 +598,7 @@
             }
 
             clusters = getItemClusters(allItems, props.target ? [props.target] : [])
+
             clusterLeft.clear()
             maxClsSize = 0
 

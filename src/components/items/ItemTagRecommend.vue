@@ -12,8 +12,8 @@
 
             <div
                 class="d-flex flex-column align-center bordered-grey-light-thin pa-2 mr-4 rounded-lg"
-                :style="{ minWidth: (imageWidth+10)+'px' }"
-                style="max-width: 49%; width: 40%; border: 2px dashed black;">
+                :style="{ minWidth: (imageWidth+10)+'px', width: wSize.width.value < 1500 ? '45%' : '40%' }"
+                style="max-width: 49%; border: 2px dashed black;">
                 <h3 class="sectitle">Candidates</h3>
                 <div class="d-flex flex-wrap justify-center align-start"
                     @drop.prevent="dropItem(0)"
@@ -34,7 +34,8 @@
                 </div>
             </div>
 
-            <div class="ml-4" style="max-width: 49%; width: 40%;" :style="{ minWidth: (imageWidth+10)+'px' }">
+            <div class="ml-4" style="max-width: 49%;"
+                :style="{ minWidth: (imageWidth+10)+'px', width: wSize.width.value < 1500 ? '45%' : '40%' }">
 
                 <div class="d-flex flex-column align-center rounded-lg pa-2 mb-1 drop-area"
                     @drop.prevent="dropItem(2)"
@@ -117,16 +118,17 @@
     import { useApp } from '@/stores/app'
     import { reactive, computed } from 'vue'
     import ItemTeaser from './ItemTeaser.vue'
-    import { useDisplay, useTheme } from 'vuetify'
+    import { useTheme } from 'vuetify'
     import { useToast } from 'vue-toastification'
     import { SOUND, useSounds } from '@/stores/sounds'
+    import { useWindowSize } from '@vueuse/core'
 
     const app = useApp()
     const theme = useTheme()
     const toast = useToast()
     const sounds = useSounds()
 
-    const { md, lg, xl, xxl } = useDisplay()
+    const wSize = useWindowSize()
 
     const props = defineProps({
         items: {

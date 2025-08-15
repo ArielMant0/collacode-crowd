@@ -286,8 +286,7 @@
         if (!isValidGameId.value) {
             return toast.error("please select a game mode")
         }
-        await submitRatings()
-        await submitText()
+        await Promise.all([submitRatings(), submitText()])
         sounds.play(SOUND.WIN_MINI)
         toast.success(
             "thanks for your feedback :)",
@@ -304,7 +303,8 @@
     }
 
     function onDialogClose() {
-        setTimeout(() => router.push("/"), 1000)
+        window.scrollTo(0, 0, { behavior: "smooth" })
+        setTimeout(() => router.push("/"), 1500)
     }
 
 

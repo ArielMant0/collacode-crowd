@@ -1,5 +1,8 @@
 <template>
-    <svg ref="el" :width="width" :height="height" :style="{ minWidth: width+'px', minHeight: height+'px' }"></svg>
+    <svg ref="el"
+        :width="width"
+        :height="height"
+        :style="{ minWidth: width+'px', minHeight: height+'px' }"></svg>
 </template>
 
 <script setup>
@@ -51,7 +54,7 @@
             type: Number,
             default: 3
         },
-        draggable: {
+        canDrag: {
             type: Boolean,
             default: false
         }
@@ -59,13 +62,13 @@
 
     const el = ref(null)
 
-    const emit = defineEmits(["click", "hover", "dragstart", "drag"])
+    const emit = defineEmits(["click", "hover", "rect-dragstart", "rect-drag"])
 
     const cols = computed(() => Math.floor(props.width / props.rectSize))
     const rows = computed(() => Math.max(1, Math.ceil(props.data.length / cols.value)))
     const height = computed(() => props.rectSize * rows.value)
 
-    let rects
+    let rects, isDragging = false
 
     function getColor(id) {
         const inSel = props.selected ? props.selected.includes(id) : false
@@ -83,6 +86,28 @@
         const w = props.rectSize
         const h = props.rectSize
 
+        function onDragStart(event, d) {
+            if (!props.canDrag) return
+            isDragging = true
+
+            if (props.imageAttr) {
+                const img = new Image(160, 80)
+                img.src = mediaPath(props.mediaPathType, d[props.imageAttr])
+                event.dataTransfer.setDragImage(img, 80, 40)
+            }
+
+            emit("rect-dragstart",  d, event)
+        }
+        function onDrag(event, d) {
+            if (!props.canDrag) return
+            isDragging = true
+            emit("rect-drag", d, new DragEvent("drag"))
+        }
+        function onDragEnd(event, d) {
+            if (!props.canDrag) return
+            isDragging = false
+        }
+
         rects = svg.selectAll("rect")
             .data(props.data)
             .join("rect")
@@ -96,27 +121,18 @@
             .attr("width", 0)
             .attr("height", 0)
             .style("cursor", "pointer")
-            .attr("draggable", props.draggable)
-            .on("dragstart", function(event, d) {
-                if (!props.draggable) return
-                if (props.imageAttr) {
-                    const img = new Image(160, 80)
-                    img.src = mediaPath(props.mediaPathType, d[props.imageAttr])
-                    event.dataTransfer.setDragImage(img, 80, 40)
-                }
-                emit("dragstart", d, event)
-            })
-            .on("drag", function(event, d) {
-                if (!props.draggable) return
-                emit("drag", d, event)
-            })
-            .on("mouseenter", function(_event, d) {
-                emit("hover", null, null)
-                d3.select(this)
-                    .transition(50)
-                    .attr("fill", getColor(d.id).brighter(0.5))
-            })
+            .attr("draggable", props.canDrag)
+
+        if (props.canDrag) {
+            rects
+                .on("dragstart", onDragStart)
+                .on("drag", onDrag)
+                .on("dragend", onDragEnd)
+        }
+
+        rects
             .on("mousemove", function(event, d) {
+                if (isDragging) return
                 emit("hover", d, event)
             })
             .on("mouseleave", function(_event, d) {
@@ -126,7 +142,15 @@
                     .attr("fill", getColor(d.id))
             })
             .on("click", function(event, d) {
+                if (event.defaultPrevented) return;
+                if (isDragging) return
                 emit("click", d, event)
+            })
+            .on("mouseenter", function(_event, d) {
+                emit("hover", null, null)
+                d3.select(this)
+                    .transition(50)
+                    .attr("fill", getColor(d.id).brighter(0.5))
             })
 
         rects

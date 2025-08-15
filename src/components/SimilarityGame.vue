@@ -495,7 +495,7 @@
                 compdata = null
                 sounds.play(SOUND.FAIL_MINI)
                 toast.error(
-                    "you failed the comprehension check",
+                    "you failed the knowledge check",
                     { timeout: 1500, position: POSITION.TOP_CENTER }
                 )
                 setTimeout(() => router.replace("/"), 2000)

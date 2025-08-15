@@ -45,26 +45,37 @@ export const useTooltip = defineStore('tooltip', {
             this.data = null
         },
 
-        showItem(event, item) {
+        showItem(event, item, imageOnly=true) {
             const app = useApp()
             const [mx, my] = pointer(event, document.body)
-            const extra = app.itemColumns.reduce((acc, c) => {
-                return acc + (item[c.name] !== undefined && item[c.name] !== null ?
-                    `<div><b>${capitalize(c.name)}:</b> ${item[c.name]}</div>` :
-                    "")
-            }, "")
+
             const path = item.teaser.startsWith("http") ? item.teaser : mediaPath('teaser', item.teaser)
-            this.show(
-                `<div>
-                    <img src="${path}" style="max-height: 120px; object-fit: contain;"/>
-                    <div class="mt-1 text-caption">
+            if (imageOnly) {
+                this.show(`
+                    <div class="text-caption">
                         <div>${item.name}</div>
-                        ${item.description ? '<div><b>Description:</b> '+item.description+'</div>' : ''}
-                        ${extra}
-                    </div>
-                </div>`,
-                mx, my
-            )
+                        <img src="${path}" style="max-height: 120px; object-fit: contain;"/>
+                    </div>`, mx, my
+                )
+            } else {
+                const extra = app.itemColumns.reduce((acc, c) => {
+                    return acc + (item[c.name] !== undefined && item[c.name] !== null ?
+                        `<div><b>${capitalize(c.name)}:</b> ${item[c.name]}</div>` :
+                        "")
+                }, "")
+                this.show(
+                    `<div>
+                        <img src="${path}" style="max-height: 120px; object-fit: contain;"/>
+                        <div class="mt-1 text-caption">
+                            <div>${item.name}</div>
+                            ${item.description ? '<div><b>Description:</b> '+item.description+'</div>' : ''}
+                            ${extra}
+                        </div>
+                    </div>`,
+                    mx, my
+                )
+            }
+
         },
     }
 })

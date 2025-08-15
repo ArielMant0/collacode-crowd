@@ -1,5 +1,5 @@
 <template>
-    <div id="act-binsearch" style="width: min-content;" class="pa-2">
+    <div id="act-binsearch" style="width: min-content; max-width: 100%;" class="pa-2">
 
         <div id="question-container">
             <div id="final-selection">
@@ -154,7 +154,7 @@
                 :style="{ minWidth: (imageWidth+20)+'px', maxWidth: (imageWidth+30)+'px' }">
                 <div style="text-align: center;">stored {{ app.itemName }}s</div>
                 <div
-                    class="rounded-lg pa-2"
+                    class="rounded-lg pa-2 bg-surface"
                     style="max-height: 80vh; overflow-y: auto; overflow-x: hidden; min-height: 100px; border: 2px dashed black;">
                     <ItemTeaser v-for="exId in inventory"
                         :id="exId"
@@ -535,6 +535,7 @@
                     element: "#start-tutorial",
                     on: "left"
                 },
+                canClickTarget: false,
                 scrollToHandler: function() {
                     window.scrollTo(0, 0, { behavior: 'smooth' })
                 },
@@ -1089,6 +1090,6 @@
 .inventory {
     position: fixed;
     top: 200px;
-    right: 50px;
+    right: 10px;
 }
 </style>

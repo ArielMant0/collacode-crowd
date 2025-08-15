@@ -87,7 +87,28 @@ export function getMinMaxMeanDistBetweenClusters(ca, cb, pwd) {
     return [mind, maxd, meand / (ca.length*cb.length)]
 }
 
-export function getItemClusters(data, targets=[], metric="euclidean", minStd=4, maxStd=2, minSize=5, maxSize=13, allTags=true, useWeights=false) {
+const CLS_OPTIONS = {
+    metric: "euclidean",
+    minStd: 4,
+    maxStd: 2,
+    minSize: 5,
+    maxSize: 13,
+    allTags: true,
+    useWeights: false,
+    sort: 'asc'
+}
+
+export function getItemClusters(data, targets=[], options=CLS_OPTIONS) {
+
+    const opts = Object.assign(Object.assign({}, CLS_OPTIONS), options)
+    const metric = opts.metric
+    const minStd = opts.minStd
+    const maxStd = opts.maxStd
+    const minSize = opts.minSize
+    const maxSize = opts.maxSize
+    const allTags = opts.allTags
+    const useWeights = opts.useWeights
+
     const n = data.length
     if (n <= minSize) return null
 
@@ -335,6 +356,7 @@ export function getItemClusters(data, targets=[], metric="euclidean", minStd=4, 
     }
 
     // sort all items in a cluster by their avg distance to each other
+    const sortAsc = opts.sort === "asc"
     indices.forEach(list => {
         if (list.length < 2) return
         const meanBetween = {}
@@ -346,10 +368,13 @@ export function getItemClusters(data, targets=[], metric="euclidean", minStd=4, 
                     meanBetween[d] += pwd[j][i]
                 }
             }
-            meanBetween[d] = meanBetween[d] / (list.length-1)
+            meanBetween[d] = meanBetween[d] / list.length
         })
 
-        list.sort((a, b) => meanBetween[a] - meanBetween[b])
+        list.sort((a, b) => sortAsc ?
+            meanBetween[a] - meanBetween[b] :
+            meanBetween[b] - meanBetween[a]
+        )
     })
 
     const clusters = indices.map(list => list.map(i => data[i]))

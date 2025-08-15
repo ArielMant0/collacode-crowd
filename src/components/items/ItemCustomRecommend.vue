@@ -1,5 +1,5 @@
 <template>
-    <div style="text-align: center; min-width: 100%;">
+    <div style="text-align: center; width: 100%;">
 
         <div class="text-h5 mb-1">
             click or drag <b class="text-decoration-underline">only</b> similar {{ app.itemName }}s into a fitting category
@@ -11,8 +11,8 @@
         <div class="d-flex align-start justify-center" style="width: 100%;">
 
             <div class="d-flex flex-column mr-4"
-                :style="{ minWidth: (imageWidth+10)+'px' }"
-                style="max-width: 49%; width: 40%;">
+                :style="{ minWidth: (imageWidth+10)+'px', width: wSize.width.value < 1500 ? '45%' : '40%' }"
+                style="max-width: 49%;">
 
                 <div class="rounded-lg pa-2 mb-2" style="width: 100%; border: 2px dashed black">
                     <div>
@@ -93,7 +93,9 @@
                 </div>
             </div>
 
-            <div class="ml-4" style="max-width: 49%; width: 40%;" :style="{ minWidth: (imageWidth+10)+'px' }">
+            <div class="ml-4"
+                style="max-width: 49%;"
+                :style="{ minWidth: (imageWidth+10)+'px', width: wSize.width.value < 1500 ? '45%' : '40%' }">
 
                 <div class="d-flex flex-column align-center pa-2 mb-1 rounded-lg drop-area"
                     @drop.prevent="dropItem(2)"
@@ -198,18 +200,20 @@
     import { useApp } from '@/stores/app'
     import { reactive, computed, onMounted } from 'vue'
     import ItemTeaser from './ItemTeaser.vue'
-    import { useDisplay, useTheme } from 'vuetify'
+    import { useTheme } from 'vuetify'
     import DM from '@/use/data-manager'
     import { getSimilarByTarget } from '@/use/data-api'
     import { useToast } from 'vue-toastification'
     import { getGameWords, getStopWords } from '@/use/utility'
     import { SOUND, useSounds } from '@/stores/sounds'
+    import { useWindowSize } from '@vueuse/core'
 
     const app = useApp()
     const theme = useTheme()
     const toast = useToast()
     const sounds = useSounds()
-    const { md, lg, xl, xxl } = useDisplay()
+
+    const wSize = useWindowSize()
 
     const props = defineProps({
         target: {

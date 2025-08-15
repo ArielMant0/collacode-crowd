@@ -124,7 +124,8 @@
 
                         <div style="min-width: 120px;" class="text-caption">
                             <div>Value: {{ item.value }}</div>
-                            <div>Count: {{ item.count }}</div>
+                            <div>Users: {{ item.unique }}</div>
+                            <div>Counts: {{ item.count }}</div>
                         </div>
                     </div>
 
@@ -328,6 +329,7 @@
                     id: oid,
                     count: l.count,
                     value: l.value,
+                    unique: l.unique,
                     percent: Math.floor((l.value / maxValue) * 100)
                 }
             })

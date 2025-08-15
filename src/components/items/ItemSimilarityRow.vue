@@ -1,5 +1,6 @@
 <template>
-    <v-sheet class="d-flex align-center" :class="{ 'flex-column': vertical, 'align-center': vertical }">
+    <v-sheet class="d-flex align-center prevent-select"
+        :class="{ 'flex-column': vertical, 'align-center': vertical }">
 
         <div class="text-caption mt-1 mb-1">
             <div v-for="t in tags" class="text-dots" style="text-align: center;" :style="{ maxWidth: imageWidth+'px' }">
@@ -82,23 +83,30 @@
                 prevent-context/>
         </div>
 
-        <RectBubble v-if="otherItems.length > 0"
-            :style="{ opacity: disabled ? 0.5 : 1 }"
-            :data="otherItems"
-            :width="imageWidth"
-            :rect-size="30"
-            :padding="5"
-            :class="[vertical ? 'mt-1 mb-1' : 'ml-1 mr-1']"
-            :highlights="highlights"
-            :highlights-color="theme.current.value.colors.secondary"
-            :color="settings.lightMode ? '#ccc' : '#555'"
-            image-attr="teaser"
-            draggable
-            @hover="onHover"
-            @dragstart="d => emit('dragstart-item', d)"
-            @drag="d => emit('drag-item', d)"
-            @click="d => emit('click-item', d)"/>
+        <div class="d-flex flex-wrap justify-start mt-1"
+            style="width: 100%;"
+            :style="{ opacity: disabled ? 0.5 : 1 }">
+            <div v-for="d in otherItems" :key="d.id"
+                style="margin: 2px; cursor: pointer; width: 25px; height: 25px;"
+                draggable="true"
+                class="plop-in"
+                :style="{
+                    border: '1px solid '+ (highlights.includes(d.id) ?
+                        theme.current.value.colors.primary :
+                        '#aaa'),
+                    backgroundColor: highlights.includes(d.id) ?
+                        theme.current.value.colors.secondary :
+                        '#ccc'
+                }"
+                @mouseenter="e => onHover(d, e)"
+                @mousemove="e => onHover(d, e)"
+                @mouseleave="e => onHover(null, e)"
+                @dragstart="onDragStart(d)"
+                @drag="emit('drag-item', d)"
+                @click="emit('click-item', d)">
+            </div>
 
+        </div>
     </v-sheet>
 </template>
 
@@ -111,12 +119,9 @@
     import DM from '@/use/data-manager';
     import TagText from '../tags/TagText.vue';
     import { sortObjByValue } from '@/use/sorting';
-    import RectBubble from '../vis/RectBubble.vue';
-    import { useSettings } from '@/stores/settings';
 
     const tt = useTooltip()
     const theme = useTheme()
-    const settings = useSettings()
 
     const props = defineProps({
         items: {
@@ -196,11 +201,16 @@
         emit("change", value)
     }
 
+    function onDragStart(d) {
+        tt.hide()
+        emit('dragstart-item', d)
+    }
+
     function onHover(d, event) {
         if (d === null) {
             tt.hide()
         } else {
-            tt.showItem(event, d)
+            tt.showItem(event, d, true)
         }
     }
 
@@ -244,3 +254,56 @@
     watch(() => props.items, read)
 
 </script>
+
+<style scoped>
+.plop-in {
+    animation: growBounce 700ms ease-in;
+}
+.plop-in:hover {
+    filter: brightness(0.5);
+}
+
+@keyframes growBounce {
+	0% {
+		animation-timing-function: ease-in;
+		opacity: 0;
+		transform: scale(0);
+	}
+
+	38% {
+		animation-timing-function: ease-out;
+		opacity: 1;
+		transform: scale(1);
+	}
+
+	55% {
+		animation-timing-function: ease-in;
+		transform: scale(0.7);
+	}
+
+	72% {
+		animation-timing-function: ease-out;
+		transform: scale(1);
+	}
+
+	81% {
+		animation-timing-function: ease-in;
+		transform: scale(0.84);
+	}
+
+	89% {
+		animation-timing-function: ease-out;
+		transform: scale(1);
+	}
+
+	95% {
+		animation-timing-function: ease-in;
+		transform: scale(0.95);
+	}
+
+	100% {
+		animation-timing-function: ease-out;
+		transform: scale(1);
+	}
+}
+</style>
