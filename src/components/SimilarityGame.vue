@@ -330,6 +330,9 @@
 
     function onTutorialStart() {
         pauseTimer()
+        if (timeStartTutorial === undefined) {
+            timeStartTutorial = Date.now()
+        }
     }
     function onTutorialStop(completed) {
         localStorage.setItem("tutorial_"+props.method, true)
@@ -351,10 +354,8 @@
         // get the data from clusters/binary search
         if (clusters.value) {
             clusters.value.startTutorial()
-            timeStartTutorial = Date.now()
         } else if (binsearch.value) {
             binsearch.value.startTutorial()
-            timeStartTutorial = Date.now()
         }
     }
 
