@@ -66,6 +66,12 @@
                             style="width: 160px; height: 80px; position: absolute; top: 0; left: 0;">
                             <b style="text-shadow: black 0 0 1px;">max. submissions reached</b>
                         </div>
+                        <div v-else-if="subset === 1"
+                            class="d-flex align-center justify-center"
+                            style="color: #333; width: 160px; height: 80px; position: absolute; top: 0; left: 0;">
+                            <v-icon v-if="app.methodPerItem[item.id] === GAME_IDS.BINSEARCH" size="30">mdi-family-tree</v-icon>
+                            <v-icon v-else size="30">mdi-cards-variant</v-icon>
+                        </div>
                     </div>
                 </v-sheet>
             </div>
@@ -83,6 +89,7 @@
     import DM from '@/use/data-manager';
     import { useTimes } from '@/stores/times';
     import { useSettings } from '@/stores/settings';
+    import { GAME_IDS } from '@/stores/games';
 
     const app = useApp()
     const times = useTimes()
@@ -134,10 +141,8 @@
     const showPagination = computed(() => props.pagination && numPages.value > 1)
     const matchingItems = computed(() => {
         if (search.value && search.value.length > 1) {
-            const accents = /[éèê]/gi
-            const noAccent = search.value.replaceAll(accents, "e")
-            const name = new RegExp(noAccent, "gi")
-            return items.value.filter(d => name.test(d.name))
+            const name = new RegExp(search.value.replaceAll(/[éèê]/gi, "e"), "gi")
+            return items.value.filter(d => name.test(d.nameSearch))
         }
         return items.value
     })
@@ -155,7 +160,7 @@
     const page = ref(1)
     const numPages = computed(() => Math.ceil(items.value.length / props.numPerPage))
 
-    const sortBy = ref(settings.panelSort[props.subset])
+    const sortBy = ref(app.isCrowdWorker ? settings.panelSort[props.subset] : 0)
 
     const textClass = computed(() => {
         switch(props.subset) {
@@ -214,11 +219,23 @@
     function applySort() {
         if (!props.sortable) return
         settings.panelSort[props.subset] = sortBy.value
+        const prio = Array.from(app.itemsLeft.values())
         items.value.sort((a, b) => {
             switch(sortBy.value) {
-                // sort by id (ascending)
+                // sort by id + priority (ascending)
                 default:
-                case 0: return a.index - b.index
+                case 0: {
+                    if (!app.isCrowdWorker) {
+                        if (app.itemsLeft.has(a.id) && app.itemsLeft.has(b.id)) {
+                            return app.getItemCount(a.id) - app.getItemCount(b.id)
+                        } else if (app.itemsLeft.has(a.id) && !app.itemsLeft.has(b.id)) {
+                            return -1
+                        } else if (!app.itemsLeft.has(a.id) && app.itemsLeft.has(b.id)) {
+                            return 1
+                        }
+                    }
+                    return a.index - b.index
+                }
                 // sort by count (descending)
                 case 1: return app.getItemCount(b.id) - app.getItemCount(a.id)
                 // sort by count (ascending)
@@ -231,7 +248,10 @@
         let tmp
         switch (props.subset) {
             case 0:
-                tmp = DM.getDataBy("items", d => app.itemsLeft.has(d.id) && !isItemDone(d.id))
+                tmp = DM.getDataBy("items", d => {
+                    return !isItemDone(d.id) &&
+                        (!app.isCrowdWorker || app.itemsLeft.has(d.id))
+                })
                 tmp.forEach(d => d._done = false)
                 break
             case 1:

@@ -279,7 +279,7 @@
             emit("search", searchHistory)
 
             bySearch.value = DM
-                .getDataBy("items", d => !isChosenItem(d.id) && name.test(d.name.replaceAll(accents, "e")))
+                .getDataBy("items", d => !isChosenItem(d.id) && name.test(d.nameSearch))
                 .map(d => ({ id: d.id, value: 0 }))
 
         } else {
@@ -287,31 +287,9 @@
         }
     }
     async function getSuggestions() {
-        const stopWords = new Set(getStopWords())
-        const gameWords = getGameWords()
-        const rSp = new RegExp("\\s{2,}", "gi")
-        const rDel = new RegExp("[&®©™'\(\)0-9\.,’;_]", "gi")
-        const process = name => {
-            let lower = name.toLowerCase()
-            gameWords.forEach(w => {
-                if (lower.includes(w)) {
-                    lower = lower.replace(w, "")
-                }
-            })
-            const str = lower.replaceAll(rDel, "").replaceAll(rSp, " ")
-            return str.split(/[:\-]/gi)
-                .map(s => s
-                    .split(" ")
-                    .map(w => w.trim())
-                    .filter(w => !stopWords.has(w))
-                    .join(" ")
-                    .trim()
-                )
-                .filter(s => s && s.length > 0)
-        }
-        const names = DM.getDataBy("items", d => isFixedItem(d.id)).map(d => process(d.name)).flat()
+        const names = DM.getDataBy("items", d => isFixedItem(d.id)).map(d => d.nameParts).flat()
         const other = DM.getDataBy("items", d => {
-            const dn = process(d.name)
+            const dn = d.nameParts
             return !isFixedItem(d.id) && names.some(n1 => dn.some(n2 => n1 === n2))
         })
         suggs.byName = other.map(d => ({ id: d.id }))

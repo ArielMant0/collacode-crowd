@@ -3,7 +3,7 @@
         <div v-if="!app.isCrowdWorker" style="text-align: center;" class="mb-6">
             <div class="text-caption">
                 <i v-if="canFixMethod">use this to fix the similarity game mode</i>
-                <i v-else>submit similarities for at least {{ CW_MAX_SUB }} {{ app.itemName }}s to unlock fixing the similarity game mode</i>
+                <i v-else>submit similarities for at least 2 {{ app.itemName }}s to unlock fixing the similarity game mode</i>
             </div>
             <GameModeToggle v-model="fixedMethod" :disabled="!canFixMethod"/>
         </div>
@@ -16,7 +16,7 @@
             :numPerPage="40"
             :count-target="countTarget"
             :pagination="!app.isCrowdWorker"
-            :searchable="!app.isCrowdWorker && app.numSubmissions >= CW_MAX_SUB"
+            :searchable="!app.isCrowdWorker"
             :selectable="true"/>
 
         <ItemSelectionPanel
@@ -63,7 +63,7 @@
     const { smAndDown } = useDisplay()
     const maxWidth = computed(() => smAndDown.value ? "95%" : "90%")
 
-    const canFixMethod = computed(() => app.inDevMode || app.numSubmissions >= CW_MAX_SUB)
+    const canFixMethod = computed(() => app.inDevMode || !app.isCrowdWorker && app.numSubmissions >= 2)
 
     function chooseItem(item) {
         if (item._done) return

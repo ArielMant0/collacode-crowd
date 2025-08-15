@@ -8,7 +8,7 @@
             color="primary"
             variant="outlined">
             <v-btn prepend-icon="mdi-cards-variant" :value="GAME_IDS.CLUSTERS">clustering</v-btn>
-            <v-btn prepend-icon="mdi-graph-outline" :value="GAME_IDS.BINSEARCH">binary search</v-btn>
+            <v-btn prepend-icon="mdi-family-tree" :value="GAME_IDS.BINSEARCH">binary search</v-btn>
         </v-btn-toggle>
 
         <v-tooltip location="bottom" open-delay="100">
@@ -25,7 +25,7 @@
                     </div>
                     <v-divider class="mt-2 mb-2"></v-divider>
                     <div>
-                        <v-icon>mdi-graph-outline</v-icon> in the binary search mode,
+                        <v-icon>mdi-family-tree</v-icon> in the binary search mode,
                         each step divided the remaining {{ app.itemName }}s
                         into 2 groups based on a specific tag
                         <img :src="w22" height="200px"></img>

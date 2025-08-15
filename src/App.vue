@@ -284,11 +284,42 @@
 
         const sortFunc = sortObjByString("name")
 
+        const stopWords = new Set(getStopWords())
+        const gameWords = getGameWords()
+        const rSp = new RegExp("\\s{2,}", "gi")
+        const rDel = new RegExp("[&®©™'\(\)\.,’;_]", "gi")
+        const rDelNoNum = new RegExp("[&®©™'\(\)0-9\.,’;_]", "gi")
+        const process = name => {
+            let lower = name.toLowerCase().replaceAll(/[éèê]/gi, "e")
+            gameWords.forEach(w => {
+                if (lower.includes(w)) {
+                    lower = lower.replace(w, "")
+                }
+            })
+            const str = lower.replaceAll(rDelNoNum, "").replaceAll(rSp, " ")
+            return str.split(/[:\-]/gi)
+                .map(s => s
+                    .split(" ")
+                    .map(w => w.trim())
+                    .filter(w => !stopWords.has(w))
+                    .join(" ")
+                    .trim()
+                )
+                .filter(s => s && s.length > 0)
+        }
+
         data.forEach(g => {
-            g.tags = [];
-            g.allTags = [];
-            g.numCoders = 0;
-            g.coders = [];
+            g.tags = []
+            g.allTags = []
+            g.numCoders = 0
+            g.coders = []
+            g.nameSearch = g.name
+                .toLowerCase()
+                .replaceAll(/[éèê]/gi, "e")
+                .replaceAll(rDel, "")
+                .replaceAll(rSp, " ")
+
+            g.nameParts = process(g.name)
 
             if (groupDT.has(g.id)) {
                 const array = groupDT.get(g.id)

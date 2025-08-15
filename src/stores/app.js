@@ -61,6 +61,7 @@ export const useApp = defineStore('app', {
         fixedMethod: null,
         method: 0,
         methodCounts: new Map(),
+        methodPerItem: {},
 
         // which items the user can still do
         itemsLeft: new Set(),
@@ -156,6 +157,9 @@ export const useApp = defineStore('app', {
             if (meta.methodCounts) {
                 this.setMethodCounts(meta.methodCounts)
             }
+            if (meta.methodPerItem) {
+                this.methodPerItem = meta.methodPerItem
+            }
             this.setUserBlocked(meta.blocked)
             this.itemTime = Date.now()
         },
@@ -167,9 +171,9 @@ export const useApp = defineStore('app', {
         setTarget(item) {
             if (
                  item &&
-                 this.itemsLeft.has(item.id) &&
-                !this.itemsDone.has(item.id) &&
-                !this.itemsGone.has(item.id)
+                 !this.itemsGone.has(item.id) &&
+                 !this.itemsDone.has(item.id) &&
+                (!this.isCrowdWorker || this.itemsLeft.has(item.id))
             ) {
                 this.target = item
             } else {

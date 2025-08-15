@@ -604,7 +604,7 @@
             gameData.comprehension = await loadComprehensionData(target.value.id)
         } catch(e) {
             console.error(e.toString())
-            toast.error("error loading comprehension check data")
+            console.error("error loading knowledge check data")
             gameData.comprehension = []
         }
 
