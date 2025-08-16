@@ -64,7 +64,7 @@
                 const c2 = app.getMethodCount(GAME_IDS.BINSEARCH)
                 if (c1 > c2) {
                     method.value = GAME_IDS.BINSEARCH
-                } else if (c2 > c2) {
+                } else if (c2 > c1) {
                     method.value = GAME_IDS.CLUSTERS
                 } else {
                     method.value = Math.random() > 0.5 ?
