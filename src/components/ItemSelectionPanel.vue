@@ -94,7 +94,7 @@
     const times = useTimes()
     const settings = useSettings()
 
-    const { itemCounts } = storeToRefs(app)
+    const { itemCounts, isCrowdWorker } = storeToRefs(app)
     const { panelPage } = storeToRefs(settings)
 
     const props = defineProps({
@@ -160,7 +160,7 @@
     const page = computed(() => panelPage.value[props.subset])
     const numPages = computed(() => Math.ceil(matchingItems.value.length / props.numPerPage))
 
-    const sortBy = ref(app.isCrowdWorker ? settings.panelSort[props.subset] : 0)
+    const sortBy = ref(isCrowdWorker.value ? settings.panelSort[props.subset] : 0)
 
     const textClass = computed(() => {
         switch(props.subset) {
@@ -203,16 +203,16 @@
     })
 
     function isItemFull(id) {
-        return app.isCrowdWorker && itemCounts.value[id] >= props.countTarget
+        return isCrowdWorker.value && itemCounts.value[id] >= props.countTarget
     }
 
     function isItemDone(id) {
         return app.itemsDone.has(id) || app.itemsGone.has(id) ||
-            isItemFull(id) || (app.isCrowdWorker && !app.itemsLeft.has(id))
+            isItemFull(id) || (isCrowdWorker.value && !app.itemsLeft.has(id))
     }
 
     function onClick(item) {
-        if (!app.isCrowdWorker || !isItemFull(item.id)) {
+        if (!isCrowdWorker.value || !isItemFull(item.id)) {
             emit('click', item)
         }
     }
@@ -225,7 +225,7 @@
                 // sort by id + priority (ascending)
                 default:
                 case 0: {
-                    if (!app.isCrowdWorker) {
+                    if (!isCrowdWorker.value) {
                         if (app.itemsLeft.has(a.id) && app.itemsLeft.has(b.id)) {
                             return app.getItemCount(a.id) - app.getItemCount(b.id)
                         } else if (app.itemsLeft.has(a.id) && !app.itemsLeft.has(b.id)) {
@@ -268,6 +268,9 @@
 
     watch(() => Math.max(times.all, times.crowd), read)
     watch(() => props.subset, read)
+    watch(isCrowdWorker, function() {
+        sortBy.value = isCrowdWorker.value ? settings.panelSort[props.subset] : 0
+    })
     watch(numPages, function(num) {
         if (page.value > num) {
             panelPage.value[props.subet] = num
