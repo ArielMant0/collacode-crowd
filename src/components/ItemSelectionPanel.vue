@@ -220,7 +220,6 @@
     function applySort() {
         if (!props.sortable) return
         settings.panelSort[props.subset] = sortBy.value
-        const prio = Array.from(app.itemsLeft.values())
         items.value.sort((a, b) => {
             switch(sortBy.value) {
                 // sort by id + priority (ascending)

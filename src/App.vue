@@ -462,43 +462,7 @@
         // load actual game data
         if (app.ds) {
             await loadData()
-            await loadSimilarities()
         }
-
-        // const stopWords = new Set(getStopWords())
-        // const gameWords = getGameWords()
-        // const rSp = new RegExp("\\s{2,}", "gi")
-        // const rDel = new RegExp("[&®©™'\(\)0-9\.,’;_]", "gi")
-        // const process = name => {
-        //     let lower = name.toLowerCase()
-        //     gameWords.forEach(w => {
-        //         if (lower.includes(w)) {
-        //             lower = lower.replace(w, "")
-        //         }
-        //     })
-        //     const str = lower.replaceAll(rDel, "").replaceAll(rSp, " ")
-        //     return str.split(/[:\-]/gi)
-        //         .map(s => s
-        //             .split(" ")
-        //             .map(w => w.trim())
-        //             .filter(w => !stopWords.has(w))
-        //             .join(" ")
-        //             .trim()
-        //         )
-        //         .filter(s => s && s.length > 0)
-        // }
-        // const items = DM.getData("items", false)
-        // const names = items.map(d => process(d.name))
-        // for (let i = 0; i < items.length; ++i) {
-        //     console.log(`target: ${items[i].name} (${names[i]})`)
-        //     for (let j = 0; j < items.length; ++j) {
-        //         if (i === j) continue
-        //         if (names[i].some(n1 => names[j].some(n2 => n1 === n2))) {
-        //             console.log(`\t${items[j].name} (${names[j]})`)
-        //         }
-        //     }
-        //     console.log("  ")
-        // }
 
         initialized.value = true
     }
