@@ -20,22 +20,24 @@
     import { GAME_IDS } from '@/stores/games';
 
     const app = useApp()
-    const show = computed(() => {
-        return !app.isCrowdWorker &&
-            (
-                app.numFeedback[GAME_IDS.BINSEARCH] < 4 &&
-                app.methodCounts.get(GAME_IDS.BINSEARCH) >= CW_MAX_SUB
-            ) ||
-            (
-                app.numFeedback[GAME_IDS.CLUSTERS] < 4 &&
-                app.methodCounts.get(GAME_IDS.CLUSTERS) >= CW_MAX_SUB
-            )
-    })
-
     const props = defineProps({
         maxWidth: {
             type: [String, Number],
             default: "1000px"
         }
     })
+
+    const numSubs = computed(() => app.isCrowdWorker ? CW_MAX_SUB : 2)
+    const show = computed(() => {
+        return !app.isCrowdWorker &&
+            (
+                app.numFeedback[GAME_IDS.BINSEARCH] < 4 &&
+                app.methodCounts.get(GAME_IDS.BINSEARCH) >= numSubs.value
+            ) ||
+            (
+                app.numFeedback[GAME_IDS.CLUSTERS] < 4 &&
+                app.methodCounts.get(GAME_IDS.CLUSTERS) >= numSubs.value
+            )
+    })
+
 </script>

@@ -93,7 +93,7 @@
                     </div>
                 </div>
                 <div v-else style="margin-top: 2em; font-size: 30px; text-align: center;">
-                    You must complete at least {{ CW_MAX_SUB }} {{ app.itemName }}s  for this mode before
+                    You must complete at least {{ numSubs }} {{ app.itemName }}s  for this mode before
                     you can give feedback.
                 </div>
             </div>
@@ -144,6 +144,7 @@
     const text = ref("")
 
     const optWidth = 120
+    const numSubs = computed(() => app.isCrowdWorker ? CW_MAX_SUB : 2)
     const data = reactive({
         ratings: {},
         stats: {},
@@ -156,7 +157,7 @@
 
     const cwDialog = ref(false)
 
-    const canGiveFeedback = computed(() => isValidGameId.value && app.methodCounts.get(gameId.value) >= CW_MAX_SUB)
+    const canGiveFeedback = computed(() => isValidGameId.value && app.methodCounts.get(gameId.value) >= numSubs.value)
     const done = computed(() => isValidGameId.value && app.numFeedback[gameId.value] >= questions.value.length)
     const numAnswered = computed(() => isValidGameId.value && activeRating.value ?
         Object.values(activeRating.value).reduce((acc, d) => acc + (d !== null ? 1 : 0), 0) :
@@ -323,9 +324,9 @@
             // 0 Y | Y Y -> C
             // Y Y | Y Y -> C
             if (
-                app.getMethodCount(GAME_IDS.BINSEARCH) >= CW_MAX_SUB &&
+                app.getMethodCount(GAME_IDS.BINSEARCH) >= numSubs.value &&
                 (
-                    app.getMethodCount(GAME_IDS.CLUSTERS) < CW_MAX_SUB ||
+                    app.getMethodCount(GAME_IDS.CLUSTERS) < numSubs.value ||
                     app.numFeedback[GAME_IDS.BINSEARCH] < questions.value.length
                 )
             ) {
