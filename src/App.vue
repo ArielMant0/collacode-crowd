@@ -75,11 +75,10 @@
         // crowd worker related
         if (app.cwId) {
             localStorage.setItem("cw-id", app.cwId)
+            localStorage.setItem("cw-submitted", app.cwSubmitted)
         } else {
             localStorage.removeItem("cw-id")
-        }
-        if (app.cwId && app.cwSubmitted) {
-            localStorage.setItem("cw-submitted", app.cwSubmitted)
+            localStorage.removeItem("cw-submitted")
         }
     }
 
