@@ -20,7 +20,7 @@ export const PR_STEPS = Object.freeze({
 })
 
 export const CW_MAX_SUB = __CW_MAX_SUB__
-export const GRAPH_MIN_SUB = 5
+export const GRAPH_MIN_SUB = __CW_MAX_SUB__
 
 export const useApp = defineStore('app', {
     state: () => ({
