@@ -33,12 +33,11 @@
                     density="compact"
                     class="mb-1"
                     style="max-width: 50%; align-self: center;"
-                    @update:model-value="onSearch"
                     clearable
                     hide-details/>
 
                 <v-pagination v-if="showPagination"
-                    v-model="page"
+                    v-model="panelPage[subset]"
                     :length="numPages"
                     show-first-last-page
                     style="align-self: flex-end"
@@ -61,7 +60,7 @@
                             hide-overlay
                             prevent-click
                             style="opacity: 0.33"/>
-                        <div v-if="isItemDone(item.id)"
+                        <div v-if="isItemFull(item.id)"
                             class="d-flex align-center justify-center text-error"
                             style="width: 160px; height: 80px; position: absolute; top: 0; left: 0;">
                             <b style="text-shadow: black 0 0 1px;">max. submissions reached</b>
@@ -96,6 +95,7 @@
     const settings = useSettings()
 
     const { itemCounts } = storeToRefs(app)
+    const { panelPage } = storeToRefs(settings)
 
     const props = defineProps({
         subset: {
@@ -157,8 +157,8 @@
 
     const search = ref("")
 
-    const page = ref(1)
-    const numPages = computed(() => Math.ceil(items.value.length / props.numPerPage))
+    const page = computed(() => panelPage.value[props.subset])
+    const numPages = computed(() => Math.ceil(matchingItems.value.length / props.numPerPage))
 
     const sortBy = ref(app.isCrowdWorker ? settings.panelSort[props.subset] : 0)
 
@@ -194,7 +194,7 @@
         if (showPagination.value) count++
 
         if (count > 1) {
-            return 'justify-space-between'
+            return showPagination.value ? 'justify-space-between' : "justify-start"
         }
 
         return props.sortable ? 'justify-start' :
@@ -202,16 +202,17 @@
             'justify-end'
     })
 
-    function onSearch() {
-        page.value = Math.max(1, Math.min(page.value, Math.ceil(matchingItems.value.length / props.numPerPage)))
-    }
-
-    function isItemDone(id) {
+    function isItemFull(id) {
         return app.isCrowdWorker && itemCounts.value[id] >= props.countTarget
     }
 
+    function isItemDone(id) {
+        return app.itemsDone.has(id) || app.itemsGone.has(id) ||
+            isItemFull(id) || (app.isCrowdWorker && !app.itemsLeft.has(id))
+    }
+
     function onClick(item) {
-        if (!app.isCrowdWorker || !isItemDone(item.id)) {
+        if (!app.isCrowdWorker || !isItemFull(item.id)) {
             emit('click', item)
         }
     }
@@ -248,10 +249,7 @@
         let tmp
         switch (props.subset) {
             case 0:
-                tmp = DM.getDataBy("items", d => {
-                    return !isItemDone(d.id) &&
-                        (!app.isCrowdWorker || app.itemsLeft.has(d.id))
-                })
+                tmp = DM.getDataBy("items", d => !isItemDone(d.id))
                 tmp.forEach(d => d._done = false)
                 break
             case 1:
@@ -259,7 +257,7 @@
                 tmp.forEach(d => d._done = true)
                 break
             case 2:
-                tmp = DM.getDataBy("items", d => app.itemsGone.has(d.id) || isItemDone(d.id))
+                tmp = DM.getDataBy("items", d => app.itemsGone.has(d.id) || isItemFull(d.id))
                 tmp.forEach(d => d._done = true)
                 break
         }
@@ -273,7 +271,7 @@
     watch(() => props.subset, read)
     watch(numPages, function(num) {
         if (page.value > num) {
-            page.value = num
+            panelPage.value[props.subet] = num
         }
     })
 

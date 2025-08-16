@@ -215,8 +215,7 @@
 
     let ilog = null, compdata = null
     let attentionDone = false, attentionNext = null
-    let timeStart, timeEnd
-    let timeStartTutorial, timeEndTutorial
+    let timeStart, timeEnd, timeStartTutorial
     let tabChangeWarning = false, numTabChanged = 0
     let searchHistory = []
 
@@ -338,10 +337,13 @@
         localStorage.setItem("tutorial_"+props.method, true)
         tutorialDone = tutorialDone || completed
         // only record the first time the tutorial is done
-        if (timeEndTutorial === undefined) {
-            timeEndTutorial = Date.now()
-            gameData.timePerStep.tutorial = timeEndTutorial
-            gameData.durPerStep.tutorial = timeEndTutorial-timeStartTutorial
+        if (!gameData.timePerStep.tutorial && timeStartTutorial !== undefined) {
+            const now = Date.now()
+            const dur = now - timeStartTutorial
+            if (!gameData.durPerStep.tutorial || gameData.durPerStep.tutorial < dur) {
+                gameData.timePerStep.tutorial = now
+                gameData.durPerStep.tutorial = dur
+            }
         }
         unpauseTimer()
     }
@@ -376,7 +378,7 @@
             step.value = PR_STEPS.GAME
         }
         stepIndex.value = 1
-        setTimeout(checkTutorial, 200)
+        setTimeout(checkTutorial, 1000)
     }
 
     function logStepTime(name) {
@@ -388,10 +390,10 @@
     }
 
     function nextStep(onTimerEnd=false) {
-        stopTimer()
+        stopTimer(true)
+        logStepTime(step.value)
         switch(step.value) {
             case PR_STEPS.COMPREHENSION:
-                logStepTime(PR_STEPS.COMPREHENSION)
                 if (onTimerEnd) {
                     // the user did not answer the questions in time
                     testComp(cc.value ? cc.value.getAnswers() : null)
@@ -400,12 +402,11 @@
                     allowNext.value = false
                     step.value = PR_STEPS.GAME
                     startTimer(150)
-                    setTimeout(checkTutorial, 200)
+                    setTimeout(checkTutorial, 1000)
                 }
                 break
             case PR_STEPS.GAME: {
                 let data
-                logStepTime(PR_STEPS.GAME)
                 // get the data from clusters/binary search
                 if (clusters.value) {
                     data = clusters.value.getSubmitData()
@@ -432,7 +433,6 @@
                 break
             }
             case PR_STEPS.SELECT:
-                logStepTime(PR_STEPS.SELECT)
                 if (!attentionDone && props.attentionChecks && Math.random() > 0.5) {
                     step.value = PR_STEPS.ATTENTION
                     attentionNext = PR_STEPS.REFINE
@@ -446,7 +446,6 @@
                 startTimer(150)
                 break
             case PR_STEPS.REFINE:
-                logStepTime(PR_STEPS.REFINE)
                 if (!attentionDone && props.attentionChecks) {
                     step.value = PR_STEPS.ATTENTION
                     attentionNext = null
@@ -458,7 +457,6 @@
                 }
                 break
             case PR_STEPS.ATTENTION:
-                logStepTime(PR_STEPS.ATTENTION)
                 attentionDone = true
                 if (onTimerEnd) {
                     // user did not complete attention check in time
@@ -770,7 +768,6 @@
         attentionNext = null
         timeEnd = undefined
         timeStart = undefined
-        timeEndTutorial = undefined
         timeStartTutorial = undefined
         allowNext.value = true
         stepIndex.value = 1

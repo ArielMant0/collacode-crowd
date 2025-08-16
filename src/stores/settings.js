@@ -11,7 +11,16 @@ export const useSettings = defineStore('settings', {
         verticalLayout: false,
         panelSide: "left",
 
-        panelSort: [2, 0, 0]
+        panelSort: {
+            0: 2,
+            1: 0,
+            2: 0
+        },
+        panelPage: {
+            0: 1,
+            1: 1,
+            2: 1
+        },
     }),
 
     actions: {
