@@ -390,6 +390,7 @@
     }
 
     function nextStep(onTimerEnd=false) {
+        allowNext.value = false
         stopTimer(true)
         logStepTime(step.value)
         switch(step.value) {
@@ -619,6 +620,7 @@
     async function stopGame() {
         stopTimer()
         timeEnd = Date.now()
+        allowNext.value = true
 
         // check if we already have a guid
         if (!app.activeUserId) {

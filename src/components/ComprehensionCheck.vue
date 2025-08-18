@@ -17,11 +17,11 @@
             </v-radio-group>
         </div>
 
-        <div style="text-align: center;">
+        <div v-if="!blocked" style="text-align: center;">
             <v-btn
                 @click="submit"
                 :color="numAnswered < questions.length ? 'default' : submitColor"
-                :disabled="numAnswered < questions.length">
+                :disabled="blocked || numAnswered < questions.length">
                 {{ submitText }}
             </v-btn>
         </div>
@@ -56,6 +56,7 @@
 
     const emit = defineEmits(["submit"])
 
+    const blocked = ref(false)
     const choices = ref({})
 
     const answers = computed(() => Object.values(choices.value).filter(d => d >= 0))
@@ -63,6 +64,7 @@
 
     function submit() {
         if (numAnswered.value === props.questions.length) {
+            blocked.value = true
             emit("submit", getAnswers())
         }
     }
